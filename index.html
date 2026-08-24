@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
   <meta name="description" content="Localizador de materiais em bombonas" />
+  <link rel="icon" type="image/png" href="./icons/icon-192.png" />
   <title>Localizador de Materiais</title>
 </head>
 <body>
@@ -19,7 +20,7 @@
       if (!window.__LM_BOOT_OK__) {
         var el = document.getElementById('boot-message');
         if (el) {
-          el.innerHTML = '<div><strong style="display:block;color:#15171a;margin-bottom:8px">O aplicativo não foi carregado.</strong><span style="display:block;max-width:560px">O GitHub Pages provavelmente está publicando os arquivos-fonte em vez do build do Vite. Em Settings → Pages, selecione <b>GitHub Actions</b> e confirme que o workflow “Deploy GitHub Pages” terminou com todas as etapas verdes.</span></div>';
+          el.innerHTML = '<div><strong style="display:block;color:#15171a;margin-bottom:8px">O aplicativo não foi carregado.</strong><span style="display:block;max-width:560px">O build do Vite ainda não foi publicado. Abra a aba Actions do repositório e verifique o workflow “Build GitHub Pages into main”.</span></div>';
         }
       }
     }, 5000);
