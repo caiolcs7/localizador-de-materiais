@@ -1,11 +1,12 @@
 {
   "name": "localizador-materiais",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
+    "typecheck": "tsc -b",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "verify:data": "node scripts/verify-seed.mjs"
@@ -19,13 +20,13 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vite-plugin-pwa": "^0.21.1",
-    "vitest": "^2.1.8",
-    "@types/node": "^22.10.2"
+    "vitest": "^2.1.8"
   }
 }
