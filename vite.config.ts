@@ -2,8 +2,18 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+function githubPagesBase() {
+  if (process.env.GITHUB_ACTIONS !== 'true') return '/'
+  const repo = (process.env.GITHUB_REPOSITORY ?? '').split('/')[1] ?? ''
+  const owner = process.env.GITHUB_REPOSITORY_OWNER ?? ''
+  if (!repo) return '/'
+  return repo.toLowerCase() === `${owner.toLowerCase()}.github.io` ? '/' : `/${repo}/`
+}
+
+const base = githubPagesBase()
+
 export default defineConfig({
-  base: '/',
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -16,11 +26,11 @@ export default defineConfig({
         theme_color: '#111827',
         background_color: '#f5f6f8',
         display: 'standalone',
-        start_url: './',
-        scope: './',
+        start_url: base,
+        scope: base,
         icons: [
-          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }
+          { src: `${base}icons/icon-192.png`, sizes: '192x192', type: 'image/png' },
+          { src: `${base}icons/icon-512.png`, sizes: '512x512', type: 'image/png' }
         ]
       },
       workbox: {
