@@ -8,7 +8,7 @@ export function ScannerModal({ onDetected, onClose }: { onDetected: (value: stri
   const controlsRef = useRef<{ stop: () => void } | null>(null)
   const [error, setError] = useState('')
   const hints = new Map(); hints.set(DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE, BarcodeFormat.DATA_MATRIX])
-  const reader = useRef(new BrowserMultiFormatReader(hints, 300)).current
+  const reader = useRef(new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 300, delayBetweenScanSuccess: 300 })).current
 
   useEffect(() => {
     let active = true
