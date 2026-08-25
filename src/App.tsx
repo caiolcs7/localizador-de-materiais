@@ -7,6 +7,7 @@ import { ScannerModal } from './features/scanner/ScannerModal'
 import { ItemModal } from './features/items/ItemModal'
 import { ResultCards } from './components/ResultCards'
 import { exportBackup, exportCSV, importBackup } from './features/backup/backup'
+import { cleanScannedCode, formatBombona, normalizeSearch } from './utils/normalize'
 import './styles.css'
 
 const recentKey='lm-recent'; const favoriteKey='lm-favorites'
@@ -24,8 +25,8 @@ export default function App() {
   const copy=async(s:string)=>{await navigator.clipboard.writeText(s);notify('Copiado')}
   const toggleFav=(s:string)=>setFavorites(prev=>{const n=prev.includes(s)?prev.filter(x=>x!==s):[s,...prev].slice(0,12);localStorage.setItem(favoriteKey,JSON.stringify(n));return n})
   const deleteItem=async(item:InventoryLocation)=>{if(confirm(`Excluir esta localização?\n\n${item.codigo}\n${item.bombona}\n${item.endereco}`)){await deleteLocation(item.id);await refresh();setResult(await searchInventory(query));notify('Localização excluída')}}
-  const filtered=useMemo(()=>{const q=query.trim().toUpperCase();return all.filter(x=>!q||x.codigo.includes(q)||x.bombona.includes(q)||x.endereco.includes(q)).sort((a,b)=>a.codigo.localeCompare(b.codigo))},[all,query])
-  const detect=(value:string)=>{setScanner(false);setQuery(value);notify('Código lido')}
+  const filtered=useMemo(()=>{const q=normalizeSearch(query); const bq=normalizeSearch(formatBombona(query)); return all.filter(x=>!q||normalizeSearch(x.codigo).includes(q)||normalizeSearch(formatBombona(x.bombona)).includes(bq)||normalizeSearch(x.endereco).includes(q)).sort((a,b)=>a.codigo.localeCompare(b.codigo))},[all,query])
+  const detect=(value:string)=>{const cleaned=cleanScannedCode(value);setScanner(false);if(!cleaned){notify('Leitura inválida');return}setQuery(cleaned);notify('Código lido')}
   if(!ready) return <div className="loading">Carregando base local…</div>
   return <div className="app-shell">
     <header><div className="brand"><div className="brand-mark">LM</div><div><b>Localizador de Materiais</b><span>Almoxarifado</span></div></div><nav className={mobileMenu?'open':''}>
