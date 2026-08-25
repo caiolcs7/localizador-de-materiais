@@ -1,5 +1,6 @@
 import { db } from '../../db/database'
 import type { InventoryLocation } from '../../types/inventory'
+import { formatBombona, inferRua, normalizeSearch } from '../../utils/normalize'
 
 export async function exportBackup() {
   const data = await db.locations.toArray()
@@ -10,8 +11,19 @@ export async function importBackup(file: File) {
   const parsed = JSON.parse(await file.text()) as { records?: InventoryLocation[] }
   if (!Array.isArray(parsed.records)) throw new Error('Backup inválido: lista de registros ausente.')
   if (!parsed.records.every(r => r && typeof r.id === 'string' && typeof r.codigo === 'string' && typeof r.bombona === 'string' && typeof r.endereco === 'string')) throw new Error('Backup inválido: há registros malformados.')
-  await db.transaction('rw', db.locations, async () => { await db.locations.clear(); await db.locations.bulkPut(parsed.records!) })
-  return parsed.records.length
+
+  const normalized = parsed.records.map(r => {
+    const bombona = formatBombona(r.bombona)
+    return {
+      ...r,
+      codigoNormalizado: normalizeSearch(r.codigo),
+      bombona,
+      rua: inferRua(bombona)
+    }
+  })
+
+  await db.transaction('rw', db.locations, async () => { await db.locations.clear(); await db.locations.bulkPut(normalized) })
+  return normalized.length
 }
 
 export async function exportCSV() {
