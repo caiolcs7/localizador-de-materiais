@@ -1,6 +1,6 @@
 import { db } from '../db/database'
 import type { InventoryLocation, ItemDraft, SearchResult } from '../types/inventory'
-import { equivalentAI, inferRua, normalizeSearch } from '../utils/normalize'
+import { equivalentAI, formatBombona, inferRua, normalizeSearch } from '../utils/normalize'
 
 const levenshtein = (a: string, b: string) => {
   const m = Array.from({ length: b.length + 1 }, (_, j) => j)
@@ -17,13 +17,14 @@ const levenshtein = (a: string, b: string) => {
 
 export async function searchInventory(raw: string): Promise<SearchResult> {
   const q = normalizeSearch(raw)
+  const bombonaQ = normalizeSearch(formatBombona(raw))
   if (!q) return { kind: 'contains', items: [] }
   const all = await db.locations.toArray()
   const exact = all.filter(x => x.codigoNormalizado === q || (x.aliases ?? []).some(a => normalizeSearch(a) === q))
   if (exact.length) return { kind: 'exact', items: exact }
   const equivalent = all.filter(x => equivalentAI(x.codigo, q))
   if (equivalent.length) return { kind: 'equivalent', items: equivalent }
-  const bombona = all.filter(x => normalizeSearch(x.bombona) === q)
+  const bombona = all.filter(x => normalizeSearch(formatBombona(x.bombona)) === bombonaQ)
   if (bombona.length) return { kind: 'bombona', items: bombona }
   const endereco = all.filter(x => normalizeSearch(x.endereco) === q)
   if (endereco.length) return { kind: 'endereco', items: endereco }
@@ -41,12 +42,12 @@ export async function searchInventory(raw: string): Promise<SearchResult> {
 
 export async function saveLocation(draft: ItemDraft, allowDuplicate = false) {
   const codigo = draft.codigo.trim().toUpperCase()
-  const bombona = draft.bombona.trim().toUpperCase()
+  const bombona = formatBombona(draft.bombona)
   const endereco = draft.endereco.trim().toUpperCase()
   const normalized = normalizeSearch(codigo)
   if (!codigo || !bombona || !endereco) throw new Error('Código, bombona e endereço são obrigatórios.')
   const all = await db.locations.toArray()
-  const duplicate = all.find(x => x.id !== draft.id && x.codigoNormalizado === normalized && normalizeSearch(x.bombona) === normalizeSearch(bombona) && normalizeSearch(x.endereco) === normalizeSearch(endereco))
+  const duplicate = all.find(x => x.id !== draft.id && x.codigoNormalizado === normalized && normalizeSearch(formatBombona(x.bombona)) === normalizeSearch(bombona) && normalizeSearch(x.endereco) === normalizeSearch(endereco))
   if (duplicate && !allowDuplicate) return { duplicate }
   const now = new Date().toISOString()
   const existing = draft.id ? await db.locations.get(draft.id) : undefined
