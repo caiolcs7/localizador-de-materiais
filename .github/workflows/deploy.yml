@@ -35,6 +35,9 @@ jobs:
       - name: Validar base inicial
         run: npm run verify:data
 
+      - name: Restaurar entrada fonte do Vite
+        run: cp index.source.html index.html
+
       - name: Gerar build do Vite
         run: npm run build
 
