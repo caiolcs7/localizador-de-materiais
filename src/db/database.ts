@@ -1,6 +1,7 @@
 import Dexie, { type Table } from 'dexie'
 import type { InventoryLocation } from '../types/inventory'
 import seed from '../data/seedInventory.json'
+import moniqueAdditions from '../data/moniqueAdditions.json'
 import { formatBombona, normalizeSearch } from '../utils/normalize'
 
 class InventoryDB extends Dexie {
@@ -16,6 +17,9 @@ class InventoryDB extends Dexie {
 }
 
 export const db = new InventoryDB()
+
+const codeSet = (record: InventoryLocation) =>
+  new Set([record.codigo, ...(record.aliases ?? [])].map(normalizeSearch))
 
 export async function ensureSeeded() {
   const seeded = await db.meta.get('seeded-v1')
@@ -41,5 +45,26 @@ export async function ensureSeeded() {
 
     if (changed.length) await db.locations.bulkPut(changed)
     await db.meta.put({ key: 'bombona-3digits-v1', value: true })
+  }
+
+  const moniqueMigration = await db.meta.get('monique-luminarias-v1')
+  if (!moniqueMigration) {
+    const existing = await db.locations.toArray()
+    const additions = (moniqueAdditions as unknown as InventoryLocation[]).map(record => ({
+      ...record,
+      codigoNormalizado: normalizeSearch(record.codigo),
+      bombona: formatBombona(record.bombona)
+    }))
+
+    const missing = additions.filter(candidate => {
+      const candidateCodes = codeSet(candidate)
+      return !existing.some(record => {
+        if (formatBombona(record.bombona) !== candidate.bombona) return false
+        return [...codeSet(record)].some(code => candidateCodes.has(code))
+      })
+    })
+
+    if (missing.length) await db.locations.bulkAdd(missing)
+    await db.meta.put({ key: 'monique-luminarias-v1', value: { expected: additions.length, added: missing.length } })
   }
 }
