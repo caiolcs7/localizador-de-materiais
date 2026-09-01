@@ -1,1 +1,0 @@
-Maccomevap logo is stored as public/maccomevap-logo.png and copied by Vite into the GitHub Pages build.
