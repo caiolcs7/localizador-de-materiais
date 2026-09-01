@@ -38,6 +38,9 @@ jobs:
       - name: Validar dados dos Carrinhos
         run: npm run verify:carts
 
+      - name: Validar TypeScript
+        run: npm run typecheck
+
       - name: Restaurar entrada fonte do Vite
         run: cp index.source.html index.html
 
