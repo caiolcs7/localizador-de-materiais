@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "verify:data": "node scripts/verify-seed.mjs",
