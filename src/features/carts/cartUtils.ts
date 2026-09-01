@@ -3,19 +3,21 @@ import type { CartItem } from '../../types/cart'
 import { equivalentAI, normalizeSearch } from '../../utils/normalize'
 
 const CATEGORY_RULES: Array<{ label: string; tokens: string[] }> = [
-  { label: 'Parafusos', tokens: ['PARAFUS'] },
-  { label: 'Arruelas', tokens: ['ARRUEL'] },
+  { label: 'Parafusos', tokens: ['PARAFUSO', 'PARAF'] },
+  { label: 'Arruelas', tokens: ['ARRUELA'] },
   { label: 'Porcas', tokens: ['PORCA'] },
   { label: 'Terminais', tokens: ['TERMINAL'] },
-  { label: 'Rebites', tokens: ['REBITE'] },
+  { label: 'Rivkles', tokens: ['RIVKLE'] },
+  { label: 'Rebites', tokens: ['REBITE', 'REBIT'] },
+  { label: 'Vedações', tokens: ['VEDACAO', 'VEDAÇÃO'] },
+  { label: 'Pinos', tokens: ['PINO'] },
   { label: 'Buchas', tokens: ['BUCHA'] },
   { label: 'Abraçadeiras', tokens: ['ABRACADEIRA', 'ABRAÇADEIRA'] },
   { label: 'Cabos', tokens: ['CABO'] },
   { label: 'Conectores', tokens: ['CONECTOR'] },
   { label: 'Suportes', tokens: ['SUPORTE'] },
   { label: 'Presilhas', tokens: ['PRESILHA'] },
-  { label: 'Molas', tokens: ['MOLA'] },
-  { label: 'Pinos', tokens: ['PINO'] }
+  { label: 'Molas', tokens: ['MOLA'] }
 ]
 
 export function categoryForItem(item: CartItem) {
