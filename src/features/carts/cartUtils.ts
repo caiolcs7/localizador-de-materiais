@@ -3,21 +3,23 @@ import type { CartItem } from '../../types/cart'
 import { equivalentAI, normalizeSearch } from '../../utils/normalize'
 
 const CATEGORY_RULES: Array<{ label: string; tokens: string[] }> = [
-  { label: 'Parafusos', tokens: ['PARAFUSO', 'PARAF'] },
-  { label: 'Arruelas', tokens: ['ARRUELA'] },
-  { label: 'Porcas', tokens: ['PORCA'] },
-  { label: 'Terminais', tokens: ['TERMINAL'] },
+  // Regras mais específicas vêm antes das genéricas. Ex.: uma vedação pode
+  // mencionar "parafusos" no descritivo sem ser um parafuso.
+  { label: 'Vedações', tokens: ['VEDACAO', 'VEDAÇÃO'] },
   { label: 'Rivkles', tokens: ['RIVKLE'] },
   { label: 'Rebites', tokens: ['REBITE', 'REBIT'] },
-  { label: 'Vedações', tokens: ['VEDACAO', 'VEDAÇÃO'] },
+  { label: 'Terminais', tokens: ['TERMINAL'] },
+  { label: 'Porcas', tokens: ['PORCA'] },
+  { label: 'Arruelas', tokens: ['ARRUELA'] },
   { label: 'Pinos', tokens: ['PINO'] },
   { label: 'Buchas', tokens: ['BUCHA'] },
   { label: 'Abraçadeiras', tokens: ['ABRACADEIRA', 'ABRAÇADEIRA'] },
-  { label: 'Cabos', tokens: ['CABO'] },
   { label: 'Conectores', tokens: ['CONECTOR'] },
   { label: 'Suportes', tokens: ['SUPORTE'] },
   { label: 'Presilhas', tokens: ['PRESILHA'] },
-  { label: 'Molas', tokens: ['MOLA'] }
+  { label: 'Molas', tokens: ['MOLA'] },
+  { label: 'Cabos', tokens: ['CABO'] },
+  { label: 'Parafusos', tokens: ['PARAFUSO', 'PARAF'] }
 ]
 
 export function categoryForItem(item: CartItem) {
