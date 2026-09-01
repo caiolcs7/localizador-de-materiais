@@ -38,6 +38,9 @@ jobs:
       - name: Validar dados dos Carrinhos
         run: npm run verify:carts
 
+      - name: Validar fotos das luminárias
+        run: npm run verify:luminaire-images
+
       - name: Validar TypeScript
         run: npm run typecheck
 

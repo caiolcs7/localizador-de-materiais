@@ -18,7 +18,20 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
+      includeAssets: [
+        'icons/icon-192.png',
+        'icons/icon-512.png',
+        'luminarias/lum-010.webp',
+        'luminarias/lum-254.webp',
+        'luminarias/lum-avf.webp',
+        'luminarias/lum-014.webp',
+        'luminarias/lum-984.webp',
+        'luminarias/lum-035.webp',
+        'luminarias/lum-mas.webp',
+        'luminarias/lum-l75.webp',
+        'luminarias/lum-948.webp',
+        'luminarias/lum-cas.webp',
+      ],
       manifest: {
         name: 'Localizador de Materiais',
         short_name: 'Localizador',
