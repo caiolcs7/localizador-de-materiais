@@ -5,6 +5,7 @@ import type { InventoryLocation } from '../../types/inventory'
 import type { LuminaireCart } from '../../types/cart'
 import { normalizeSearch } from '../../utils/normalize'
 import { cartItemKey, categoryForItem, findInventoryLocations } from './cartUtils'
+import './carts.css'
 
 type Props = {
   inventory: InventoryLocation[]
@@ -39,7 +40,7 @@ export function CartsPage({ inventory, onOpenInventoryCode }: Props) {
 
   const enriched = useMemo(() => (selected?.items ?? []).map((item, index) => {
     const locations = findInventoryLocations(item.codigo, inventory)
-    const exact = locations.some(location => normalizeSearch(location.codigo) === normalizeSearch(item.codigo))
+    const exact = locations.some(location => [location.codigo, ...(location.aliases ?? [])].some(code => normalizeSearch(code) === normalizeSearch(item.codigo)))
     return {
       item,
       index,
