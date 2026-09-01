@@ -1,7 +1,7 @@
 {
   "name": "localizador-materiais",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -9,7 +9,8 @@
     "typecheck": "tsc -b",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
-    "verify:data": "node scripts/verify-seed.mjs"
+    "verify:data": "node scripts/verify-seed.mjs",
+    "verify:carts": "node scripts/verify-carts.mjs"
   },
   "dependencies": {
     "@zxing/browser": "^0.1.5",
