@@ -1,1 +1,0 @@
-Binary PNG is committed through the Git data API; this text file is harmless and may be removed later.
