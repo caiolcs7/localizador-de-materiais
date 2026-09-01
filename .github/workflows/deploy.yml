@@ -35,6 +35,9 @@ jobs:
       - name: Validar base inicial
         run: npm run verify:data
 
+      - name: Validar dados dos Carrinhos
+        run: npm run verify:carts
+
       - name: Restaurar entrada fonte do Vite
         run: cp index.source.html index.html
 
