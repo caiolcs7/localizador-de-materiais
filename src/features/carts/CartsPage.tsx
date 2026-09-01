@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Filter, Home, Lock, LockOpen, MapPin, PackagePlus, Pencil, Plus, Search, ShieldCheck, ShoppingCart, Trash2, X, XCircle } from 'lucide-react'
+import { Check, ChevronDown, Filter, Home, Lock, LockOpen, MapPin, PackagePlus, Pencil, Plus, Search, ShieldCheck, ShoppingCart, Trash2, X, XCircle } from 'lucide-react'
 import cartsSource from '../../data/cartsData.json'
 import type { InventoryLocation } from '../../types/inventory'
 import type { CartItem, LuminaireCart } from '../../types/cart'
@@ -11,6 +11,7 @@ type Props = {
   inventory: InventoryLocation[]
   onOpenInventoryCode: (code: string) => void
   onBackHome: () => void
+  onRefreshInventory: () => Promise<void> | void
 }
 
 type LocationFilter = 'all' | 'located' | 'unlocated'
@@ -93,7 +94,7 @@ function CartItemModal({ initial, cartName, onClose, onSave }: { initial?: CartI
   </div></div>
 }
 
-export function CartsPage({ inventory, onOpenInventoryCode, onBackHome }: Props) {
+export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefreshInventory }: Props) {
   const [carts,setCarts]=useState<LuminaireCart[]>(()=>loadCarts())
   const [selectedId,setSelectedId]=useState(()=>loadCarts()[0]?.id??'')
   const [query,setQuery]=useState('')
@@ -103,8 +104,28 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome }: Props)
   const [showPassword,setShowPassword]=useState(false)
   const [cartEditor,setCartEditor]=useState<LuminaireCart|'new'|null>(null)
   const [itemEditor,setItemEditor]=useState<CartItem|'new'|null>(null)
+  const [pickerOpen,setPickerOpen]=useState(false)
+  const [pickerQuery,setPickerQuery]=useState('')
 
   useEffect(()=>{localStorage.setItem(cartsStorageKey,JSON.stringify(carts));if(!carts.some(cart=>cart.id===selectedId))setSelectedId(carts[0]?.id??'')},[carts,selectedId])
+
+  // Carrinhos never store bombona/address. They always read locations from the
+  // main inventory. Refreshing here guarantees that returning to this page,
+  // focusing the browser, or coming back from another tab reflects edits.
+  useEffect(()=>{
+    void onRefreshInventory()
+    const sync=()=>{void onRefreshInventory()}
+    const onVisibility=()=>{if(!document.hidden)sync()}
+    window.addEventListener('focus',sync)
+    document.addEventListener('visibilitychange',onVisibility)
+    return()=>{window.removeEventListener('focus',sync);document.removeEventListener('visibilitychange',onVisibility)}
+  },[onRefreshInventory])
+
+  useEffect(()=>{
+    const onKey=(event:KeyboardEvent)=>{if(event.key==='Escape')setPickerOpen(false)}
+    window.addEventListener('keydown',onKey)
+    return()=>window.removeEventListener('keydown',onKey)
+  },[])
 
   const selected=useMemo(()=>carts.find(cart=>cart.id===selectedId)??carts[0],[carts,selectedId])
   const enriched=useMemo(()=>(selected?.items??[]).map((item,index)=>{
@@ -116,7 +137,9 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome }: Props)
   useEffect(()=>{if(!categories.includes(category))setCategory('Todos')},[categories,category])
   const filtered=useMemo(()=>{const q=normalizeSearch(query);return enriched.filter(row=>{if(category!=='Todos'&&row.category!==category)return false;if(locationFilter==='located'&&row.locations.length===0)return false;if(locationFilter==='unlocated'&&row.locations.length>0)return false;if(!q)return true;return normalizeSearch(`${row.item.codigo} ${row.item.descritivo??''} ${row.category}`).includes(q)})},[enriched,query,category,locationFilter])
   const located=enriched.filter(row=>row.locations.length>0).length
+  const pickerCarts=useMemo(()=>{const q=normalizeSearch(pickerQuery);return carts.filter(cart=>!q||normalizeSearch(`${cart.nome} ${cart.sourceSheet}`).includes(q))},[carts,pickerQuery])
 
+  const chooseCart=(id:string)=>{setSelectedId(id);setQuery('');setCategory('Todos');setLocationFilter('all');setPickerOpen(false);setPickerQuery('');void onRefreshInventory()}
   const unlock=()=>{sessionStorage.setItem(cartsAdminKey,'1');setAdminUnlocked(true);setShowPassword(false)}
   const lock=()=>{sessionStorage.removeItem(cartsAdminKey);setAdminUnlocked(false);setCartEditor(null);setItemEditor(null)}
   const saveCart=(name:string,sourceSheet:string)=>{
@@ -135,7 +158,30 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome }: Props)
     <div className="page-title carts-title"><div><h2>Carrinhos</h2><p>Composição, filtros e localização de materiais por luminária.</p></div><div className="carts-top-actions"><button className="secondary-button" onClick={onBackHome}><Home size={16}/>Voltar ao início</button>{adminUnlocked?<><button className="secondary-button" onClick={()=>setCartEditor('new')}><Plus size={16}/>Novo carrinho</button><button className="primary-button" onClick={()=>setItemEditor('new')} disabled={!selected}><PackagePlus size={16}/>Novo item</button><button className="secondary-button" onClick={lock}><LockOpen size={16}/>Bloquear edição</button></>:<button className="primary-button" onClick={()=>setShowPassword(true)}><Lock size={16}/>Desbloquear edição</button>}</div></div>
 
     {!carts.length?<div className="carts-empty"><ShoppingCart size={34}/><b>Nenhum carrinho cadastrado</b><p>Desbloqueie a edição para criar o primeiro carrinho.</p></div>:<>
-      <div className="carts-controls"><div className="cart-select-wrap"><span>Luminária</span><select value={selected?.id??''} onChange={event=>{setSelectedId(event.target.value);setQuery('');setCategory('Todos');setLocationFilter('all')}}>{carts.map(cart=><option key={cart.id} value={cart.id}>{cart.nome}</option>)}</select></div><div className="table-search cart-search"><Search size={18}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Buscar código ou descritivo no carrinho"/></div></div>
+      <div className="luminaire-switcher-wrap">
+        <button className={`luminaire-switcher ${pickerOpen?'open':''}`} onClick={()=>setPickerOpen(value=>!value)} aria-expanded={pickerOpen}>
+          <span className="luminaire-switcher-icon"><ShoppingCart size={22}/></span>
+          <span className="luminaire-switcher-copy"><small>Luminária selecionada</small><strong>{selected?.nome}</strong><em>{selected?.items.length??0} itens · localizações sincronizadas com o almoxarifado</em></span>
+          <span className="luminaire-switcher-chevron"><ChevronDown size={20}/></span>
+        </button>
+        {pickerOpen&&<>
+          <button className="luminaire-picker-backdrop" aria-label="Fechar seletor" onClick={()=>setPickerOpen(false)}/>
+          <div className="luminaire-picker-panel">
+            <div className="luminaire-picker-head"><div><b>Trocar luminária</b><span>Selecione o carrinho que deseja consultar.</span></div><button className="picker-close" onClick={()=>setPickerOpen(false)}><X size={18}/></button></div>
+            <div className="luminaire-picker-search"><Search size={17}/><input autoFocus value={pickerQuery} onChange={e=>setPickerQuery(e.target.value)} placeholder="Buscar luminária..."/></div>
+            <div className="luminaire-picker-grid">
+              {pickerCarts.map((cart,index)=><button key={cart.id} className={`luminaire-option ${cart.id===selected?.id?'selected':''}`} onClick={()=>chooseCart(cart.id)}>
+                <span className="luminaire-option-number">{String(index+1).padStart(2,'0')}</span>
+                <span className="luminaire-option-copy"><b>{cart.nome}</b><small>{cart.items.length} itens · {cart.sourceSheet}</small></span>
+                <span className="luminaire-option-check">{cart.id===selected?.id&&<Check size={17}/>}</span>
+              </button>)}
+              {!pickerCarts.length&&<div className="luminaire-picker-empty">Nenhuma luminária encontrada.</div>}
+            </div>
+          </div>
+        </>}
+      </div>
+
+      <div className="carts-controls"><div className="sync-note"><MapPin size={16}/><div><b>Bombonas sincronizadas automaticamente</b><span>Ao editar a bombona/endereço de um código no Localizador, o Carrinho passa a mostrar a nova localização sem duplicar dados.</span></div></div><div className="table-search cart-search"><Search size={18}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Buscar código ou descritivo no carrinho"/></div></div>
 
       <div className="cart-kpis"><div><ShoppingCart/><span>Itens do carrinho</span><strong>{enriched.length}</strong></div><div><MapPin/><span>Com localização</span><strong>{located}<small> / {enriched.length}</small></strong></div><div><XCircle/><span>Sem localização</span><strong>{enriched.length-located}</strong></div><div><Filter/><span>Categorias</span><strong>{Math.max(categories.length-1,0)}</strong></div></div>
 
@@ -143,7 +189,7 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome }: Props)
 
       <div className="cart-context"><div><b>{selected?.nome}</b><span>Aba de origem: {selected?.sourceSheet}</span></div><div className="cart-context-actions"><span>{filtered.length} {filtered.length===1?'item exibido':'itens exibidos'}</span>{adminUnlocked&&selected&&<><button onClick={()=>setCartEditor(selected)}><Pencil size={14}/>Editar carrinho</button><button className="danger-text" onClick={deleteCart}><Trash2 size={14}/>Excluir carrinho</button></>}</div></div>
 
-      <div className="cart-list">{filtered.map(row=>{const uniqueBombonas=Array.from(new Set(row.locations.map(location=>location.bombona)));return <article className="cart-item" key={row.item.id??`${selected?.id}-${row.index}-${row.item.codigo}`}><div className="cart-item-main"><div className="cart-item-heading"><strong>{row.item.codigo}</strong><span className="category-badge">{row.category}</span>{row.equivalentOnly&&<span className="equivalent-badge">AI4/AI6</span>}</div><p>{row.item.descritivo||'Sem descritivo informado'}</p><div className="cart-item-meta"><span>Qtd.: <b>{row.item.quantidade??'—'}</b>{row.item.unidade?` ${row.item.unidade}`:''}</span>{row.item.observacoes&&<span>{row.item.observacoes}</span>}</div></div><div className="cart-location">{row.locations.length?<><span className="location-status ok"><MapPin size={14}/>Localizado</span><div className="bombona-list">{uniqueBombonas.slice(0,3).map(bombona=><span key={bombona}>{bombona}</span>)}{uniqueBombonas.length>3&&<span>+{uniqueBombonas.length-3}</span>}</div><button onClick={()=>onOpenInventoryCode(row.item.codigo)}>Ver no Localizador</button></>:<><span className="location-status missing"><XCircle size={14}/>Sem localização cadastrada</span><small>Não foi encontrada bombona para este código na base atual.</small><button onClick={()=>onOpenInventoryCode(row.item.codigo)}>Pesquisar código</button></>}</div>{adminUnlocked&&<div className="cart-admin-actions"><button title="Editar item" onClick={()=>setItemEditor(row.item)}><Pencil size={16}/></button><button title="Excluir item" onClick={()=>deleteCartItem(row.item)}><Trash2 size={16}/></button></div>}</article>})}{!filtered.length&&<div className="cart-no-results"><b>Nenhum item neste filtro.</b><span>Altere a categoria, a pesquisa ou o status de localização.</span></div>}</div>
+      <div className="cart-list">{filtered.map(row=>{const uniqueBombonas=Array.from(new Set(row.locations.map(location=>location.bombona)));return <article className="cart-item" key={row.item.id??`${selected?.id}-${row.index}-${row.item.codigo}`}><div className="cart-item-main"><div className="cart-item-heading"><strong>{row.item.codigo}</strong><span className="category-badge">{row.category}</span>{row.equivalentOnly&&<span className="equivalent-badge">AI4/AI6</span>}</div><p>{row.item.descritivo||'Sem descritivo informado'}</p><div className="cart-item-meta"><span>Qtd.: <b>{row.item.quantidade??'—'}</b>{row.item.unidade?` ${row.item.unidade}`:''}</span>{row.item.observacoes&&<span>{row.item.observacoes}</span>}</div></div><div className="cart-location">{row.locations.length?<><span className="location-status ok"><MapPin size={14}/>Localizado</span><div className="bombona-list">{uniqueBombonas.slice(0,3).map(bombona=><span key={bombona}>{bombona}</span>)}{uniqueBombonas.length>3&&<span>+{uniqueBombonas.length-3}</span>}</div><button onClick={()=>onOpenInventoryCode(row.item.codigo)}>Ver no Localizador</button></>:<><span className="location-status missing"><XCircle size={14}/>Sem localização cadastrada</span><small>Assim que este código receber bombona/endereço no Localizador, esta informação aparecerá aqui automaticamente.</small><button onClick={()=>onOpenInventoryCode(row.item.codigo)}>Pesquisar código</button></>}</div>{adminUnlocked&&<div className="cart-admin-actions"><button title="Editar item" onClick={()=>setItemEditor(row.item)}><Pencil size={16}/></button><button title="Excluir item" onClick={()=>deleteCartItem(row.item)}><Trash2 size={16}/></button></div>}</article>})}{!filtered.length&&<div className="cart-no-results"><b>Nenhum item neste filtro.</b><span>Altere a categoria, a pesquisa ou o status de localização.</span></div>}</div>
     </>}
 
     {showPassword&&<PasswordModal onClose={()=>setShowPassword(false)} onUnlock={unlock}/>} 
