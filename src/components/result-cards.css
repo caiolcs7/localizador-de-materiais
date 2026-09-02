@@ -1,0 +1,69 @@
+.result-luminaires {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+}
+
+.result-luminaires-label {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.result-luminaires-list {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.result-luminaire-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 3px 8px 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface2) 84%, transparent);
+  color: var(--text);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(15 23 42 / .035);
+}
+
+.result-luminaire-swatch {
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+html[data-theme='dark'] .result-luminaire-chip {
+  background: color-mix(in srgb, var(--surface2) 92%, transparent);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .18);
+}
+
+@media (max-width: 760px) {
+  .result-luminaires {
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .result-luminaires-label {
+    width: 100%;
+  }
+
+  .result-luminaire-chip {
+    min-height: 23px;
+    font-size: 10px;
+  }
+}
