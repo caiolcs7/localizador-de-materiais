@@ -153,9 +153,6 @@ export function buildErjModel() {
 
 export default function ErjModel3D() {
   const mountRef = useRef<HTMLDivElement>(null)
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
-  const controlsRef = useRef<OrbitControls | null>(null)
-  const [autoRotate, setAutoRotate] = useState(() => typeof window === 'undefined' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -172,7 +169,6 @@ export default function ErjModel3D() {
 
       const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100)
       camera.position.copy(initialCameraPosition)
-      cameraRef.current = camera
 
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' })
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
@@ -194,11 +190,8 @@ export default function ErjModel3D() {
       controls.maxDistance = 11
       controls.minPolarAngle = 0.28
       controls.maxPolarAngle = Math.PI - 0.28
-      controls.autoRotate = autoRotate
-      controls.autoRotateSpeed = 0.72
-      controls.addEventListener('start', () => setAutoRotate(false))
+      controls.autoRotate = false
       controls.update()
-      controlsRef.current = controls
 
       scene.add(new THREE.HemisphereLight(0xffffff, 0x5a6470, 2.3))
       const key = new THREE.DirectionalLight(0xffffff, 4.4)
@@ -256,8 +249,6 @@ export default function ErjModel3D() {
         })
         renderer?.dispose()
         renderer?.domElement.remove()
-        controlsRef.current = null
-        cameraRef.current = null
       }
     } catch {
       renderer?.dispose()
@@ -266,41 +257,9 @@ export default function ErjModel3D() {
     }
   }, [])
 
-  useEffect(() => {
-    if (controlsRef.current) controlsRef.current.autoRotate = autoRotate
-  }, [autoRotate])
-
-  const rotate = (direction: -1 | 1) => {
-    const controls = controlsRef.current
-    const camera = cameraRef.current
-    if (!controls || !camera) return
-    setAutoRotate(false)
-    const offset = camera.position.clone().sub(controls.target)
-    offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), direction * Math.PI / 8)
-    camera.position.copy(controls.target).add(offset)
-    controls.update()
-  }
-
-  const reset = () => {
-    const controls = controlsRef.current
-    const camera = cameraRef.current
-    if (!controls || !camera) return
-    camera.position.copy(initialCameraPosition)
-    controls.target.copy(modelTarget)
-    controls.update()
-    setAutoRotate(true)
-  }
-
   return <div className="erj-model-shell">
     <div className="erj-model-stage" ref={mountRef}>
       {error && <div className="erj-model-error" role="status"><img src={`${import.meta.env.BASE_URL}luminarias/lum-erj-rear.webp`} alt="Vista traseira da luminária ERJ"/><span>{error}</span></div>}
-      {!error && <div className="erj-model-hint">Arraste para girar · pinça ou roda para aproximar</div>}
     </div>
-    {!error && <div className="erj-model-controls" aria-label="Controles do modelo 3D">
-      <button type="button" onClick={() => rotate(-1)} aria-label="Girar modelo para a esquerda">← Girar</button>
-      <button type="button" onClick={() => setAutoRotate(value => !value)}>{autoRotate ? 'Pausar rotação' : 'Rotação automática'}</button>
-      <button type="button" onClick={reset}>Restaurar vista</button>
-      <button type="button" onClick={() => rotate(1)} aria-label="Girar modelo para a direita">Girar →</button>
-    </div>}
   </div>
 }

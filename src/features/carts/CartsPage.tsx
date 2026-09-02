@@ -196,9 +196,8 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
       </div>
 
       {selected&&selectedIsErj&&<section className="erj-experience" aria-labelledby="erj-3d-title">
-        <div className="erj-experience-head"><div><small>Referência visual interativa</small><strong id="erj-3d-title">Luminária ERJ em 3D</strong><p>Gire, aproxime e examine a luminária antes de consultar os componentes do carrinho.</p></div><span className="erj-3d-badge">3D interativo</span></div>
+        <div className="erj-experience-head"><div><strong id="erj-3d-title">Luminária ERJ em 3D</strong><p>Examine a luminária antes de consultar os componentes do carrinho.</p></div><span className="erj-3d-badge">3D interativo</span></div>
         <Suspense fallback={<div className="erj-model-loading" role="status">Preparando o modelo 3D da ERJ…</div>}><ErjModel3D/></Suspense>
-        <div className="erj-model-disclaimer"><b>Referência visual:</b> modelo reconstruído a partir das fotos fornecidas, sem escala nem finalidade de fabricação.</div>
         <div className="erj-photo-gallery" aria-label="Fotos de referência da luminária ERJ">
           {erjPhotos.map(photo=><button key={photo.path} type="button" onClick={()=>setPhotoViewer({src:photo.src,label:`${photo.label} da ${selected.nome}`})} aria-label={`Ampliar ${photo.label.toLowerCase()} da ${selected.nome}`}><img src={photo.src} alt={photo.label} decoding="async"/><span><Maximize2 size={14}/>{photo.label}</span></button>)}
         </div>

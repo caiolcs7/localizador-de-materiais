@@ -3,25 +3,17 @@
 .erj-experience{margin:0 0 14px;border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden;box-shadow:0 10px 34px rgb(15 23 42/.055)}
 .erj-experience-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px 22px 17px;border-bottom:1px solid var(--line)}
 .erj-experience-head>div{display:flex;flex-direction:column;align-items:flex-start}
-.erj-experience-head small{font-size:10px;text-transform:uppercase;letter-spacing:.105em;font-weight:850;color:var(--accent)}
-.erj-experience-head strong{margin-top:4px;font-size:23px;line-height:1.2;letter-spacing:-.03em;color:var(--text)}
+.erj-experience-head strong{font-size:23px;line-height:1.2;letter-spacing:-.03em;color:var(--text)}
 .erj-experience-head p{max-width:650px;margin:7px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
 .erj-3d-badge{flex:0 0 auto;border:1px solid rgb(37 99 235/.25);border-radius:999px;padding:7px 10px;background:rgb(37 99 235/.08);color:var(--accent);font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.06em}
 .erj-model-shell{background:#f3f5f7}
 .erj-model-stage{position:relative;width:100%;height:clamp(390px,54vw,610px);overflow:hidden;background:#f3f5f7}
 .erj-model-stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .erj-model-stage canvas:active{cursor:grabbing}
-.erj-model-hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:2;pointer-events:none;white-space:nowrap;border:1px solid rgb(255 255 255/.42);border-radius:999px;padding:7px 11px;background:rgb(17 24 39/.76);backdrop-filter:blur(8px);color:#fff;font-size:10px;font-weight:700;box-shadow:0 6px 20px rgb(15 23 42/.15)}
-.erj-model-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px;border-top:1px solid var(--line);background:var(--surface)}
-.erj-model-controls button{min-height:38px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--surface2);color:var(--text);font-size:11px;font-weight:760}
-.erj-model-controls button:hover{border-color:var(--accent);color:var(--accent)}
-.erj-model-controls button:focus-visible{outline:3px solid rgb(37 99 235/.25);outline-offset:1px}
 .erj-model-loading{min-height:360px;display:grid;place-items:center;padding:28px;text-align:center;color:var(--muted);font-size:12px;background:#f3f5f7}
 .erj-model-error{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:22px;text-align:center;color:var(--muted);font-size:11px;line-height:1.5;background:#f3f5f7}
 .erj-model-error img{display:block;width:min(360px,82%);max-height:calc(100% - 66px);object-fit:contain;filter:drop-shadow(0 14px 24px rgb(15 23 42/.12))}
 .erj-model-error span{max-width:560px}
-.erj-model-disclaimer{padding:11px 18px;border-top:1px solid var(--line);background:rgb(245 158 11/.07);color:var(--muted);font-size:10px;line-height:1.45}
-.erj-model-disclaimer b{color:#8a5800}
 .erj-photo-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;border-top:1px solid var(--line);background:var(--line)}
 .erj-photo-gallery button{position:relative;min-width:0;padding:0;border:0;background:#fff;overflow:hidden}
 .erj-photo-gallery img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;transition:transform .22s ease}
@@ -29,5 +21,5 @@
 .erj-photo-gallery button:hover img{transform:scale(1.025)}
 .erj-photo-gallery button:focus-visible{z-index:1;outline:3px solid var(--accent);outline-offset:-3px}
 
-@media(max-width:760px){.erj-experience-head{padding:16px;gap:10px}.erj-experience-head strong{font-size:19px}.erj-3d-badge{padding:6px 8px;font-size:9px}.erj-model-stage{height:min(105vw,470px)}.erj-model-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.erj-model-hint{bottom:10px;max-width:calc(100% - 20px);white-space:normal;text-align:center}.erj-photo-gallery{grid-template-columns:1fr}.erj-photo-gallery img{aspect-ratio:16/10}}
+@media(max-width:760px){.erj-experience-head{padding:16px;gap:10px}.erj-experience-head strong{font-size:19px}.erj-3d-badge{padding:6px 8px;font-size:9px}.erj-model-stage{height:min(105vw,470px)}.erj-photo-gallery{grid-template-columns:1fr}.erj-photo-gallery img{aspect-ratio:16/10}}
 @media(prefers-reduced-motion:reduce){.erj-photo-gallery img{transition:none}}
