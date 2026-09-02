@@ -7,6 +7,7 @@ import { categoryForItem, findInventoryLocations } from './cartUtils'
 import { getLuminaireImages } from './luminaireImages'
 import { MaterialVisual } from '../materials/MaterialVisual'
 import { LuminaireMark } from './LuminaireMark'
+import { LuminaireImageCarousel } from './LuminaireImageCarousel'
 import { cart016017MigrationKey, cartsStorageKey, loadCurrentCarts } from './cartData'
 import './carts.css'
 import './luminaire-images.css'
@@ -124,9 +125,7 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
 
   const selected=useMemo(()=>carts.find(cart=>cart.id===selectedId)??carts[0],[carts,selectedId])
   const selectedImages=useMemo(()=>getLuminaireImages(selected),[selected])
-  const selectedImage=selectedImages[0]??null
   const selectedIsErj=selected?.id==='luminaria-erj'
-  const selectedHasGallery=selectedImages.length>1&&!selectedIsErj
   const erjPhotos=useMemo(()=>erjPhotoReferences.map(photo=>({...photo,src:`${import.meta.env.BASE_URL}${photo.path}`})),[])
   const enriched=useMemo(()=>(selected?.items??[]).map((item,index)=>{
     const locations=findInventoryLocations(item.codigo,inventory)
@@ -189,16 +188,7 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
         </div>
       </section>}
 
-      {selected&&selectedImage&&!selectedIsErj&&<div className={`cart-luminaire-reference ${selectedHasGallery?'cart-luminaire-reference--gallery':''}`}>
-        <button className="cart-luminaire-photo" type="button" onClick={()=>setPhotoViewer({src:selectedImage,label:`Foto principal da ${selected.nome}`})} aria-label={`Ampliar foto principal da ${selected.nome}`}>
-          <img src={selectedImage} alt={`Foto principal da ${selected.nome}`} decoding="async"/>
-          <span><Maximize2 size={15}/>Ampliar foto</span>
-        </button>
-        <div className="cart-luminaire-photo-copy"><small>Referência visual</small><strong>{selected.nome}</strong><p>{selectedHasGallery?'Três vistas restauradas das luminárias 016 e 017, preservando as referências fornecidas.':'Foto correspondente a esta luminária. A imagem é exibida por inteiro, sem recortes.'}</p><button className="secondary-button" type="button" onClick={()=>setPhotoViewer({src:selectedImage,label:`Foto principal da ${selected.nome}`})}><Maximize2 size={16}/>Visualizar em tamanho maior</button></div>
-        {selectedHasGallery&&<div className="cart-luminaire-gallery" aria-label={`Galeria da ${selected.nome}`}>
-          {selectedImages.map((src,index)=><button key={src} type="button" onClick={()=>setPhotoViewer({src,label:`Vista ${index+1} da ${selected.nome}`})} aria-label={`Ampliar vista ${index+1} da ${selected.nome}`}><img src={src} alt={`Vista ${index+1} da ${selected.nome}`} decoding="async"/><span>Vista {index+1}</span></button>)}
-        </div>}
-      </div>}
+      {selected&&selectedImages.length>0&&!selectedIsErj&&<LuminaireImageCarousel images={selectedImages} luminaireName={selected.nome} onOpen={(src,label)=>setPhotoViewer({src,label})}/>}
 
       <div className="carts-controls"><div className="sync-note"><MapPin size={16}/><div><b>Bombonas sincronizadas automaticamente</b><span>Ao editar a bombona/endereço de um código no Localizador, o Carrinho passa a mostrar a nova localização sem duplicar dados.</span></div></div><div className="table-search cart-search"><Search size={18}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Buscar código ou descritivo no carrinho"/></div></div>
 
