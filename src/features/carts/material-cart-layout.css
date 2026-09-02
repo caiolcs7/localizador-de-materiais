@@ -1,0 +1,19 @@
+/* Deve carregar depois de carts.css: adiciona o visual sem alterar a hierarquia dos dados. */
+.cart-item{grid-template-columns:112px minmax(0,1fr) 260px auto}
+.cart-item:not(:has(.material-visual)){grid-template-columns:minmax(0,1fr) 260px auto}
+
+@media(max-width:900px){
+  .cart-item{grid-template-columns:100px minmax(0,1fr) auto}
+  .cart-item:not(:has(.material-visual)){grid-template-columns:minmax(0,1fr) auto}
+  .cart-location{grid-column:2/-1}
+  .cart-item:not(:has(.material-visual)) .cart-location{grid-column:1/-1}
+  .cart-admin-actions{grid-column:3;grid-row:1}
+  .cart-item:not(:has(.material-visual)) .cart-admin-actions{grid-column:2}
+}
+
+@media(max-width:760px){
+  .cart-item{grid-template-columns:88px minmax(0,1fr) auto}
+  .cart-item-main p{line-height:1.4}
+  .cart-location{grid-column:1/-1}
+  .cart-item>.material-visual{align-self:start}
+}

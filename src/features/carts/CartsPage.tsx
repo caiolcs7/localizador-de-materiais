@@ -9,6 +9,7 @@ import { getLuminaireImage } from './luminaireImages'
 import { MaterialVisual } from '../materials/MaterialVisual'
 import './carts.css'
 import './luminaire-images.css'
+import './material-cart-layout.css'
 
 const ErjModel3D = lazy(() => import('./ErjModel3D'))
 
