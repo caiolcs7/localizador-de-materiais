@@ -11,7 +11,7 @@ import { exportBackup, exportCSV, importBackup } from './features/backup/backup'
 import { cleanScannedCode, formatBombona, normalizeSearch } from './utils/normalize'
 import { MaterialVisual } from './features/materials/MaterialVisual'
 import { getMaterialDescription } from './features/materials/materialCatalog'
-import { cartsStorageKey, findCartMemberships, loadCurrentCarts } from './features/carts/cartLookup'
+import { cartsStorageKey, loadCurrentCarts } from './features/carts/cartLookup'
 import { buildItemStatusRows, type ItemsStatusFilter } from './features/items/itemStatus'
 import { ThemeSwitch } from './features/theme/ThemeSwitch'
 import './styles.css'
@@ -38,13 +38,6 @@ export default function App() {
 
   const cartsStorageSnapshot=!showCarts?localStorage.getItem(cartsStorageKey):null
   const currentCarts=useMemo(()=>loadCurrentCarts(cartsStorageSnapshot),[cartsStorageSnapshot])
-  const cartMemberships=useMemo(()=>findCartMemberships(query,currentCarts),[query,currentCarts])
-  const exactCartMemberships=cartMemberships.filter(item=>item.match==='exact')
-  const equivalentCartMemberships=cartMemberships.filter(item=>item.match==='equivalent')
-  const normalizedQuery=normalizeSearch(query)
-  const physicalReferenceQuery=/^R\d{1,3}(?:A\d|B\d)/.test(normalizedQuery)
-  const showCartMembershipInfo=Boolean(query.trim())&&!physicalReferenceQuery&&normalizedQuery.length>=5&&(cartMemberships.length>0||result.kind==='exact'||result.kind==='equivalent'||result.items.length===0)
-
   const itemRows=useMemo(()=>buildItemStatusRows(all,currentCarts),[all,currentCarts])
   const itemCounts=useMemo(()=>({
     all:itemRows.length,
@@ -76,14 +69,7 @@ export default function App() {
     </nav><button className="menu-button" onClick={()=>setMobileMenu(!mobileMenu)}>{mobileMenu?<X/>:<Menu/>}</button></header>
     <main>
       {!showItems&&!showData&&!showCarts && <><section className="hero"><div className="eyebrow">LOCALIZAÇÃO RÁPIDA</div><h1>Onde está o material?</h1><p>Pesquise por código, bombona ou endereço físico.</p><div className="search-wrap"><Search size={21}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar código, bombona ou endereço..."/><button className="scan-short" onClick={()=>setScanner(true)}><Camera size={19}/><span>Escanear</span></button></div></section>
-      {showCartMembershipInfo&&<section className={`cart-membership-card ${cartMemberships.length?'found':'not-found'}`}>
-        <div className="cart-membership-icon"><ShoppingCart size={22}/></div>
-        <div className="cart-membership-content"><small>CARRINHOS DE LUMINÁRIA</small>
-          {exactCartMemberships.length>0?<><b>Este código pertence a {exactCartMemberships.length} {exactCartMemberships.length===1?'carrinho':'carrinhos'}.</b><span>Veja em quais luminárias este material é utilizado.</span></>:equivalentCartMemberships.length>0?<><b>Sem correspondência exata nos carrinhos.</b><span>Existe compatibilidade AI4/AI6 em {equivalentCartMemberships.length} {equivalentCartMemberships.length===1?'luminária':'luminárias'}.</span></>:<><b>Este código não pertence a nenhum carrinho cadastrado.</b><span>Nenhuma luminária usa este código na composição atual.</span></>}
-          {cartMemberships.length>0&&<div className="cart-membership-chips">{cartMemberships.map(item=><span key={item.cartId} className={item.match==='equivalent'?'equivalent':''}><ShoppingCart size={13}/>{item.cartName}{item.match==='equivalent'&&<em>AI4/AI6</em>}</span>)}</div>}
-        </div>
-      </section>}
-      {query.trim() && result.items.length>0 && <ResultCards items={result.items} equivalent={result.kind==='equivalent'} onEdit={setEditor} onDelete={deleteItem} onCopy={copy}/>} 
+      {query.trim() && result.items.length>0 && <ResultCards items={result.items} carts={currentCarts} equivalent={result.kind==='equivalent'} onEdit={setEditor} onDelete={deleteItem} onCopy={copy}/>} 
       {query.trim() && result.items.length===0 && <div className="empty-search"><b>Código não encontrado</b><span>{query}</span>{result.suggestion&&<button onClick={()=>setQuery(result.suggestion!)}>Você quis dizer <b>{result.suggestion}</b>?</button>}<button className="primary-button" onClick={()=>setEditor({codigo:query})}>Cadastrar este código</button></div>}
       {!query.trim() && <section className="quick"><div><div className="section-head"><b>Recentes</b><button onClick={()=>{setRecent([]);localStorage.removeItem(recentKey)}}>Limpar</button></div><div className="chips">{recent.length?recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>):<span>Nenhuma pesquisa recente.</span>}</div></div><div><div className="section-head"><b>Favoritos</b></div><div className="chips">{favorites.length?favorites.map(x=><button key={x} onClick={()=>setQuery(x)}><Star size={14}/>{x}</button>):<span>Marque consultas frequentes nos resultados.</span>}</div></div></section>}</>}
       {showItems && <section className="page"><div className="page-title"><div><h2>Itens</h2><p>{all.length} localizações cadastradas · {itemCounts.unlocated} códigos sem endereço</p></div><div className="page-actions-wrap"><button className="secondary-button" onClick={openHome}><Home size={16}/>Voltar ao início</button><button className="primary-button" onClick={()=>setEditor({})}><PackagePlus size={17}/>Novo item</button></div></div>
