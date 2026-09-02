@@ -2,6 +2,7 @@ import fs from 'node:fs'
 
 const cartsDataPath = 'src/data/cartsData.json'
 const cartsPagePath = 'src/features/carts/CartsPage.tsx'
+const cartDataPath = 'src/features/carts/cartData.ts'
 const seedInventoryPath = 'src/data/seedInventory.json'
 const targetCartId = 'luminaria-948-920'
 
@@ -63,10 +64,15 @@ console.log('Carrinho 948/920 atualizado sem remover duplicidades legítimas.')
 
 // 2) Migra automaticamente quem já possui Carrinhos salvos no localStorage.
 // Sem isso, alterar apenas cartsData.json não mudaria instalações que já abriram o app.
-let page = fs.readFileSync(cartsPagePath, 'utf8')
 const migrationMarker = 'const cart948920ReplacementByCode = new Map'
+const centralizedMigration = fs.existsSync(cartDataPath)
+  && fs.readFileSync(cartDataPath, 'utf8').includes(migrationMarker)
 
-if (!page.includes(migrationMarker)) {
+if (centralizedMigration) {
+  console.log('Migração de localStorage do 948/920 confirmada no módulo central de Carrinhos.')
+} else {
+  let page = fs.readFileSync(cartsPagePath, 'utf8')
+  if (!page.includes(migrationMarker)) {
   const adminAnchor = "const adminPassword = '3007'\n"
   if (!page.includes(adminAnchor)) throw new Error('Ponto de inserção da migração não encontrado em CartsPage.tsx.')
 
@@ -81,8 +87,9 @@ if (!page.includes(migrationMarker)) {
   page = page.replace(oldNormalize, newNormalize)
   fs.writeFileSync(cartsPagePath, page)
   console.log('Migração de localStorage do 948/920 adicionada.')
-} else {
-  console.log('Migração de localStorage do 948/920 já existe.')
+  } else {
+    console.log('Migração de localStorage do 948/920 já existe.')
+  }
 }
 
 // 3) Informa no log quais dos novos códigos já existem na base inicial e suas localizações.
