@@ -11,6 +11,8 @@ import { exportBackup, exportCSV, importBackup } from './features/backup/backup'
 import { cleanScannedCode, formatBombona, normalizeSearch } from './utils/normalize'
 import { MaterialVisual } from './features/materials/MaterialVisual'
 import { getMaterialDescription } from './features/materials/materialCatalog'
+import { cartsStorageKey, findCartMemberships, loadCurrentCarts } from './features/carts/cartLookup'
+import { buildItemStatusRows, type ItemsStatusFilter } from './features/items/itemStatus'
 import './styles.css'
 import './brand.css'
 
@@ -21,6 +23,7 @@ const logoSrc=`${import.meta.env.BASE_URL}maccomevap-logo.png`
 export default function App() {
   const [ready,setReady]=useState(false); const [query,setQuery]=useState(''); const [result,setResult]=useState<SearchResult>({kind:'contains',items:[]}); const [all,setAll]=useState<InventoryLocation[]>([])
   const [scanner,setScanner]=useState(false); const [editor,setEditor]=useState<Partial<InventoryLocation>|null>(null); const [showItems,setShowItems]=useState(false); const [showData,setShowData]=useState(false); const [showCarts,setShowCarts]=useState(false); const [mobileMenu,setMobileMenu]=useState(false)
+  const [itemsStatus,setItemsStatus]=useState<ItemsStatusFilter>('all')
   const [recent,setRecent]=useState<string[]>(()=>loadList(recentKey)); const [favorites,setFavorites]=useState<string[]>(()=>loadList(favoriteKey)); const [toast,setToast]=useState(''); const [dark,setDark]=useState(()=>localStorage.getItem('lm-theme')==='dark')
   const refresh=useCallback(async()=>setAll(await getAllLocations()),[])
   useEffect(()=>{ensureSeeded().then(async()=>{await refresh();setReady(true)})},[refresh])
@@ -30,7 +33,37 @@ export default function App() {
   const copy=async(s:string)=>{await navigator.clipboard.writeText(s);notify('Copiado')}
   const toggleFav=(s:string)=>setFavorites(prev=>{const n=prev.includes(s)?prev.filter(x=>x!==s):[s,...prev].slice(0,12);localStorage.setItem(favoriteKey,JSON.stringify(n));return n})
   const deleteItem=async(item:InventoryLocation)=>{if(confirm(`Excluir esta localização?\n\n${item.codigo}\n${item.bombona}\n${item.endereco}`)){await deleteLocation(item.id);await refresh();setResult(await searchInventory(query));notify('Localização excluída')}}
-  const filtered=useMemo(()=>{const q=normalizeSearch(query); const bq=normalizeSearch(formatBombona(query)); return all.filter(x=>!q||normalizeSearch(x.codigo).includes(q)||normalizeSearch(formatBombona(x.bombona)).includes(bq)||normalizeSearch(x.endereco).includes(q)).sort((a,b)=>a.codigo.localeCompare(b.codigo))},[all,query])
+
+  const cartsStorageSnapshot=!showCarts?localStorage.getItem(cartsStorageKey):null
+  const currentCarts=useMemo(()=>loadCurrentCarts(cartsStorageSnapshot),[cartsStorageSnapshot])
+  const cartMemberships=useMemo(()=>findCartMemberships(query,currentCarts),[query,currentCarts])
+  const exactCartMemberships=cartMemberships.filter(item=>item.match==='exact')
+  const equivalentCartMemberships=cartMemberships.filter(item=>item.match==='equivalent')
+  const normalizedQuery=normalizeSearch(query)
+  const physicalReferenceQuery=/^R\d{1,3}(?:A\d|B\d)/.test(normalizedQuery)
+  const showCartMembershipInfo=Boolean(query.trim())&&!physicalReferenceQuery&&normalizedQuery.length>=5&&(cartMemberships.length>0||result.kind==='exact'||result.kind==='equivalent'||result.items.length===0)
+
+  const itemRows=useMemo(()=>buildItemStatusRows(all,currentCarts),[all,currentCarts])
+  const itemCounts=useMemo(()=>({
+    all:itemRows.length,
+    located:itemRows.filter(row=>row.status==='located').length,
+    unlocated:itemRows.filter(row=>row.status==='unlocated').length,
+    empty:itemRows.filter(row=>row.status==='empty').length,
+  }),[itemRows])
+  const filteredItemRows=useMemo(()=>{
+    const q=normalizeSearch(query)
+    const bq=normalizeSearch(formatBombona(query))
+    return itemRows.filter(row=>{
+      if(itemsStatus!=='all'&&row.status!==itemsStatus)return false
+      if(!q)return true
+      return normalizeSearch(row.codigo).includes(q)
+        || normalizeSearch(formatBombona(row.bombona)).includes(bq)
+        || normalizeSearch(row.endereco).includes(q)
+        || normalizeSearch(row.descritivo??'').includes(q)
+        || normalizeSearch(row.carts.join(' ')).includes(q)
+    })
+  },[itemRows,itemsStatus,query])
+
   const openHome=()=>{setShowCarts(false);setShowItems(false);setShowData(false);setMobileMenu(false)}
   const detect=(value:string)=>{const cleaned=cleanScannedCode(value);setScanner(false);if(!cleaned){notify('Leitura inválida');return}setQuery(cleaned);openHome();notify('Código lido')}
   const openHomeSearch=(code:string)=>{openHome();setQuery(code);notify('Código enviado para o Localizador')}
@@ -41,10 +74,26 @@ export default function App() {
     </nav><button className="menu-button" onClick={()=>setMobileMenu(!mobileMenu)}>{mobileMenu?<X/>:<Menu/>}</button></header>
     <main>
       {!showItems&&!showData&&!showCarts && <><section className="hero"><div className="eyebrow">LOCALIZAÇÃO RÁPIDA</div><h1>Onde está o material?</h1><p>Pesquise por código, bombona ou endereço físico.</p><div className="search-wrap"><Search size={21}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar código, bombona ou endereço..."/><button className="scan-short" onClick={()=>setScanner(true)}><Camera size={19}/><span>Escanear</span></button></div></section>
+      {showCartMembershipInfo&&<section className={`cart-membership-card ${cartMemberships.length?'found':'not-found'}`}>
+        <div className="cart-membership-icon"><ShoppingCart size={22}/></div>
+        <div className="cart-membership-content"><small>CARRINHOS DE LUMINÁRIA</small>
+          {exactCartMemberships.length>0?<><b>Este código pertence a {exactCartMemberships.length} {exactCartMemberships.length===1?'carrinho':'carrinhos'}.</b><span>Veja em quais luminárias este material é utilizado.</span></>:equivalentCartMemberships.length>0?<><b>Sem correspondência exata nos carrinhos.</b><span>Existe compatibilidade AI4/AI6 em {equivalentCartMemberships.length} {equivalentCartMemberships.length===1?'luminária':'luminárias'}.</span></>:<><b>Este código não pertence a nenhum carrinho cadastrado.</b><span>Nenhuma luminária usa este código na composição atual.</span></>}
+          {cartMemberships.length>0&&<div className="cart-membership-chips">{cartMemberships.map(item=><span key={item.cartId} className={item.match==='equivalent'?'equivalent':''}><ShoppingCart size={13}/>{item.cartName}{item.match==='equivalent'&&<em>AI4/AI6</em>}</span>)}</div>}
+        </div>
+      </section>}
       {query.trim() && result.items.length>0 && <ResultCards items={result.items} equivalent={result.kind==='equivalent'} onEdit={setEditor} onDelete={deleteItem} onCopy={copy}/>} 
       {query.trim() && result.items.length===0 && <div className="empty-search"><b>Código não encontrado</b><span>{query}</span>{result.suggestion&&<button onClick={()=>setQuery(result.suggestion!)}>Você quis dizer <b>{result.suggestion}</b>?</button>}<button className="primary-button" onClick={()=>setEditor({codigo:query})}>Cadastrar este código</button></div>}
       {!query.trim() && <section className="quick"><div><div className="section-head"><b>Recentes</b><button onClick={()=>{setRecent([]);localStorage.removeItem(recentKey)}}>Limpar</button></div><div className="chips">{recent.length?recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>):<span>Nenhuma pesquisa recente.</span>}</div></div><div><div className="section-head"><b>Favoritos</b></div><div className="chips">{favorites.length?favorites.map(x=><button key={x} onClick={()=>setQuery(x)}><Star size={14}/>{x}</button>):<span>Marque consultas frequentes nos resultados.</span>}</div></div></section>}</>}
-      {showItems && <section className="page"><div className="page-title"><div><h2>Itens</h2><p>{all.length} localizações cadastradas</p></div><div className="page-actions-wrap"><button className="secondary-button" onClick={openHome}><Home size={16}/>Voltar ao início</button><button className="primary-button" onClick={()=>setEditor({})}><PackagePlus size={17}/>Novo item</button></div></div><div className="table-search"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Filtrar código, bombona ou endereço"/></div><div className="table-wrap"><table><thead><tr><th>Código</th><th>Bombona</th><th>Endereço</th><th>Descritivo</th><th>Quantidade</th><th></th></tr></thead><tbody>{filtered.map(x=>{const description=getMaterialDescription(x.codigo,x.descritivo);return <tr key={x.id}><td><div className="item-code-cell"><MaterialVisual code={x.codigo} description={description} compact/><b>{x.codigo}</b></div></td><td>{x.bombona}</td><td>{x.endereco}</td><td>{description||'—'}</td><td>{x.quantidade??'—'}</td><td><button className="table-action" onClick={()=>setEditor(x)}>Editar</button></td></tr>})}</tbody></table></div></section>}
+      {showItems && <section className="page"><div className="page-title"><div><h2>Itens</h2><p>{all.length} localizações cadastradas · {itemCounts.unlocated} códigos sem endereço</p></div><div className="page-actions-wrap"><button className="secondary-button" onClick={openHome}><Home size={16}/>Voltar ao início</button><button className="primary-button" onClick={()=>setEditor({})}><PackagePlus size={17}/>Novo item</button></div></div>
+        <div className="items-status-filter" role="group" aria-label="Filtrar itens por situação">
+          <button className={itemsStatus==='all'?'active':''} onClick={()=>setItemsStatus('all')}>Todos <span>{itemCounts.all}</span></button>
+          <button className={itemsStatus==='located'?'active':''} onClick={()=>setItemsStatus('located')}>Código + endereço <span>{itemCounts.located}</span></button>
+          <button className={itemsStatus==='unlocated'?'active':''} onClick={()=>setItemsStatus('unlocated')}>Código sem endereço <span>{itemCounts.unlocated}</span></button>
+          <button className={itemsStatus==='empty'?'active':''} onClick={()=>setItemsStatus('empty')}>Endereço vazio <span>{itemCounts.empty}</span></button>
+        </div>
+        <div className="table-search"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Filtrar código, bombona, endereço, descritivo ou luminária"/></div>
+        <div className="table-wrap"><table className="items-table"><thead><tr><th>Código</th><th>Bombona</th><th>Endereço</th><th>Status</th><th>Descritivo</th><th>Quantidade</th><th></th></tr></thead><tbody>{filteredItemRows.map(row=>{const description=getMaterialDescription(row.codigo,row.descritivo);return <tr key={row.key}><td><div className="item-code-cell"><MaterialVisual code={row.codigo} description={description} compact/><b>{row.codigo}</b></div></td><td>{row.bombona||'—'}</td><td>{row.endereco||'—'}</td><td><span className={`item-status-badge ${row.status}`}>{row.status==='located'?'Código + endereço':row.status==='unlocated'?'Código sem endereço':'Endereço vazio'}</span></td><td><div className="item-description-cell"><span>{description||'—'}</span>{row.carts.length>0&&<small>Carrinhos: {row.carts.join(' · ')}</small>}</div></td><td>{row.quantidade??'—'}</td><td>{row.inventoryItem?<button className="table-action" onClick={()=>setEditor(row.inventoryItem!)}>{row.status==='empty'?'Preencher':'Editar'}</button>:<button className="table-action" onClick={()=>setEditor({codigo:row.codigo,descritivo:description})}>Cadastrar endereço</button>}</td></tr>})}{filteredItemRows.length===0&&<tr className="table-empty-row"><td colSpan={7}>Nenhum item encontrado neste filtro.</td></tr>}</tbody></table></div>
+      </section>}
       {showCarts && <CartsPage inventory={all} onOpenInventoryCode={openHomeSearch} onBackHome={openHome} onRefreshInventory={refresh}/>} 
       {showData && <section className="page"><div className="page-title"><div><h2>Dados e Backup</h2><p>Proteja e transporte a base local.</p></div><button className="secondary-button" onClick={openHome}><Home size={16}/>Voltar ao início</button></div><div className="data-grid"><button onClick={exportBackup}><Download/><b>Exportar backup</b><span>Salva toda a base em JSON.</span></button><label><Upload/><b>Importar backup</b><span>Substitui a base após confirmação.</span><input type="file" accept="application/json" onChange={async e=>{const f=e.target.files?.[0];if(!f)return;if(!confirm('Substituir a base atual pelo backup selecionado?'))return;try{const n=await importBackup(f);await refresh();notify(`${n} registros importados`)}catch(err){alert(err instanceof Error?err.message:'Backup inválido')}}}/></label><button onClick={exportCSV}><FileDown/><b>Exportar CSV</b><span>Arquivo compatível com Excel.</span></button></div></section>}
     </main>
