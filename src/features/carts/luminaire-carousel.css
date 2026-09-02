@@ -1,0 +1,179 @@
+.luminaire-carousel{
+  position:relative;
+  width:100%;
+  margin:0 0 16px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:#111318;
+  box-shadow:0 14px 38px rgb(15 23 42/.08);
+  isolation:isolate;
+}
+
+.luminaire-carousel__track{
+  display:flex;
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+  overscroll-behavior-x:contain;
+  scrollbar-width:none;
+  cursor:grab;
+  user-select:none;
+  -webkit-overflow-scrolling:touch;
+}
+
+.luminaire-carousel__track::-webkit-scrollbar{display:none}
+.luminaire-carousel__track.is-dragging{cursor:grabbing;scroll-snap-type:none;scroll-behavior:auto}
+
+.luminaire-carousel__slide{
+  position:relative;
+  flex:0 0 100%;
+  width:100%;
+  height:clamp(330px,58vw,640px);
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:#111318;
+}
+
+.luminaire-carousel__backdrop{
+  position:absolute;
+  inset:-7%;
+  width:114%;
+  height:114%;
+  object-fit:cover;
+  filter:blur(30px) saturate(.88) brightness(.74);
+  opacity:.62;
+  transform:scale(1.06);
+  pointer-events:none;
+}
+
+.luminaire-carousel__shade{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:linear-gradient(180deg,rgb(10 13 18/.06),rgb(10 13 18/.16));
+  pointer-events:none;
+}
+
+.luminaire-carousel__image{
+  position:relative;
+  z-index:2;
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+  filter:drop-shadow(0 16px 28px rgb(0 0 0/.16));
+  pointer-events:none;
+}
+
+.luminaire-carousel__expand,
+.luminaire-carousel__arrow,
+.luminaire-carousel__progress,
+.luminaire-carousel__counter{position:absolute;z-index:4}
+
+.luminaire-carousel__expand{
+  right:14px;
+  bottom:14px;
+  min-height:38px;
+  padding:0 12px;
+  border:1px solid rgb(255 255 255/.18);
+  border-radius:10px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  background:rgb(17 24 39/.82);
+  backdrop-filter:blur(12px);
+  color:#fff;
+  font-size:11px;
+  font-weight:780;
+  box-shadow:0 8px 22px rgb(0 0 0/.18);
+  transition:transform .18s ease,background .18s ease;
+}
+
+.luminaire-carousel__expand:hover{transform:translateY(-1px);background:rgb(17 24 39/.94)}
+.luminaire-carousel__expand:focus-visible,.luminaire-carousel__arrow:focus-visible,.luminaire-carousel__progress button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+
+.luminaire-carousel__arrow{
+  top:50%;
+  width:42px;
+  height:42px;
+  margin-top:-21px;
+  border:1px solid rgb(255 255 255/.16);
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:rgb(17 24 39/.68);
+  backdrop-filter:blur(12px);
+  color:#fff;
+  box-shadow:0 8px 24px rgb(0 0 0/.16);
+  transition:opacity .18s ease,transform .18s ease,background .18s ease;
+}
+
+.luminaire-carousel__arrow--left{left:14px}
+.luminaire-carousel__arrow--right{right:14px}
+.luminaire-carousel__arrow:hover:not(:disabled){transform:scale(1.05);background:rgb(17 24 39/.9)}
+.luminaire-carousel__arrow:disabled{opacity:.24;cursor:default}
+
+.luminaire-carousel__progress{
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 9px;
+  border:1px solid rgb(255 255 255/.13);
+  border-radius:999px;
+  background:rgb(17 24 39/.54);
+  backdrop-filter:blur(12px);
+}
+
+.luminaire-carousel__progress button{
+  width:7px;
+  height:7px;
+  padding:0;
+  border:0;
+  border-radius:999px;
+  background:rgb(255 255 255/.42);
+  transition:width .2s ease,background .2s ease;
+}
+
+.luminaire-carousel__progress button.active{width:22px;background:#fff}
+
+.luminaire-carousel__counter{
+  top:14px;
+  right:14px;
+  padding:6px 9px;
+  border:1px solid rgb(255 255 255/.13);
+  border-radius:999px;
+  background:rgb(17 24 39/.56);
+  backdrop-filter:blur(12px);
+  color:#fff;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.04em;
+}
+
+/* O modal preserva a foto inteira sem criar uma moldura branca nas laterais. */
+.luminaire-photo-dialog>img{background:#111318!important}
+
+@media(max-width:760px){
+  .luminaire-carousel{border-radius:14px;margin-bottom:14px}
+  .luminaire-carousel__slide{height:clamp(300px,82vw,470px)}
+  .luminaire-carousel__arrow{display:none}
+  .luminaire-carousel__expand{right:10px;bottom:10px;min-height:36px;padding:0 10px}
+  .luminaire-carousel__expand span{display:none}
+  .luminaire-carousel__progress{bottom:14px}
+  .luminaire-carousel__counter{top:10px;right:10px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .luminaire-carousel__track{scroll-behavior:auto}
+  .luminaire-carousel__expand,.luminaire-carousel__arrow,.luminaire-carousel__progress button{transition:none}
+}
