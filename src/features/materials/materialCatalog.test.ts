@@ -15,7 +15,7 @@ describe('material visual catalog', () => {
       }
     }
 
-    expect(expected.size).toBe(95)
+    expect(expected.size).toBe(93)
     expect(describedMaterials.size).toBe(expected.size)
     for (const [code, description] of expected) {
       expect(getMaterialDescription(code)).toBe(description)
