@@ -48,7 +48,7 @@ for (const cart of carts) {
 }
 
 export function getMaterialDescription(code: string, fallback?: string | null) {
-  return fallback?.trim() || describedMaterials.get(normalizeSearch(code)) || null
+  return describedMaterials.get(normalizeSearch(code)) || fallback?.trim() || null
 }
 
 function normalizeDescription(value: string) {
