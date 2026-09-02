@@ -18,11 +18,27 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
   const trackRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<MouseDragState | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [imageRatios, setImageRatios] = useState<Record<number, number>>({})
 
   useEffect(() => {
     setActiveIndex(0)
+    setImageRatios({})
     trackRef.current?.scrollTo({ left: 0, behavior: 'auto' })
   }, [images])
+
+  const activeRatio = imageRatios[activeIndex]
+  const trackAspectRatio = activeRatio && Number.isFinite(activeRatio) && activeRatio > 0
+    ? String(activeRatio)
+    : '16 / 10'
+
+  const registerImageRatio = (index: number, width: number, height: number) => {
+    if (!width || !height) return
+    const ratio = width / height
+    setImageRatios(current => {
+      if (Math.abs((current[index] ?? 0) - ratio) < 0.0001) return current
+      return { ...current, [index]: ratio }
+    })
+  }
 
   const goTo = (index: number) => {
     const track = trackRef.current
@@ -75,6 +91,7 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
       <div
         ref={trackRef}
         className="luminaire-carousel__track"
+        style={{ aspectRatio: trackAspectRatio }}
         onScroll={syncActiveSlide}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -85,7 +102,14 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
           const label = `Vista ${index + 1} da ${luminaireName}`
           return (
             <div className="luminaire-carousel__slide" key={src} aria-label={`${index + 1} de ${images.length}`}>
-              <img className="luminaire-carousel__image" src={src} alt={label} decoding="async" draggable={false}/>
+              <img
+                className="luminaire-carousel__image"
+                src={src}
+                alt={label}
+                decoding="async"
+                draggable={false}
+                onLoad={event => registerImageRatio(index, event.currentTarget.naturalWidth, event.currentTarget.naturalHeight)}
+              />
               <button className="luminaire-carousel__expand" type="button" onClick={()=>onOpen(src,label)} aria-label={`Ampliar ${label.toLowerCase()}`}>
                 <Maximize2 size={15}/><span>Ampliar foto</span>
               </button>
