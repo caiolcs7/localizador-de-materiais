@@ -31,7 +31,7 @@
   position:relative;
   flex:0 0 100%;
   width:100%;
-  height:clamp(330px,58vw,640px);
+  height:clamp(320px,50vw,570px);
   scroll-snap-align:start;
   scroll-snap-stop:always;
   display:grid;
@@ -40,15 +40,16 @@
   background:#111318;
 }
 
+/* O fundo preenche o quadro sem interferir no enquadramento da foto principal. */
 .luminaire-carousel__backdrop{
   position:absolute;
   inset:-7%;
   width:114%;
   height:114%;
   object-fit:cover;
-  filter:blur(30px) saturate(.88) brightness(.74);
-  opacity:.62;
-  transform:scale(1.06);
+  filter:blur(32px) saturate(.82) brightness(.66);
+  opacity:.48;
+  transform:scale(1.05);
   pointer-events:none;
 }
 
@@ -56,19 +57,26 @@
   position:absolute;
   inset:0;
   z-index:1;
-  background:linear-gradient(180deg,rgb(10 13 18/.06),rgb(10 13 18/.16));
+  background:linear-gradient(180deg,rgb(10 13 18/.04),rgb(10 13 18/.12));
   pointer-events:none;
 }
 
+/*
+ * Área segura de enquadramento: a foto nunca ocupa 100% do quadro.
+ * Isso evita a sensação de zoom e mantém a luminária inteira visível,
+ * independentemente da proporção do arquivo original.
+ */
 .luminaire-carousel__image{
   position:relative;
   z-index:2;
   display:block;
-  width:100%;
-  height:100%;
+  width:auto;
+  height:auto;
+  max-width:90%;
+  max-height:88%;
   object-fit:contain;
   object-position:center;
-  filter:drop-shadow(0 16px 28px rgb(0 0 0/.16));
+  filter:drop-shadow(0 14px 26px rgb(0 0 0/.14));
   pointer-events:none;
 }
 
@@ -160,17 +168,29 @@
   letter-spacing:.04em;
 }
 
-/* O modal preserva a foto inteira sem criar uma moldura branca nas laterais. */
-.luminaire-photo-dialog>img{background:#111318!important}
+/* A ampliação também mantém a foto inteira, sem corte. */
+.luminaire-photo-dialog>img{
+  width:auto!important;
+  height:auto!important;
+  max-width:94%!important;
+  max-height:calc(100% - 76px)!important;
+  margin:auto;
+  flex:0 1 auto!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  background:#111318!important;
+}
 
 @media(max-width:760px){
   .luminaire-carousel{border-radius:14px;margin-bottom:14px}
-  .luminaire-carousel__slide{height:clamp(300px,82vw,470px)}
+  .luminaire-carousel__slide{height:clamp(280px,78vw,430px)}
+  .luminaire-carousel__image{max-width:88%;max-height:84%}
   .luminaire-carousel__arrow{display:none}
   .luminaire-carousel__expand{right:10px;bottom:10px;min-height:36px;padding:0 10px}
   .luminaire-carousel__expand span{display:none}
   .luminaire-carousel__progress{bottom:14px}
   .luminaire-carousel__counter{top:10px;right:10px}
+  .luminaire-photo-dialog>img{max-width:92%!important;max-height:calc(100% - 72px)!important}
 }
 
 @media(prefers-reduced-motion:reduce){
