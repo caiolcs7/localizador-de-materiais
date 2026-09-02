@@ -17,6 +17,10 @@ const expectedCounts = new Map([
   ['Luminária CAS', 9]
 ])
 
+const allowedDuplicateCounts = new Map([
+  ['Luminária 948-920::ITPFPHM408PABC', 2]
+])
+
 assert(Array.isArray(carts), 'cartsData.json precisa ser uma lista')
 assert(carts.length === 11, `Esperadas 11 luminárias; encontradas ${carts.length}`)
 assert(new Set(carts.map(cart => cart.id)).size === carts.length, 'Há IDs de luminária duplicados')
@@ -28,20 +32,31 @@ for (const cart of carts) {
   assert(cart.items.length === expectedCounts.get(cart.sourceSheet), `${cart.sourceSheet}: esperado ${expectedCounts.get(cart.sourceSheet)} itens; encontrado ${cart.items.length}`)
   assert(cart.nome && cart.sourceSheet && cart.id, `${cart.sourceSheet}: metadados obrigatórios ausentes`)
 
-  const codesInCart = new Set()
+  const codeCounts = new Map()
   for (const item of cart.items) {
     assert(typeof item.codigo === 'string' && item.codigo.trim(), `${cart.sourceSheet}: código vazio`)
     assert(typeof item.descritivo === 'string' && item.descritivo.trim(), `${cart.sourceSheet}: descritivo vazio em ${item.codigo}`)
-    assert(!codesInCart.has(item.codigo), `${cart.sourceSheet}: código duplicado dentro da mesma luminária: ${item.codigo}`)
+
+    const count = (codeCounts.get(item.codigo) ?? 0) + 1
+    codeCounts.set(item.codigo, count)
+    const duplicateKey = `${cart.sourceSheet}::${item.codigo}`
+    const allowedCount = allowedDuplicateCounts.get(duplicateKey) ?? 1
+    assert(count <= allowedCount, `${cart.sourceSheet}: código duplicado dentro da mesma luminária: ${item.codigo}`)
+
     assert(item.quantidade == null, `${cart.sourceSheet}: quantidade foi preenchida sem existir na planilha: ${item.codigo}`)
-    codesInCart.add(item.codigo)
     allCodes.add(item.codigo)
     total += 1
+  }
+
+  for (const [key, expected] of allowedDuplicateCounts) {
+    const [sheet, code] = key.split('::')
+    if (sheet !== cart.sourceSheet) continue
+    assert(codeCounts.get(code) === expected, `${sheet}: esperado ${expected} ocorrências intencionais de ${code}; encontrado ${codeCounts.get(code) ?? 0}`)
   }
 }
 
 assert(total === 158, `Esperadas 158 relações luminária/material; encontradas ${total}`)
-assert(allCodes.size === 95, `Esperados 95 códigos distintos; encontrados ${allCodes.size}`)
+assert(allCodes.size === 93, `Esperados 93 códigos distintos; encontrados ${allCodes.size}`)
 
 const has = (sheet, code) => carts.some(cart => cart.sourceSheet === sheet && cart.items.some(item => item.codigo === code))
 assert(has('Luminária AVF', 'ITPFPHM410PAAI6'), 'AVF sem ITPFPHM410PAAI6')
@@ -51,4 +66,13 @@ assert(has('Luminária 984', 'ITL98400023'), 'Luminária 984 sem ITL98400023')
 assert(has('Luminária MAS', 'J9900000900'), 'Luminária MAS sem J9900000900')
 assert(has('Luminária CAS', 'ITLCASCJ00096'), 'Luminária CAS sem ITLCASCJ00096')
 
-console.log(`OK: 11 luminárias; 158 relações; 95 códigos distintos; contagens, campos e amostras críticas validados.`)
+const cart948 = carts.find(cart => cart.sourceSheet === 'Luminária 948-920')
+assert(cart948, 'Luminária 948-920 ausente')
+for (const oldCode of ['ITARLSM004AC', 'ITARPRM04AC', 'ITPFPHM510PAAC', 'ITPFPHM408PAAC']) {
+  assert(!cart948.items.some(item => item.codigo === oldCode), `Luminária 948-920 ainda contém código antigo: ${oldCode}`)
+}
+for (const newCode of ['ITARLSM004BC', 'ITARPRM04BC', 'ITPFPHM510PABC', 'ITPFPHM408PABC']) {
+  assert(cart948.items.some(item => item.codigo === newCode), `Luminária 948-920 sem código novo: ${newCode}`)
+}
+
+console.log(`OK: 11 luminárias; 158 relações; 93 códigos distintos; duplicidade intencional do 948/920 e substituições validadas.`)
