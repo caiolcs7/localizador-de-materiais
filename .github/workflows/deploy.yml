@@ -35,6 +35,9 @@ jobs:
       - name: Aplicar botão de edição no final da página
         run: node scripts/apply-carts-unlock-footer.mjs
 
+      - name: Atualizar materiais da luminária 948/920
+        run: node scripts/apply-948-920-material-update.mjs
+
       - name: Validar base inicial
         run: npm run verify:data
 
