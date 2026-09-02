@@ -1,7 +1,7 @@
 .luminaire-carousel{
   position:relative;
   width:100%;
-  margin:0 0 16px;
+  margin:0 auto 16px;
   overflow:hidden;
   border:1px solid var(--line);
   border-radius:18px;
@@ -29,9 +29,10 @@
 .luminaire-carousel__track.is-dragging{cursor:grabbing;scroll-snap-type:none;scroll-behavior:auto}
 
 /*
- * O slide usa a proporção real da foto ativa, definida pelo componente.
- * Dessa forma não precisamos escolher entre cortar a imagem ou criar faixas
- * laterais: o próprio quadro assume a proporção correta do arquivo.
+ * O quadro acompanha a proporção real da foto e o componente limita sua
+ * largura a partir de uma altura-alvo de 500px. Assim imagens quadradas ou
+ * verticais não crescem demais, enquanto imagens panorâmicas mantêm o tamanho
+ * visual da referência sem recorte e sem faixas artificiais.
  */
 .luminaire-carousel__slide{
   position:relative;
