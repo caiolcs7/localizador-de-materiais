@@ -85,8 +85,6 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
           const label = `Vista ${index + 1} da ${luminaireName}`
           return (
             <div className="luminaire-carousel__slide" key={src} aria-label={`${index + 1} de ${images.length}`}>
-              <img className="luminaire-carousel__backdrop" src={src} alt="" aria-hidden="true" decoding="async" draggable={false}/>
-              <span className="luminaire-carousel__shade" aria-hidden="true"/>
               <img className="luminaire-carousel__image" src={src} alt={label} decoding="async" draggable={false}/>
               <button className="luminaire-carousel__expand" type="button" onClick={()=>onOpen(src,label)} aria-label={`Ampliar ${label.toLowerCase()}`}>
                 <Maximize2 size={15}/><span>Ampliar foto</span>
