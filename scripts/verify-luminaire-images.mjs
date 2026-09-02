@@ -14,6 +14,7 @@ const expected = {
   'luminaria-984': 'luminarias/lum-984.webp',
   'luminaria-avf': 'luminarias/lum-avf.webp',
   'luminaria-cas': 'luminarias/lum-cas.webp',
+  'luminaria-erj': 'luminarias/lum-erj-rear.webp',
   'luminaria-l75': 'luminarias/lum-l75.webp',
   'luminaria-mas': 'luminarias/lum-mas.webp'
 }
@@ -21,7 +22,7 @@ const expected = {
 const actualEntries = Object.entries(imageMap).sort(([a], [b]) => a.localeCompare(b))
 const expectedEntries = Object.entries(expected).sort(([a], [b]) => a.localeCompare(b))
 if (JSON.stringify(actualEntries) !== JSON.stringify(expectedEntries)) {
-  throw new Error('O mapa de imagens não corresponde às 10 luminárias enviadas.')
+  throw new Error('O mapa de imagens não corresponde às 11 luminárias cadastradas.')
 }
 
 const cartIds = new Set(carts.map(cart => cart.id))
@@ -35,5 +36,18 @@ for (const [cartId, relativePath] of actualEntries) {
   if (statSync(filePath).size < 10_000) throw new Error(`Imagem pequena ou incompleta: ${relativePath}`)
 }
 
-if (imageMap['luminaria-erj']) throw new Error('A ERJ não deve receber imagem sem arquivo correspondente.')
-console.log('OK: 10 fotos WEBP válidas e associadas aos carrinhos corretos; ERJ preservada sem imagem.')
+const erjGallery = [
+  'luminarias/lum-erj-front.webp',
+  'luminarias/lum-erj-side.webp',
+  'luminarias/lum-erj-rear.webp',
+]
+for (const relativePath of erjGallery) {
+  const filePath = resolve(root, 'public', relativePath)
+  const header = readFileSync(filePath).subarray(0, 12)
+  if (header.toString('ascii', 0, 4) !== 'RIFF' || header.toString('ascii', 8, 12) !== 'WEBP') {
+    throw new Error(`Foto da galeria ERJ inválida: ${relativePath}`)
+  }
+  if (statSync(filePath).size < 10_000) throw new Error(`Foto da galeria ERJ pequena ou incompleta: ${relativePath}`)
+}
+
+console.log('OK: 11 luminárias associadas; 13 fotos WEBP válidas, incluindo 3 vistas da ERJ.')

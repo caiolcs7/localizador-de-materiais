@@ -31,6 +31,9 @@ export default defineConfig({
         'luminarias/lum-l75.webp',
         'luminarias/lum-948.webp',
         'luminarias/lum-cas.webp',
+        'luminarias/lum-erj-front.webp',
+        'luminarias/lum-erj-side.webp',
+        'luminarias/lum-erj-rear.webp',
       ],
       manifest: {
         name: 'Localizador de Materiais',

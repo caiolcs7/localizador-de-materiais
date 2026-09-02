@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Check, ChevronDown, Filter, Home, Lock, LockOpen, MapPin, Maximize2, PackagePlus, Pencil, Plus, Search, ShieldCheck, ShoppingCart, Trash2, X, XCircle } from 'lucide-react'
 import cartsSource from '../../data/cartsData.json'
 import type { InventoryLocation } from '../../types/inventory'
@@ -8,6 +8,14 @@ import { categoryForItem, findInventoryLocations } from './cartUtils'
 import { getLuminaireImage } from './luminaireImages'
 import './carts.css'
 import './luminaire-images.css'
+
+const ErjModel3D = lazy(() => import('./ErjModel3D'))
+
+const erjPhotoReferences = [
+  { path: 'luminarias/lum-erj-front.webp', label: 'Vista frontal' },
+  { path: 'luminarias/lum-erj-side.webp', label: 'Vista lateral' },
+  { path: 'luminarias/lum-erj-rear.webp', label: 'Vista traseira' },
+]
 
 type Props = {
   inventory: InventoryLocation[]
@@ -108,7 +116,7 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
   const [itemEditor,setItemEditor]=useState<CartItem|'new'|null>(null)
   const [pickerOpen,setPickerOpen]=useState(false)
   const [pickerQuery,setPickerQuery]=useState('')
-  const [photoOpen,setPhotoOpen]=useState(false)
+  const [photoViewer,setPhotoViewer]=useState<{src:string;label:string}|null>(null)
 
   useEffect(()=>{localStorage.setItem(cartsStorageKey,JSON.stringify(carts));if(!carts.some(cart=>cart.id===selectedId))setSelectedId(carts[0]?.id??'')},[carts,selectedId])
 
@@ -125,13 +133,15 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
   },[onRefreshInventory])
 
   useEffect(()=>{
-    const onKey=(event:KeyboardEvent)=>{if(event.key==='Escape'){setPickerOpen(false);setPhotoOpen(false)}}
+    const onKey=(event:KeyboardEvent)=>{if(event.key==='Escape'){setPickerOpen(false);setPhotoViewer(null)}}
     window.addEventListener('keydown',onKey)
     return()=>window.removeEventListener('keydown',onKey)
   },[])
 
   const selected=useMemo(()=>carts.find(cart=>cart.id===selectedId)??carts[0],[carts,selectedId])
   const selectedImage=useMemo(()=>getLuminaireImage(selected),[selected])
+  const selectedIsErj=selected?.id==='luminaria-erj'
+  const erjPhotos=useMemo(()=>erjPhotoReferences.map(photo=>({...photo,src:`${import.meta.env.BASE_URL}${photo.path}`})),[])
   const enriched=useMemo(()=>(selected?.items??[]).map((item,index)=>{
     const locations=findInventoryLocations(item.codigo,inventory)
     const exact=locations.some(location=>[location.codigo,...(location.aliases??[])].some(code=>normalizeSearch(code)===normalizeSearch(item.codigo)))
@@ -143,7 +153,7 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
   const located=enriched.filter(row=>row.locations.length>0).length
   const pickerCarts=useMemo(()=>{const q=normalizeSearch(pickerQuery);return carts.filter(cart=>!q||normalizeSearch(`${cart.nome} ${cart.sourceSheet}`).includes(q))},[carts,pickerQuery])
 
-  const chooseCart=(id:string)=>{setSelectedId(id);setQuery('');setCategory('Todos');setLocationFilter('all');setPickerOpen(false);setPickerQuery('');setPhotoOpen(false);void onRefreshInventory()}
+  const chooseCart=(id:string)=>{setSelectedId(id);setQuery('');setCategory('Todos');setLocationFilter('all');setPickerOpen(false);setPickerQuery('');setPhotoViewer(null);void onRefreshInventory()}
   const unlock=()=>{sessionStorage.setItem(cartsAdminKey,'1');setAdminUnlocked(true);setShowPassword(false)}
   const lock=()=>{sessionStorage.removeItem(cartsAdminKey);setAdminUnlocked(false);setCartEditor(null);setItemEditor(null)}
   const saveCart=(name:string,sourceSheet:string)=>{
@@ -185,12 +195,21 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
         </>}
       </div>
 
-      {selected&&selectedImage&&<div className="cart-luminaire-reference">
-        <button className="cart-luminaire-photo" type="button" onClick={()=>setPhotoOpen(true)} aria-label={`Ampliar foto da ${selected.nome}`}>
+      {selected&&selectedIsErj&&<section className="erj-experience" aria-labelledby="erj-3d-title">
+        <div className="erj-experience-head"><div><small>Referência visual interativa</small><strong id="erj-3d-title">Luminária ERJ em 3D</strong><p>Gire, aproxime e examine a luminária antes de consultar os componentes do carrinho.</p></div><span className="erj-3d-badge">3D interativo</span></div>
+        <Suspense fallback={<div className="erj-model-loading" role="status">Preparando o modelo 3D da ERJ…</div>}><ErjModel3D/></Suspense>
+        <div className="erj-model-disclaimer"><b>Referência visual:</b> modelo reconstruído a partir das fotos fornecidas, sem escala nem finalidade de fabricação.</div>
+        <div className="erj-photo-gallery" aria-label="Fotos de referência da luminária ERJ">
+          {erjPhotos.map(photo=><button key={photo.path} type="button" onClick={()=>setPhotoViewer({src:photo.src,label:`${photo.label} da ${selected.nome}`})} aria-label={`Ampliar ${photo.label.toLowerCase()} da ${selected.nome}`}><img src={photo.src} alt={photo.label} decoding="async"/><span><Maximize2 size={14}/>{photo.label}</span></button>)}
+        </div>
+      </section>}
+
+      {selected&&selectedImage&&!selectedIsErj&&<div className="cart-luminaire-reference">
+        <button className="cart-luminaire-photo" type="button" onClick={()=>setPhotoViewer({src:selectedImage,label:`Foto da ${selected.nome}`})} aria-label={`Ampliar foto da ${selected.nome}`}>
           <img src={selectedImage} alt={`Foto da ${selected.nome}`} decoding="async"/>
           <span><Maximize2 size={15}/>Ampliar foto</span>
         </button>
-        <div className="cart-luminaire-photo-copy"><small>Referência visual</small><strong>{selected.nome}</strong><p>Foto correspondente a esta luminária. A imagem é exibida por inteiro, sem recortes.</p><button className="secondary-button" type="button" onClick={()=>setPhotoOpen(true)}><Maximize2 size={16}/>Visualizar em tamanho maior</button></div>
+        <div className="cart-luminaire-photo-copy"><small>Referência visual</small><strong>{selected.nome}</strong><p>Foto correspondente a esta luminária. A imagem é exibida por inteiro, sem recortes.</p><button className="secondary-button" type="button" onClick={()=>setPhotoViewer({src:selectedImage,label:`Foto da ${selected.nome}`})}><Maximize2 size={16}/>Visualizar em tamanho maior</button></div>
       </div>}
 
       <div className="carts-controls"><div className="sync-note"><MapPin size={16}/><div><b>Bombonas sincronizadas automaticamente</b><span>Ao editar a bombona/endereço de um código no Localizador, o Carrinho passa a mostrar a nova localização sem duplicar dados.</span></div></div><div className="table-search cart-search"><Search size={18}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Buscar código ou descritivo no carrinho"/></div></div>
@@ -204,7 +223,7 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
       <div className="cart-list">{filtered.map(row=>{const uniqueBombonas=Array.from(new Set(row.locations.map(location=>location.bombona)));return <article className="cart-item" key={row.item.id??`${selected?.id}-${row.index}-${row.item.codigo}`}><div className="cart-item-main"><div className="cart-item-heading"><strong>{row.item.codigo}</strong><span className="category-badge">{row.category}</span>{row.equivalentOnly&&<span className="equivalent-badge">AI4/AI6</span>}</div><p>{row.item.descritivo||'Sem descritivo informado'}</p><div className="cart-item-meta"><span>Qtd.: <b>{row.item.quantidade??'—'}</b>{row.item.unidade?` ${row.item.unidade}`:''}</span>{row.item.observacoes&&<span>{row.item.observacoes}</span>}</div></div><div className="cart-location">{row.locations.length?<><span className="location-status ok"><MapPin size={14}/>Localizado</span><div className="bombona-list">{uniqueBombonas.slice(0,3).map(bombona=><span key={bombona}>{bombona}</span>)}{uniqueBombonas.length>3&&<span>+{uniqueBombonas.length-3}</span>}</div><button onClick={()=>onOpenInventoryCode(row.item.codigo)}>Ver no Localizador</button></>:<><span className="location-status missing"><XCircle size={14}/>Sem localização cadastrada</span><small>Assim que este código receber bombona/endereço no Localizador, esta informação aparecerá aqui automaticamente.</small><button onClick={()=>onOpenInventoryCode(row.item.codigo)}>Pesquisar código</button></>}</div>{adminUnlocked&&<div className="cart-admin-actions"><button title="Editar item" onClick={()=>setItemEditor(row.item)}><Pencil size={16}/></button><button title="Excluir item" onClick={()=>deleteCartItem(row.item)}><Trash2 size={16}/></button></div>}</article>})}{!filtered.length&&<div className="cart-no-results"><b>Nenhum item neste filtro.</b><span>Altere a categoria, a pesquisa ou o status de localização.</span></div>}</div>
     </>}
 
-    {photoOpen&&selected&&selectedImage&&<div className="luminaire-photo-viewer" role="dialog" aria-modal="true" aria-label={`Foto ampliada da ${selected.nome}`} onClick={()=>setPhotoOpen(false)}><div className="luminaire-photo-dialog" onClick={event=>event.stopPropagation()}><div className="luminaire-photo-dialog-head"><b>{selected.nome}</b><button type="button" onClick={()=>setPhotoOpen(false)} aria-label="Fechar foto"><X size={22}/></button></div><img src={selectedImage} alt={`Foto ampliada da ${selected.nome}`}/></div></div>}
+    {photoViewer&&selected&&<div className="luminaire-photo-viewer" role="dialog" aria-modal="true" aria-label={photoViewer.label} onClick={()=>setPhotoViewer(null)}><div className="luminaire-photo-dialog" onClick={event=>event.stopPropagation()}><div className="luminaire-photo-dialog-head"><b>{selected.nome} · {photoViewer.label.replace(` da ${selected.nome}`,'')}</b><button type="button" onClick={()=>setPhotoViewer(null)} aria-label="Fechar foto"><X size={22}/></button></div><img src={photoViewer.src} alt={photoViewer.label}/></div></div>}
     {showPassword&&<PasswordModal onClose={()=>setShowPassword(false)} onUnlock={unlock}/>} 
     {cartEditor&&<CartModal initial={cartEditor==='new'?undefined:cartEditor} onClose={()=>setCartEditor(null)} onSave={saveCart}/>} 
     {itemEditor&&selected&&<CartItemModal initial={itemEditor==='new'?undefined:itemEditor} cartName={selected.nome} onClose={()=>setItemEditor(null)} onSave={saveItem}/>} 
