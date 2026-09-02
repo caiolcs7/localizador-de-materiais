@@ -5,7 +5,7 @@
   overflow:hidden;
   border:1px solid var(--line);
   border-radius:18px;
-  background:#f8f8f8;
+  background:#fff;
   box-shadow:0 12px 32px rgb(15 23 42/.06);
   isolation:isolate;
 }
@@ -22,42 +22,41 @@
   cursor:grab;
   user-select:none;
   -webkit-overflow-scrolling:touch;
-  background:#f8f8f8;
+  background:#fff;
 }
 
 .luminaire-carousel__track::-webkit-scrollbar{display:none}
 .luminaire-carousel__track.is-dragging{cursor:grabbing;scroll-snap-type:none;scroll-behavior:auto}
 
+/*
+ * O slide usa a proporção real da foto ativa, definida pelo componente.
+ * Dessa forma não precisamos escolher entre cortar a imagem ou criar faixas
+ * laterais: o próprio quadro assume a proporção correta do arquivo.
+ */
 .luminaire-carousel__slide{
   position:relative;
   flex:0 0 100%;
   width:100%;
-  height:clamp(360px,52vw,620px);
+  height:100%;
+  min-height:0;
   scroll-snap-align:start;
   scroll-snap-stop:always;
   display:flex;
   align-items:center;
   justify-content:center;
   overflow:hidden;
-  background:#f8f8f8;
+  background:#fff;
 }
 
-/*
- * A imagem recebe uma caixa com dimensões definidas pelo próprio slide.
- * Assim, object-fit: contain consegue garantir matematicamente que 100%
- * do arquivo fique dentro do quadro, independentemente da proporção.
- */
 .luminaire-carousel__image{
   position:relative;
   z-index:2;
   display:block;
   width:100%;
   height:100%;
-  max-width:none;
-  max-height:none;
   object-fit:contain;
   object-position:center;
-  background:#f8f8f8;
+  background:#fff;
   pointer-events:none;
   user-select:none;
 }
@@ -72,12 +71,12 @@
   bottom:14px;
   min-height:38px;
   padding:0 12px;
-  border:1px solid rgb(255 255 255/.7);
+  border:1px solid rgb(17 24 39/.09);
   border-radius:10px;
   display:inline-flex;
   align-items:center;
   gap:7px;
-  background:rgb(255 255 255/.88);
+  background:rgb(255 255 255/.92);
   backdrop-filter:blur(12px);
   color:#111827;
   font-size:11px;
@@ -98,7 +97,7 @@
   border-radius:50%;
   display:grid;
   place-items:center;
-  background:rgb(255 255 255/.88);
+  background:rgb(255 255 255/.90);
   backdrop-filter:blur(10px);
   color:#111827;
   box-shadow:0 7px 20px rgb(15 23 42/.13);
@@ -120,7 +119,7 @@
   padding:7px 9px;
   border:1px solid rgb(17 24 39/.08);
   border-radius:999px;
-  background:rgb(255 255 255/.84);
+  background:rgb(255 255 255/.88);
   backdrop-filter:blur(10px);
   box-shadow:0 5px 16px rgb(15 23 42/.10);
 }
@@ -143,7 +142,7 @@
   padding:6px 9px;
   border:1px solid rgb(17 24 39/.08);
   border-radius:999px;
-  background:rgb(255 255 255/.84);
+  background:rgb(255 255 255/.88);
   backdrop-filter:blur(10px);
   color:#111827;
   font-size:10px;
@@ -152,9 +151,9 @@
   box-shadow:0 5px 16px rgb(15 23 42/.08);
 }
 
-/* A ampliação usa a área útil inteira e nunca corta o arquivo. */
+/* A ampliação mantém 100% do arquivo visível e usa o mesmo fundo da foto. */
 .luminaire-photo-dialog{
-  background:#f8f8f8!important;
+  background:#fff!important;
 }
 
 .luminaire-photo-dialog>img{
@@ -168,12 +167,11 @@
   flex:1 1 auto!important;
   object-fit:contain!important;
   object-position:center!important;
-  background:#f8f8f8!important;
+  background:#fff!important;
 }
 
 @media(max-width:760px){
   .luminaire-carousel{border-radius:14px;margin-bottom:14px}
-  .luminaire-carousel__slide{height:clamp(320px,88vw,500px)}
   .luminaire-carousel__arrow{display:none}
   .luminaire-carousel__expand{right:10px;bottom:10px;min-height:36px;padding:0 10px}
   .luminaire-carousel__expand span{display:none}
