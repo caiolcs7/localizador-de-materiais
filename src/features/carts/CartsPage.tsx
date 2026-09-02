@@ -7,9 +7,11 @@ import { normalizeSearch } from '../../utils/normalize'
 import { categoryForItem, findInventoryLocations } from './cartUtils'
 import { getLuminaireImage } from './luminaireImages'
 import { MaterialVisual } from '../materials/MaterialVisual'
+import { LuminaireMark } from './LuminaireMark'
 import './carts.css'
 import './luminaire-images.css'
 import './material-cart-layout.css'
+import './luminaire-theme.css'
 
 const ErjModel3D = lazy(() => import('./ErjModel3D'))
 
@@ -189,7 +191,7 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
     {!carts.length?<div className="carts-empty"><ShoppingCart size={34}/><b>Nenhum carrinho cadastrado</b><p>Desbloqueie a edição para criar o primeiro carrinho.</p></div>:<>
       <div className="luminaire-switcher-wrap">
         <button className={`luminaire-switcher ${pickerOpen?'open':''}`} onClick={()=>setPickerOpen(value=>!value)} aria-expanded={pickerOpen}>
-          <span className="luminaire-switcher-icon"><ShoppingCart size={22}/></span>
+          <LuminaireMark name={selected?.nome??'Luminária'}/>
           <span className="luminaire-switcher-copy"><small>Luminária selecionada</small><strong>{selected?.nome}</strong><em>{selected?.items.length??0} itens · localizações sincronizadas com o almoxarifado</em></span>
           <span className="luminaire-switcher-chevron"><ChevronDown size={20}/></span>
         </button>
@@ -199,8 +201,8 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
             <div className="luminaire-picker-head"><div><b>Trocar luminária</b><span>Selecione o carrinho que deseja consultar.</span></div><button className="picker-close" onClick={()=>setPickerOpen(false)}><X size={18}/></button></div>
             <div className="luminaire-picker-search"><Search size={17}/><input autoFocus value={pickerQuery} onChange={e=>setPickerQuery(e.target.value)} placeholder="Buscar luminária..."/></div>
             <div className="luminaire-picker-grid">
-              {pickerCarts.map((cart,index)=><button key={cart.id} className={`luminaire-option ${cart.id===selected?.id?'selected':''}`} onClick={()=>chooseCart(cart.id)}>
-                <span className="luminaire-option-number">{String(index+1).padStart(2,'0')}</span>
+              {pickerCarts.map(cart=><button key={cart.id} className={`luminaire-option ${cart.id===selected?.id?'selected':''}`} onClick={()=>chooseCart(cart.id)}>
+                <LuminaireMark name={cart.nome} compact/>
                 <span className="luminaire-option-copy"><b>{cart.nome}</b><small>{cart.items.length} itens · {cart.sourceSheet}</small></span>
                 <span className="luminaire-option-check">{cart.id===selected?.id&&<Check size={17}/>}</span>
               </button>)}
