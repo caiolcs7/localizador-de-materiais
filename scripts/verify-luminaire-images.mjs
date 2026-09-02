@@ -6,6 +6,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const carts = [
   ...JSON.parse(readFileSync(resolve(root, 'src/data/cartsData.json'), 'utf8')),
   JSON.parse(readFileSync(resolve(root, 'src/data/cart016017.json'), 'utf8')),
+  JSON.parse(readFileSync(resolve(root, 'src/data/cartGHB.json'), 'utf8')),
 ]
 const imageMap = JSON.parse(readFileSync(resolve(root, 'src/data/luminaireImages.json'), 'utf8'))
 const expected = {
@@ -23,6 +24,10 @@ const expected = {
   'luminaria-avf': 'luminarias/lum-avf.webp',
   'luminaria-cas': 'luminarias/lum-cas.webp',
   'luminaria-erj': 'luminarias/lum-erj-rear.webp',
+  'luminaria-ghb': [
+    'luminarias/lum-ghb-profile.webp',
+    'luminarias/lum-ghb-front.webp',
+  ],
   'luminaria-l75': 'luminarias/lum-l75.webp',
   'luminaria-mas': 'luminarias/lum-mas.webp'
 }
@@ -30,7 +35,7 @@ const expected = {
 const actualEntries = Object.entries(imageMap).sort(([a], [b]) => a.localeCompare(b))
 const expectedEntries = Object.entries(expected).sort(([a], [b]) => a.localeCompare(b))
 if (JSON.stringify(actualEntries) !== JSON.stringify(expectedEntries)) {
-  throw new Error('O mapa de imagens não corresponde às 12 luminárias cadastradas.')
+  throw new Error('O mapa de imagens não corresponde às 13 luminárias cadastradas.')
 }
 
 const cartIds = new Set(carts.map(cart => cart.id))
@@ -63,4 +68,4 @@ for (const relativePath of erjGallery) {
   if (statSync(filePath).size < 10_000) throw new Error(`Foto da galeria ERJ pequena ou incompleta: ${relativePath}`)
 }
 
-console.log(`OK: 12 luminárias associadas; ${mappedImageCount + erjGallery.length - 1} fotos WEBP válidas, incluindo galerias da 016/017 e ERJ.`)
+console.log(`OK: 13 luminárias associadas; ${mappedImageCount + erjGallery.length - 1} fotos WEBP válidas, incluindo galerias da 016/017, GHB e ERJ.`)
