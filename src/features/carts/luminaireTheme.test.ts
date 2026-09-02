@@ -21,12 +21,12 @@ describe('getLuminaireTheme', () => {
     expect(getLuminaireTheme(name).shortLabel).toBe(shortLabel)
   })
 
-  it('keeps AVF and 010 orange and blue', () => {
+  it('keeps AVF orange and blue, and 010 orange and red', () => {
     expect(getLuminaireTheme('Luminária AVF')).toMatchObject({
       primary: '#ff8a24', secondary: '#1264d7', split: true,
     })
     expect(getLuminaireTheme('010 / Baby / Mini Baby')).toMatchObject({
-      primary: '#ff8a24', secondary: '#1264d7', split: true,
+      primary: '#ff8a24', secondary: '#d62828', split: true,
     })
   })
 
