@@ -41,6 +41,9 @@ jobs:
       - name: Mostrar luminárias dentro dos resultados
         run: node scripts/move-cart-memberships-into-results.mjs
 
+      - name: Aplicar carrossel das luminárias
+        run: node scripts/apply-luminaire-carousel.mjs
+
       - name: Validar base inicial
         run: npm run verify:data
 
