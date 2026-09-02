@@ -1,4 +1,4 @@
-import{r as Ps,j as yi}from"./index-B-dJlsxv.js";/**
+import{r as Ps,j as yi}from"./index-CUStWq7H.js";/**
  * @license
  * Copyright 2010-2026 Three.js Authors
  * SPDX-License-Identifier: MIT
