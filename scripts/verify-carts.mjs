@@ -3,6 +3,7 @@ import fs from 'node:fs'
 const carts = [
   ...JSON.parse(fs.readFileSync(new URL('../src/data/cartsData.json', import.meta.url), 'utf8')),
   JSON.parse(fs.readFileSync(new URL('../src/data/cart016017.json', import.meta.url), 'utf8')),
+  JSON.parse(fs.readFileSync(new URL('../src/data/cartGHB.json', import.meta.url), 'utf8')),
 ]
 const assert = (condition, message) => { if (!condition) throw new Error(message) }
 
@@ -19,6 +20,7 @@ const expectedCounts = new Map([
   ['Luminária 948-920', 10],
   ['Luminária CAS', 9],
   ['Luminária 016/017', 10],
+  ['Luminária GHB', 23],
 ])
 
 const allowedDuplicateCounts = new Map([
@@ -26,7 +28,7 @@ const allowedDuplicateCounts = new Map([
 ])
 
 assert(Array.isArray(carts), 'cartsData.json precisa ser uma lista')
-assert(carts.length === 12, `Esperadas 12 luminárias; encontradas ${carts.length}`)
+assert(carts.length === 13, `Esperadas 13 luminárias; encontradas ${carts.length}`)
 assert(new Set(carts.map(cart => cart.id)).size === carts.length, 'Há IDs de luminária duplicados')
 
 let total = 0
@@ -59,8 +61,8 @@ for (const cart of carts) {
   }
 }
 
-assert(total === 168, `Esperadas 168 relações luminária/material; encontradas ${total}`)
-assert(allCodes.size === 98, `Esperados 98 códigos distintos; encontrados ${allCodes.size}`)
+assert(total === 191, `Esperadas 191 relações luminária/material; encontradas ${total}`)
+assert(allCodes.size === 102, `Esperados 102 códigos distintos; encontrados ${allCodes.size}`)
 
 const has = (sheet, code) => carts.some(cart => cart.sourceSheet === sheet && cart.items.some(item => item.codigo === code))
 assert(has('Luminária AVF', 'ITPFPHM410PAAI6'), 'AVF sem ITPFPHM410PAAI6')
@@ -97,4 +99,36 @@ for (const [code, description] of expected016017) {
   assert(cart016017.items.some(item => item.codigo === code && item.descritivo === description), `Carrinho 016/017 sem dados exatos de ${code}`)
 }
 
-console.log(`OK: 12 luminárias; 168 relações; 98 códigos distintos; carrinho 016/017 e substituições validados.`)
+const cartGhb = carts.find(cart => cart.sourceSheet === 'Luminária GHB')
+assert(cartGhb?.id === 'luminaria-ghb' && cartGhb?.nome === 'Luminária GHB', 'Carrinho GHB ausente ou com metadados incorretos')
+const expectedGhb = new Map([
+  ['ITPFALLM520AI4', 'PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M5 20MM - PESO UN: 0,00411 KG'],
+  ['ITPFALLM516AI4', 'PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M5 16MM - PESO UN: 0,00361 KG'],
+  ['ITPFPHM516PAAI6', 'PARAFUSO AI PHILLIPS CAB PAN M5 16MM'],
+  ['ITPFPHM408ESAI6', 'PARAF PHILLIPS CAB ESC INOX 316 M4 08MM'],
+  ['ITPFPHM310PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M3 10MM - PESO UN: 0,00082 KG'],
+  ['ITPFPHM406PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M4 06MM - PESO UN: 0,00134 KG'],
+  ['ITPFPHM306PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M3 06MM - PESO UN: 0,00064 KG'],
+  ['ITPFPHM408PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M4 08MM - PESO UN: 0,00144 KG'],
+  ['ITPFPHM410PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M4 10MM - PESO UN: 0,00152 KG'],
+  ['ITLGHB00078', 'GHB CALCO AL P/ ANEL REFLETOR NOVO'],
+  ['ITARLEM03AI4', 'ARRUELA LISA AI M3 ESPECIAL (DIAMETRO EXTERNO 09MM) - PESO UN: 0,00034 KG'],
+  ['ITARLSM005AI6', 'ARRUELA LISA AI M5'],
+  ['ITARLSM004AI6', 'ARRUELA LISA AI M4'],
+  ['ITARLSM003AI4', 'ARRUELA LISA AI M3 - PESO UN: 0,00012 KG'],
+  ['ITPFPHM310ESAI6', 'PARAF PHILLIPS CAB ESC INOX 316 M3 10MM'],
+  ['ITPRCSEM03AI4', 'PORCA AI SEXTAVADA M3 - PESO UN: 0,00032 KG'],
+  ['ITARSRM004AI6', 'ARRUELA AI 316 SERR M4'],
+  ['ITARSRM003AI6', 'ARRUELA SERR INOX 316 M3'],
+  ['ITARPRM04AI6', 'ARRUELA PRESSAO AI M04'],
+  ['ITTEPI00010', 'TERMINAL PRE ISOLADO PINO, 1.5MM - 2.5MM, COMP PINO 12MM, AZUL, REF.: TPP - 2.5 - 12'],
+  ['ITTEOL00003', 'TERMINAL PRE ISOLADO OLHAL, 1.5MM - 2.5MM, DIM 5MM, AZUL, REF.: TP - 2,5 - 5'],
+  ['ITARPRM05AI4', 'ARRUELA PRESSAO AI M5 - PESO UN: 0,00034 KG'],
+  ['ITPFPHM408PAAI6', 'PARAF PHILLIPS CAB PAN INOX 316 M4 08MM'],
+])
+assert(expectedGhb.size === 23, `GHB: esperados 23 códigos únicos; encontrados ${expectedGhb.size}`)
+for (const [code, description] of expectedGhb) {
+  assert(cartGhb.items.some(item => item.codigo === code && item.descritivo === description), `Carrinho GHB sem dados exatos de ${code}`)
+}
+
+console.log(`OK: 13 luminárias; 191 relações; 102 códigos distintos; carrinhos 016/017 e GHB e substituições validados.`)
