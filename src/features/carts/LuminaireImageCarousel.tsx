@@ -14,6 +14,9 @@ type MouseDragState = {
   startScrollLeft: number
 }
 
+const DESKTOP_MAX_IMAGE_HEIGHT = 500
+const MAX_CAROUSEL_WIDTH = 1080
+
 export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<MouseDragState | null>(null)
@@ -27,9 +30,11 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
   }, [images])
 
   const activeRatio = imageRatios[activeIndex]
-  const trackAspectRatio = activeRatio && Number.isFinite(activeRatio) && activeRatio > 0
-    ? String(activeRatio)
-    : '16 / 10'
+  const validActiveRatio = activeRatio && Number.isFinite(activeRatio) && activeRatio > 0
+    ? activeRatio
+    : 16 / 10
+  const trackAspectRatio = String(validActiveRatio)
+  const idealWidth = Math.min(MAX_CAROUSEL_WIDTH, validActiveRatio * DESKTOP_MAX_IMAGE_HEIGHT)
 
   const registerImageRatio = (index: number, width: number, height: number) => {
     if (!width || !height) return
@@ -87,7 +92,12 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
   if (images.length === 0) return null
 
   return (
-    <section className="luminaire-carousel" aria-label={`Fotos da ${luminaireName}`} aria-roledescription="carrossel">
+    <section
+      className="luminaire-carousel"
+      style={{ maxWidth: `${idealWidth}px` }}
+      aria-label={`Fotos da ${luminaireName}`}
+      aria-roledescription="carrossel"
+    >
       <div
         ref={trackRef}
         className="luminaire-carousel__track"
