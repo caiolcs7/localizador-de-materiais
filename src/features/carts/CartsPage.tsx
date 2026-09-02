@@ -30,15 +30,28 @@ type LocationFilter = 'all' | 'located' | 'unlocated'
 const cartsStorageKey = 'lm-carts-data-v2'
 const cartsAdminKey = 'lm-carts-admin-v1'
 const adminPassword = '3007'
+const cart948920ReplacementByCode = new Map<string, { codigo: string; descritivo: string }>([
+  ['ITARLSM004AC', { codigo: 'ITARLSM004BC', descritivo: 'ARRUELA AC BICROMATIZADO LISA M4 - PESO UN: 0,00029 KG' }],
+  ['ITARPRM04AC', { codigo: 'ITARPRM04BC', descritivo: 'ARRUELA AC BICROMATIZADO PRESSAO M4 - PESO UN: 0,00018 KG' }],
+  ['ITPFPHM510PAAC', { codigo: 'ITPFPHM510PABC', descritivo: 'PARAFUSO AC PHILLIPS AC CAB PAN M5 10MM (BICROMATIZADO) - PESO UN: 0,00276 KG' }],
+  ['ITPFPHM408PAAC', { codigo: 'ITPFPHM408PABC', descritivo: 'PARAFUSO AC PHILLIPS CAB PAN M4 08MM (BICROMATIZADO) - PESO UN: 0,0015 KG' }],
+])
+
 
 function normalizeCarts(input: LuminaireCart[]) {
   return input.map(cart => ({
     ...cart,
     sourceSheet: cart.sourceSheet || cart.nome,
-    items: (cart.items ?? []).map((item, index) => ({
-      ...item,
-      id: item.id ?? `${cart.id}-${String(index + 1).padStart(3, '0')}-${normalizeSearch(item.codigo)}`
-    }))
+    items: (cart.items ?? []).map((sourceItem, index) => {
+      const replacement = cart.id === 'luminaria-948-920'
+        ? cart948920ReplacementByCode.get(normalizeSearch(sourceItem.codigo))
+        : undefined
+      const item = replacement ? { ...sourceItem, ...replacement } : sourceItem
+      return {
+        ...item,
+        id: item.id ?? `${cart.id}-${String(index + 1).padStart(3, '0')}-${normalizeSearch(item.codigo)}`
+      }
+    })
   }))
 }
 
