@@ -1,6 +1,5 @@
-import cartsSource from '../../data/cartsData.json'
-import type { LuminaireCart } from '../../types/cart'
 import { normalizeSearch } from '../../utils/normalize'
+import { defaultCarts } from '../carts/cartData'
 
 export type MaterialVisualFamily =
   | 'flat-washer'
@@ -35,7 +34,7 @@ export type MaterialVisualSpec = {
   verified: boolean
 }
 
-const carts = cartsSource as LuminaireCart[]
+const carts = defaultCarts
 
 export const describedMaterials = new Map<string, string>()
 
@@ -91,7 +90,7 @@ function finishFor(text: string): Pick<MaterialVisualSpec, 'finish' | 'finishLab
   if (text.includes('AMARELO')) return { finish: 'yellow', finishLabel: 'Isolação amarela' }
   if (text.includes('AI 316') || text.includes('INOX 316')) return { finish: 'stainless', finishLabel: 'Inox 316' }
   if (text.includes('AI 304') || text.includes('INOX 304')) return { finish: 'stainless', finishLabel: 'Inox 304' }
-  if (text.includes('BICROMATIZADO')) return { finish: 'bichromate', finishLabel: 'Aço bicromatizado' }
+  if (text.includes('BICROMATIZAD')) return { finish: 'bichromate', finishLabel: 'Aço bicromatizado' }
   if (/\bAI\b|\bINOX\b/.test(text)) return { finish: 'stainless', finishLabel: 'Aço inox' }
   if (/\bAC\b/.test(text)) return { finish: 'steel', finishLabel: 'Aço' }
   return { finish: 'mixed', finishLabel: 'Material conforme descritivo' }

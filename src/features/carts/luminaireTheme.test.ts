@@ -16,6 +16,7 @@ describe('getLuminaireTheme', () => {
     ['Luminária MAS', 'MAS'],
     ['Luminária L75', 'L75'],
     ['Luminária 948/920', '948'],
+    ['016/017', '016'],
   ])('maps %s to its visual identity', (name, shortLabel) => {
     expect(getLuminaireTheme(name).shortLabel).toBe(shortLabel)
   })
@@ -26,6 +27,12 @@ describe('getLuminaireTheme', () => {
     })
     expect(getLuminaireTheme('010 / Baby / Mini Baby')).toMatchObject({
       primary: '#ff8a24', secondary: '#d62828', split: true,
+    })
+  })
+
+  it('uses the orange and yellow identity for 016/017', () => {
+    expect(getLuminaireTheme('Luminária 016/017')).toMatchObject({
+      primary: '#ff8a24', secondary: '#ffd43b', split: true,
     })
   })
 

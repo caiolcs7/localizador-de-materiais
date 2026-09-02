@@ -23,3 +23,77 @@
 
 @media(max-width:760px){.erj-experience-head{padding:16px;gap:10px}.erj-experience-head strong{font-size:19px}.erj-3d-badge{padding:6px 8px;font-size:9px}.erj-model-stage{height:min(105vw,470px)}.erj-photo-gallery{grid-template-columns:1fr}.erj-photo-gallery img{aspect-ratio:16/10}}
 @media(prefers-reduced-motion:reduce){.erj-photo-gallery img{transition:none}}
+
+.cart-luminaire-reference--gallery{
+  grid-template-columns:minmax(300px,1.12fr) minmax(260px,.88fr);
+  box-shadow:0 14px 38px rgb(255 138 36/.10);
+}
+
+.cart-luminaire-reference--gallery .cart-luminaire-photo{
+  background:linear-gradient(145deg,#fff 0%,#f8f3ed 100%);
+}
+
+.cart-luminaire-reference--gallery .cart-luminaire-photo img{
+  aspect-ratio:16/11;
+  transition:transform .35s ease,filter .35s ease;
+}
+
+.cart-luminaire-reference--gallery .cart-luminaire-photo:hover img{
+  transform:scale(1.018);
+  filter:saturate(1.03) contrast(1.02);
+}
+
+.cart-luminaire-gallery{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:1px;
+  border-top:1px solid var(--line);
+  background:var(--line);
+}
+
+.cart-luminaire-gallery button{
+  position:relative;
+  min-width:0;
+  padding:0;
+  overflow:hidden;
+  border:0;
+  background:linear-gradient(145deg,#fff,#f8f3ed);
+}
+
+.cart-luminaire-gallery img{
+  display:block;
+  width:100%;
+  aspect-ratio:16/10;
+  object-fit:contain;
+  transition:transform .28s ease,filter .28s ease;
+}
+
+.cart-luminaire-gallery span{
+  position:absolute;
+  left:10px;
+  bottom:10px;
+  padding:7px 10px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:999px;
+  color:#fff;
+  background:linear-gradient(135deg,rgba(238,105,15,.94),rgba(215,158,0,.92));
+  box-shadow:0 6px 16px rgba(109,57,0,.22);
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.cart-luminaire-gallery button:hover img{transform:scale(1.035);filter:saturate(1.05) contrast(1.02)}
+.cart-luminaire-gallery button:focus-visible{z-index:1;outline:3px solid #ff9c24;outline-offset:-3px}
+
+@media(max-width:760px){
+  .cart-luminaire-reference--gallery{grid-template-columns:1fr}
+  .cart-luminaire-gallery{grid-template-columns:1fr}
+  .cart-luminaire-reference--gallery .cart-luminaire-photo img,.cart-luminaire-gallery img{aspect-ratio:16/10}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .cart-luminaire-reference--gallery .cart-luminaire-photo img,.cart-luminaire-gallery img{transition:none}
+}

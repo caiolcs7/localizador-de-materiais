@@ -1,5 +1,10 @@
 {
   "010-baby-mini-baby": "luminarias/lum-010.webp",
+  "luminaria-016-017": [
+    "luminarias/lum-016-hero.webp",
+    "luminarias/lum-016-profile.webp",
+    "luminarias/lum-017.webp"
+  ],
   "luminaria-014": "luminarias/lum-014.webp",
   "luminaria-035": "luminarias/lum-035.webp",
   "luminaria-254": "luminarias/lum-254.webp",

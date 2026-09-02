@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import cartsSource from '../../data/cartsData.json'
-import type { LuminaireCart } from '../../types/cart'
 import { normalizeSearch } from '../../utils/normalize'
+import { defaultCarts } from '../carts/cartData'
 import { describedMaterials, getMaterialDescription, resolveMaterialVisual } from './materialCatalog'
 
 describe('material visual catalog', () => {
   it('covers every unique cart code that has a description', () => {
     const expected = new Map<string, string>()
-    for (const cart of cartsSource as LuminaireCart[]) {
+    for (const cart of defaultCarts) {
       for (const item of cart.items) {
         if (item.descritivo?.trim() && !expected.has(normalizeSearch(item.codigo))) {
           expected.set(normalizeSearch(item.codigo), item.descritivo.trim())
@@ -15,7 +14,7 @@ describe('material visual catalog', () => {
       }
     }
 
-    expect(expected.size).toBe(93)
+    expect(expected.size).toBe(98)
     expect(describedMaterials.size).toBe(expected.size)
     for (const [code, description] of expected) {
       expect(getMaterialDescription(code)).toBe(description)
@@ -41,6 +40,18 @@ describe('material visual catalog', () => {
     expect(resolveMaterialVisual('ITARSRM003BC', 'Salvo Por Monique')).toMatchObject({
       family: 'serrated-washer',
       verified: true,
+    })
+  })
+
+  it('renders the photographed 016/017 hardware with the correct geometry and finish', () => {
+    expect(resolveMaterialVisual('ITPFPHM506ESBC')).toMatchObject({
+      family: 'countersunk-screw', finish: 'bichromate', verified: true,
+    })
+    expect(resolveMaterialVisual('ITPRCSEM03BC')).toMatchObject({
+      family: 'hex-nut', finish: 'bichromate', verified: true,
+    })
+    expect(resolveMaterialVisual('ITARSRM003AI6')).toMatchObject({
+      family: 'serrated-washer', finish: 'stainless', verified: true,
     })
   })
 })

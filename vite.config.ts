@@ -22,6 +22,9 @@ export default defineConfig({
         'icons/icon-192.png',
         'icons/icon-512.png',
         'luminarias/lum-010.webp',
+        'luminarias/lum-016-hero.webp',
+        'luminarias/lum-016-profile.webp',
+        'luminarias/lum-017.webp',
         'luminarias/lum-254.webp',
         'luminarias/lum-avf.webp',
         'luminarias/lum-014.webp',
@@ -52,7 +55,7 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}']
+        globPatterns: ['**/*.{js,css,html,ico,png,webp,svg,json}']
       }
     })
   ]

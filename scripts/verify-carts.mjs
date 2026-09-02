@@ -1,6 +1,9 @@
 import fs from 'node:fs'
 
-const carts = JSON.parse(fs.readFileSync(new URL('../src/data/cartsData.json', import.meta.url), 'utf8'))
+const carts = [
+  ...JSON.parse(fs.readFileSync(new URL('../src/data/cartsData.json', import.meta.url), 'utf8')),
+  JSON.parse(fs.readFileSync(new URL('../src/data/cart016017.json', import.meta.url), 'utf8')),
+]
 const assert = (condition, message) => { if (!condition) throw new Error(message) }
 
 const expectedCounts = new Map([
@@ -14,7 +17,8 @@ const expectedCounts = new Map([
   ['Luminária MAS', 15],
   ['Luminária L75', 5],
   ['Luminária 948-920', 10],
-  ['Luminária CAS', 9]
+  ['Luminária CAS', 9],
+  ['Luminária 016/017', 10],
 ])
 
 const allowedDuplicateCounts = new Map([
@@ -22,7 +26,7 @@ const allowedDuplicateCounts = new Map([
 ])
 
 assert(Array.isArray(carts), 'cartsData.json precisa ser uma lista')
-assert(carts.length === 11, `Esperadas 11 luminárias; encontradas ${carts.length}`)
+assert(carts.length === 12, `Esperadas 12 luminárias; encontradas ${carts.length}`)
 assert(new Set(carts.map(cart => cart.id)).size === carts.length, 'Há IDs de luminária duplicados')
 
 let total = 0
@@ -55,8 +59,8 @@ for (const cart of carts) {
   }
 }
 
-assert(total === 158, `Esperadas 158 relações luminária/material; encontradas ${total}`)
-assert(allCodes.size === 93, `Esperados 93 códigos distintos; encontrados ${allCodes.size}`)
+assert(total === 168, `Esperadas 168 relações luminária/material; encontradas ${total}`)
+assert(allCodes.size === 98, `Esperados 98 códigos distintos; encontrados ${allCodes.size}`)
 
 const has = (sheet, code) => carts.some(cart => cart.sourceSheet === sheet && cart.items.some(item => item.codigo === code))
 assert(has('Luminária AVF', 'ITPFPHM410PAAI6'), 'AVF sem ITPFPHM410PAAI6')
@@ -75,4 +79,22 @@ for (const newCode of ['ITARLSM004BC', 'ITARPRM04BC', 'ITPFPHM510PABC', 'ITPFPHM
   assert(cart948.items.some(item => item.codigo === newCode), `Luminária 948-920 sem código novo: ${newCode}`)
 }
 
-console.log(`OK: 11 luminárias; 158 relações; 93 códigos distintos; duplicidade intencional do 948/920 e substituições validadas.`)
+const cart016017 = carts.find(cart => cart.sourceSheet === 'Luminária 016/017')
+assert(cart016017?.nome === '016/017', 'Carrinho 016/017 ausente ou com nome incorreto')
+const expected016017 = new Map([
+  ['ITPFPHM508PABC', 'PARAFUSO AC PHILLIPS CAB PAN M5 08MM (BICROMATIZADO) - PESO UN: 0,00273 KG'],
+  ['ITARLSM006BC', 'ARRUELA AC BICROMATIZADO LISA M6 - PESO UN: 0,00083 KG'],
+  ['ITPFPHM506ESBC', 'PARAFUSO AC PHILLIPS AC CAB ESC M5 06MM (BICROMATIZADO)'],
+  ['ITARLSM005BC', 'ARRUELA AC BICROMATIZADO LISA M5 - PESO UN: 0,00038 KG'],
+  ['ITPFPHM416PABC', 'PARAFUSO AC PHILLIPS CAB PAN M4 16MM (BICROMATIZADO) - PESO UN: 0,00196 KG'],
+  ['ITPRCSEM03BC', 'PORCA AC BICROMATIZADA SEXTAVADA M3 - PESO UN: 0,00032 KG'],
+  ['ITARLSM003AI4', 'ARRUELA LISA AI M3 - PESO UN: 0,00012 KG'],
+  ['ITPFPHM310PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M3 10MM - PESO UN: 0,00082 KG'],
+  ['ITPRCSEM03AI4', 'PORCA AI SEXTAVADA M3 - PESO UN: 0,00032 KG'],
+  ['ITARSRM003AI6', 'ARRUELA SERR INOX 316 M3'],
+])
+for (const [code, description] of expected016017) {
+  assert(cart016017.items.some(item => item.codigo === code && item.descritivo === description), `Carrinho 016/017 sem dados exatos de ${code}`)
+}
+
+console.log(`OK: 12 luminárias; 168 relações; 98 códigos distintos; carrinho 016/017 e substituições validados.`)

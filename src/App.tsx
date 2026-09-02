@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Archive, Camera, Database, Download, FileDown, Home, Menu, Moon, PackagePlus, Search, ShoppingCart, Star, Sun, Upload, X } from 'lucide-react'
+import { Archive, Camera, Database, Download, FileDown, Home, Menu, PackagePlus, Search, ShoppingCart, Star, Upload, X } from 'lucide-react'
 import { ensureSeeded } from './db/database'
 import { deleteLocation, getAllLocations, searchInventory } from './services/inventoryService'
 import type { InventoryLocation, SearchResult } from './types/inventory'
@@ -13,8 +13,10 @@ import { MaterialVisual } from './features/materials/MaterialVisual'
 import { getMaterialDescription } from './features/materials/materialCatalog'
 import { cartsStorageKey, findCartMemberships, loadCurrentCarts } from './features/carts/cartLookup'
 import { buildItemStatusRows, type ItemsStatusFilter } from './features/items/itemStatus'
+import { ThemeSwitch } from './features/theme/ThemeSwitch'
 import './styles.css'
 import './brand.css'
+import './navigation.css'
 
 const recentKey='lm-recent'; const favoriteKey='lm-favorites'
 const loadList=(key:string)=>{try{return JSON.parse(localStorage.getItem(key)||'[]') as string[]}catch{return []}}
@@ -69,8 +71,8 @@ export default function App() {
   const openHomeSearch=(code:string)=>{openHome();setQuery(code);notify('Código enviado para o Localizador')}
   if(!ready) return <div className="loading">Carregando base local…</div>
   return <div className="app-shell">
-    <header><button className="brand brand-button" onClick={openHome}><img className="brand-logo" src={logoSrc} alt="Maccomevap"/><div><b>Localizador de Materiais</b><span>Maccomevap · Almoxarifado</span></div></button><nav className={mobileMenu?'open':''}>
-      <button onClick={openHome}><Home size={18}/>Início</button><button onClick={()=>{setScanner(true);setMobileMenu(false)}}><Camera size={18}/>Scanner</button><button onClick={()=>{setEditor({});setMobileMenu(false)}}><PackagePlus size={18}/>Novo item</button><button onClick={()=>{setShowItems(true);setShowData(false);setShowCarts(false);setMobileMenu(false)}}><Archive size={18}/>Itens</button><button onClick={()=>{setShowCarts(true);setShowItems(false);setShowData(false);setMobileMenu(false)}}><ShoppingCart size={18}/>Carrinhos</button><button onClick={()=>{setShowData(true);setShowItems(false);setShowCarts(false);setMobileMenu(false)}}><Database size={18}/>Dados</button><button className="icon-button" onClick={()=>setDark(!dark)}>{dark?<Sun size={18}/>:<Moon size={18}/>}</button>
+    <header><button className="brand brand-button" onClick={openHome}><img className="brand-logo" src={logoSrc} alt="Maccomevap"/><div><b>Localizador de Materiais</b><span>Maccomevap · Almoxarifado</span></div></button><nav className={`app-nav ${mobileMenu?'open':''}`} aria-label="Navegação principal">
+      <button className={`nav-3d ${!showItems&&!showData&&!showCarts?'active':''}`} onClick={openHome}><Home size={18}/>Início</button><button className="nav-3d" onClick={()=>{setScanner(true);setMobileMenu(false)}}><Camera size={18}/>Scanner</button><button className="nav-3d" onClick={()=>{setEditor({});setMobileMenu(false)}}><PackagePlus size={18}/>Novo item</button><button className={`nav-3d ${showItems?'active':''}`} onClick={()=>{setShowItems(true);setShowData(false);setShowCarts(false);setMobileMenu(false)}}><Archive size={18}/>Itens</button><button className={`nav-3d ${showCarts?'active':''}`} onClick={()=>{setShowCarts(true);setShowItems(false);setShowData(false);setMobileMenu(false)}}><ShoppingCart size={18}/>Carrinhos</button><button className={`nav-3d ${showData?'active':''}`} onClick={()=>{setShowData(true);setShowItems(false);setShowCarts(false);setMobileMenu(false)}}><Database size={18}/>Dados</button><div className="theme-nav-slot"><span className="theme-nav-label">Tema {dark?'escuro':'claro'}</span><ThemeSwitch dark={dark} onChange={setDark}/></div>
     </nav><button className="menu-button" onClick={()=>setMobileMenu(!mobileMenu)}>{mobileMenu?<X/>:<Menu/>}</button></header>
     <main>
       {!showItems&&!showData&&!showCarts && <><section className="hero"><div className="eyebrow">LOCALIZAÇÃO RÁPIDA</div><h1>Onde está o material?</h1><p>Pesquise por código, bombona ou endereço físico.</p><div className="search-wrap"><Search size={21}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar código, bombona ou endereço..."/><button className="scan-short" onClick={()=>setScanner(true)}><Camera size={19}/><span>Escanear</span></button></div></section>

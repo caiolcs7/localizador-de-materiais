@@ -1,44 +1,8 @@
-import cartsSource from '../../data/cartsData.json'
 import type { CartItem, LuminaireCart } from '../../types/cart'
 import { equivalentAI, normalizeSearch } from '../../utils/normalize'
+import { cartsStorageKey, loadCurrentCarts } from './cartData'
 
-export const cartsStorageKey = 'lm-carts-data-v2'
-
-const cart948920ReplacementByCode = new Map<string, { codigo: string; descritivo: string }>([
-  ['ITARLSM004AC', { codigo: 'ITARLSM004BC', descritivo: 'ARRUELA AC BICROMATIZADO LISA M4 - PESO UN: 0,00029 KG' }],
-  ['ITARPRM04AC', { codigo: 'ITARPRM04BC', descritivo: 'ARRUELA AC BICROMATIZADO PRESSAO M4 - PESO UN: 0,00018 KG' }],
-  ['ITPFPHM510PAAC', { codigo: 'ITPFPHM510PABC', descritivo: 'PARAFUSO AC PHILLIPS AC CAB PAN M5 10MM (BICROMATIZADO) - PESO UN: 0,00276 KG' }],
-  ['ITPFPHM408PAAC', { codigo: 'ITPFPHM408PABC', descritivo: 'PARAFUSO AC PHILLIPS CAB PAN M4 08MM (BICROMATIZADO) - PESO UN: 0,0015 KG' }],
-])
-
-function normalizeCartsForLookup(input: LuminaireCart[]) {
-  return input.map(cart => ({
-    ...cart,
-    sourceSheet: cart.sourceSheet || cart.nome,
-    items: (cart.items ?? []).map(sourceItem => {
-      const replacement = cart.id === 'luminaria-948-920'
-        ? cart948920ReplacementByCode.get(normalizeSearch(sourceItem.codigo))
-        : undefined
-      return replacement ? { ...sourceItem, ...replacement } : sourceItem
-    }),
-  }))
-}
-
-const defaultCarts = normalizeCartsForLookup(cartsSource as LuminaireCart[])
-
-export function loadCurrentCarts(storageValue?: string | null): LuminaireCart[] {
-  try {
-    const raw = storageValue === undefined
-      ? (typeof localStorage === 'undefined' ? null : localStorage.getItem(cartsStorageKey))
-      : storageValue
-    if (!raw) return defaultCarts
-    const parsed = JSON.parse(raw) as LuminaireCart[]
-    if (!Array.isArray(parsed) || !parsed.length) return defaultCarts
-    return normalizeCartsForLookup(parsed)
-  } catch {
-    return defaultCarts
-  }
-}
+export { cartsStorageKey, loadCurrentCarts }
 
 export type CartMembership = {
   cartId: string

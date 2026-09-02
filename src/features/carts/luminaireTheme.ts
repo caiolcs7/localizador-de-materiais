@@ -36,6 +36,10 @@ const themes: Record<string, LuminaireTheme> = {
     shortLabel: '254', primary: '#ffe066', secondary: '#f4b900', text: '#2d2300',
     border: 'rgba(137, 99, 0, .34)', shadow: 'rgba(244, 185, 0, .30)',
   },
+  '016/017': {
+    shortLabel: '016', primary: '#ff8a24', secondary: '#ffd43b', text: '#2d2100',
+    border: 'rgba(211, 125, 0, .42)', shadow: 'rgba(255, 155, 36, .30)', split: true,
+  },
   '014': {
     shortLabel: '014', primary: '#ff922b', secondary: '#121212', text: '#ffffff',
     border: 'rgba(255, 146, 43, .40)', shadow: 'rgba(17, 17, 17, .28)', split: true,
@@ -94,6 +98,7 @@ function normalize(value: string) {
 function themeKey(name: string) {
   const normalized = normalize(name)
   if (/\b948\s*\/\s*920\b/.test(normalized)) return '948/920'
+  if (/\b016\s*\/\s*017\b/.test(normalized)) return '016/017'
   if (/\b010\b/.test(normalized) || normalized.includes('BABY')) return '010'
 
   return Object.keys(themes).find(key => new RegExp(`(?:^|\\s)${key}(?:$|\\s)`).test(normalized))

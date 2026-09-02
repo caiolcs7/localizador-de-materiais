@@ -1,0 +1,47 @@
+{
+  "id": "luminaria-016-017",
+  "nome": "016/017",
+  "sourceSheet": "Luminária 016/017",
+  "items": [
+    {
+      "codigo": "ITPFPHM508PABC",
+      "descritivo": "PARAFUSO AC PHILLIPS CAB PAN M5 08MM (BICROMATIZADO) - PESO UN: 0,00273 KG"
+    },
+    {
+      "codigo": "ITARLSM006BC",
+      "descritivo": "ARRUELA AC BICROMATIZADO LISA M6 - PESO UN: 0,00083 KG"
+    },
+    {
+      "codigo": "ITPFPHM506ESBC",
+      "descritivo": "PARAFUSO AC PHILLIPS AC CAB ESC M5 06MM (BICROMATIZADO)"
+    },
+    {
+      "codigo": "ITARLSM005BC",
+      "descritivo": "ARRUELA AC BICROMATIZADO LISA M5 - PESO UN: 0,00038 KG"
+    },
+    {
+      "codigo": "ITPFPHM416PABC",
+      "descritivo": "PARAFUSO AC PHILLIPS CAB PAN M4 16MM (BICROMATIZADO) - PESO UN: 0,00196 KG"
+    },
+    {
+      "codigo": "ITPRCSEM03BC",
+      "descritivo": "PORCA AC BICROMATIZADA SEXTAVADA M3 - PESO UN: 0,00032 KG"
+    },
+    {
+      "codigo": "ITARLSM003AI4",
+      "descritivo": "ARRUELA LISA AI M3 - PESO UN: 0,00012 KG"
+    },
+    {
+      "codigo": "ITPFPHM310PAAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M3 10MM - PESO UN: 0,00082 KG"
+    },
+    {
+      "codigo": "ITPRCSEM03AI4",
+      "descritivo": "PORCA AI SEXTAVADA M3 - PESO UN: 0,00032 KG"
+    },
+    {
+      "codigo": "ITARSRM003AI6",
+      "descritivo": "ARRUELA SERR INOX 316 M3"
+    }
+  ]
+}

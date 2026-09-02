@@ -1,13 +1,13 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Check, ChevronDown, Filter, Home, Lock, LockOpen, MapPin, Maximize2, PackagePlus, Pencil, Plus, Search, ShieldCheck, ShoppingCart, Trash2, X, XCircle } from 'lucide-react'
-import cartsSource from '../../data/cartsData.json'
 import type { InventoryLocation } from '../../types/inventory'
 import type { CartItem, LuminaireCart } from '../../types/cart'
 import { normalizeSearch } from '../../utils/normalize'
 import { categoryForItem, findInventoryLocations } from './cartUtils'
-import { getLuminaireImage } from './luminaireImages'
+import { getLuminaireImages } from './luminaireImages'
 import { MaterialVisual } from '../materials/MaterialVisual'
 import { LuminaireMark } from './LuminaireMark'
+import { cart016017MigrationKey, cartsStorageKey, loadCurrentCarts } from './cartData'
 import './carts.css'
 import './luminaire-images.css'
 import './material-cart-layout.css'
@@ -29,46 +29,13 @@ type Props = {
 }
 
 type LocationFilter = 'all' | 'located' | 'unlocated'
-const cartsStorageKey = 'lm-carts-data-v2'
 const cartsAdminKey = 'lm-carts-admin-v1'
 const adminPassword = '3007'
-const cart948920ReplacementByCode = new Map<string, { codigo: string; descritivo: string }>([
-  ['ITARLSM004AC', { codigo: 'ITARLSM004BC', descritivo: 'ARRUELA AC BICROMATIZADO LISA M4 - PESO UN: 0,00029 KG' }],
-  ['ITARPRM04AC', { codigo: 'ITARPRM04BC', descritivo: 'ARRUELA AC BICROMATIZADO PRESSAO M4 - PESO UN: 0,00018 KG' }],
-  ['ITPFPHM510PAAC', { codigo: 'ITPFPHM510PABC', descritivo: 'PARAFUSO AC PHILLIPS AC CAB PAN M5 10MM (BICROMATIZADO) - PESO UN: 0,00276 KG' }],
-  ['ITPFPHM408PAAC', { codigo: 'ITPFPHM408PABC', descritivo: 'PARAFUSO AC PHILLIPS CAB PAN M4 08MM (BICROMATIZADO) - PESO UN: 0,0015 KG' }],
-])
-
-
-function normalizeCarts(input: LuminaireCart[]) {
-  return input.map(cart => ({
-    ...cart,
-    sourceSheet: cart.sourceSheet || cart.nome,
-    items: (cart.items ?? []).map((sourceItem, index) => {
-      const replacement = cart.id === 'luminaria-948-920'
-        ? cart948920ReplacementByCode.get(normalizeSearch(sourceItem.codigo))
-        : undefined
-      const item = replacement ? { ...sourceItem, ...replacement } : sourceItem
-      return {
-        ...item,
-        id: item.id ?? `${cart.id}-${String(index + 1).padStart(3, '0')}-${normalizeSearch(item.codigo)}`
-      }
-    })
-  }))
-}
-
-const defaultCarts = normalizeCarts(cartsSource as LuminaireCart[])
 
 function loadCarts() {
-  try {
-    const raw = localStorage.getItem(cartsStorageKey)
-    if (!raw) return defaultCarts
-    const parsed = JSON.parse(raw) as LuminaireCart[]
-    if (!Array.isArray(parsed) || !parsed.length) return defaultCarts
-    return normalizeCarts(parsed)
-  } catch {
-    return defaultCarts
-  }
+  const carts = loadCurrentCarts()
+  localStorage.setItem(cart016017MigrationKey, '1')
+  return carts
 }
 
 function slug(value: string) {
@@ -156,8 +123,10 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
   },[])
 
   const selected=useMemo(()=>carts.find(cart=>cart.id===selectedId)??carts[0],[carts,selectedId])
-  const selectedImage=useMemo(()=>getLuminaireImage(selected),[selected])
+  const selectedImages=useMemo(()=>getLuminaireImages(selected),[selected])
+  const selectedImage=selectedImages[0]??null
   const selectedIsErj=selected?.id==='luminaria-erj'
+  const selectedHasGallery=selectedImages.length>1&&!selectedIsErj
   const erjPhotos=useMemo(()=>erjPhotoReferences.map(photo=>({...photo,src:`${import.meta.env.BASE_URL}${photo.path}`})),[])
   const enriched=useMemo(()=>(selected?.items??[]).map((item,index)=>{
     const locations=findInventoryLocations(item.codigo,inventory)
@@ -220,12 +189,15 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
         </div>
       </section>}
 
-      {selected&&selectedImage&&!selectedIsErj&&<div className="cart-luminaire-reference">
-        <button className="cart-luminaire-photo" type="button" onClick={()=>setPhotoViewer({src:selectedImage,label:`Foto da ${selected.nome}`})} aria-label={`Ampliar foto da ${selected.nome}`}>
-          <img src={selectedImage} alt={`Foto da ${selected.nome}`} decoding="async"/>
+      {selected&&selectedImage&&!selectedIsErj&&<div className={`cart-luminaire-reference ${selectedHasGallery?'cart-luminaire-reference--gallery':''}`}>
+        <button className="cart-luminaire-photo" type="button" onClick={()=>setPhotoViewer({src:selectedImage,label:`Foto principal da ${selected.nome}`})} aria-label={`Ampliar foto principal da ${selected.nome}`}>
+          <img src={selectedImage} alt={`Foto principal da ${selected.nome}`} decoding="async"/>
           <span><Maximize2 size={15}/>Ampliar foto</span>
         </button>
-        <div className="cart-luminaire-photo-copy"><small>Referência visual</small><strong>{selected.nome}</strong><p>Foto correspondente a esta luminária. A imagem é exibida por inteiro, sem recortes.</p><button className="secondary-button" type="button" onClick={()=>setPhotoViewer({src:selectedImage,label:`Foto da ${selected.nome}`})}><Maximize2 size={16}/>Visualizar em tamanho maior</button></div>
+        <div className="cart-luminaire-photo-copy"><small>Referência visual</small><strong>{selected.nome}</strong><p>{selectedHasGallery?'Três vistas restauradas das luminárias 016 e 017, preservando as referências fornecidas.':'Foto correspondente a esta luminária. A imagem é exibida por inteiro, sem recortes.'}</p><button className="secondary-button" type="button" onClick={()=>setPhotoViewer({src:selectedImage,label:`Foto principal da ${selected.nome}`})}><Maximize2 size={16}/>Visualizar em tamanho maior</button></div>
+        {selectedHasGallery&&<div className="cart-luminaire-gallery" aria-label={`Galeria da ${selected.nome}`}>
+          {selectedImages.map((src,index)=><button key={src} type="button" onClick={()=>setPhotoViewer({src,label:`Vista ${index+1} da ${selected.nome}`})} aria-label={`Ampliar vista ${index+1} da ${selected.nome}`}><img src={src} alt={`Vista ${index+1} da ${selected.nome}`} decoding="async"/><span>Vista {index+1}</span></button>)}
+        </div>}
       </div>}
 
       <div className="carts-controls"><div className="sync-note"><MapPin size={16}/><div><b>Bombonas sincronizadas automaticamente</b><span>Ao editar a bombona/endereço de um código no Localizador, o Carrinho passa a mostrar a nova localização sem duplicar dados.</span></div></div><div className="table-search cart-search"><Search size={18}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Buscar código ou descritivo no carrinho"/></div></div>
