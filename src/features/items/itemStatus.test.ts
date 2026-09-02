@@ -34,12 +34,16 @@ describe('item status rows', () => {
     const inventory: InventoryLocation[] = [
       location({ id: 'located' }),
       location({ id: 'equivalent', codigo: 'ITTESTEAI6', codigoNormalizado: 'ITTESTEAI6', bombona: 'R13B002', endereco: 'R13A1C01DP01' }),
-      location({ id: 'empty', codigo: 'VAZIO', codigoNormalizado: 'VAZIO', bombona: 'R13B003', endereco: 'R13A1C01DP01', registroTipo: 'sem_codigo', grupo: 'SEM_CODIGO' }),
+      location({ id: 'empty-vazio', codigo: 'VAZIO', codigoNormalizado: 'VAZIO', bombona: 'R13B003', endereco: 'R13A1C01DP01', registroTipo: 'sem_codigo', grupo: 'SEM_CODIGO' }),
+      location({ id: 'empty-sem-codigo', codigo: 'SEM CÓDIGO', codigoNormalizado: 'SEMCÓDIGO', bombona: 'R13B004', endereco: 'R13A1C01DP01', registroTipo: 'sem_codigo', grupo: 'SEM_CODIGO' }),
     ]
 
     const rows = buildItemStatusRows(inventory, carts)
     expect(rows.filter(row => row.status === 'located')).toHaveLength(2)
-    expect(rows.filter(row => row.status === 'empty')).toMatchObject([{ codigo: 'VAZIO', endereco: 'R13A1C01DP01' }])
+    expect(rows.filter(row => row.status === 'empty')).toMatchObject([
+      { codigo: 'SEM CÓDIGO', endereco: 'R13A1C01DP01' },
+      { codigo: 'VAZIO', endereco: 'R13A1C01DP01' },
+    ])
     expect(rows.filter(row => row.status === 'unlocated')).toMatchObject([
       { codigo: 'SEMLOCAL01', carts: ['Luminária B'], inventoryItem: null },
     ])
