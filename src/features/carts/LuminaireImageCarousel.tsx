@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import './luminaire-carousel.css'
 
 type Props = {
@@ -39,7 +39,7 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
     setActiveIndex(next)
   }
 
-  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== 'mouse' || event.button !== 0) return
     if ((event.target as HTMLElement).closest('button')) return
     const track = trackRef.current
@@ -49,14 +49,14 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
     track.classList.add('is-dragging')
   }
 
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const track = trackRef.current
     const drag = dragRef.current
     if (!track || !drag || drag.pointerId !== event.pointerId) return
     track.scrollLeft = drag.startScrollLeft - (event.clientX - drag.startX)
   }
 
-  const finishMouseDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+  const finishMouseDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
     const track = trackRef.current
     const drag = dragRef.current
     if (!track || !drag || drag.pointerId !== event.pointerId) return
