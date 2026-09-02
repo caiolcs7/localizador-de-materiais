@@ -19,18 +19,22 @@ export type ItemStatusRow = {
   carts: string[]
 }
 
+const canonicalToken = (value: string) => normalizeSearch(
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
+)
+
 const emptyCodeTokens = new Set([
   'VAZIO',
   'VAZIA',
-  'SEM CODIGO',
-  'SEM IDENTIFICACAO',
-  'SEM ID',
+  'SEMCODIGO',
+  'SEMIDENTIFICACAO',
+  'SEMID',
 ])
 
 export function isEmptyCodeRecord(item: Pick<InventoryLocation, 'codigo' | 'registroTipo' | 'grupo'>) {
-  if (normalizeSearch(item.registroTipo ?? '') === 'SEM_CODIGO') return true
-  if (normalizeSearch(item.grupo ?? '') === 'SEM_CODIGO') return true
-  return emptyCodeTokens.has(normalizeSearch(item.codigo))
+  if (canonicalToken(item.registroTipo ?? '') === 'SEMCODIGO') return true
+  if (canonicalToken(item.grupo ?? '') === 'SEMCODIGO') return true
+  return emptyCodeTokens.has(canonicalToken(item.codigo))
 }
 
 export function hasPhysicalLocation(item: Pick<InventoryLocation, 'bombona' | 'endereco'>) {
