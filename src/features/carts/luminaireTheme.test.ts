@@ -36,6 +36,12 @@ describe('getLuminaireTheme', () => {
     })
   })
 
+  it('keeps GHB in the requested light-blue identity', () => {
+    expect(getLuminaireTheme('Luminária GHB')).toMatchObject({
+      shortLabel: 'GHB', primary: '#9fe2ff', secondary: '#42b9ee', text: '#07384f',
+    })
+  })
+
   it('creates a stable neutral label for a custom cart', () => {
     const theme = getLuminaireTheme('Luminária XYZ')
     expect(theme.shortLabel).toBe('XYZ')
