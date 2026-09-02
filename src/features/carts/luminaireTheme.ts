@@ -28,6 +28,10 @@ const fallbackTheme: LuminaireTheme = {
 }
 
 const themes: Record<string, LuminaireTheme> = {
+  AVF: {
+    shortLabel: 'AVF', primary: '#ff8a24', secondary: '#1264d7', text: '#ffffff',
+    border: 'rgba(18, 100, 215, .36)', shadow: 'rgba(18, 100, 215, .25)', split: true,
+  },
   '254': {
     shortLabel: '254', primary: '#ffe066', secondary: '#f4b900', text: '#2d2300',
     border: 'rgba(137, 99, 0, .34)', shadow: 'rgba(244, 185, 0, .30)',
@@ -37,8 +41,8 @@ const themes: Record<string, LuminaireTheme> = {
     border: 'rgba(255, 146, 43, .40)', shadow: 'rgba(17, 17, 17, .28)', split: true,
   },
   '010': {
-    shortLabel: '010', primary: '#ff8a24', secondary: '#1264d7', text: '#ffffff',
-    border: 'rgba(18, 100, 215, .36)', shadow: 'rgba(18, 100, 215, .25)', split: true,
+    shortLabel: '010', primary: '#ff8a24', secondary: '#d62828', text: '#ffffff',
+    border: 'rgba(172, 28, 28, .38)', shadow: 'rgba(214, 40, 40, .26)', split: true,
   },
   ERJ: {
     shortLabel: 'ERJ', primary: '#173f78', secondary: '#071b3c', text: '#ffffff',
