@@ -14,7 +14,7 @@ describe('material visual catalog', () => {
       }
     }
 
-    expect(expected.size).toBe(98)
+    expect(expected.size).toBe(102)
     expect(describedMaterials.size).toBe(expected.size)
     for (const [code, description] of expected) {
       expect(getMaterialDescription(code)).toBe(description)
@@ -28,7 +28,7 @@ describe('material visual catalog', () => {
       .map(([code]) => code)
       .sort()
 
-    expect(uncertain).toEqual(['ITL98400023', 'J9900000900'])
+    expect(uncertain).toEqual(['ITL98400023', 'ITLGHB00078', 'J9900000900'])
   })
 
   it('does not create a visual for codes without descriptions', () => {
@@ -52,6 +52,18 @@ describe('material visual catalog', () => {
     })
     expect(resolveMaterialVisual('ITARSRM003AI6')).toMatchObject({
       family: 'serrated-washer', finish: 'stainless', verified: true,
+    })
+  })
+
+  it('classifies the GHB hardware without inventing geometry for the reflector shim', () => {
+    expect(resolveMaterialVisual('ITPFALLM516AI4')).toMatchObject({
+      family: 'socket-screw', finish: 'stainless', verified: true,
+    })
+    expect(resolveMaterialVisual('ITPFPHM516PAAI6')).toMatchObject({
+      family: 'pan-screw', finish: 'stainless', verified: true,
+    })
+    expect(resolveMaterialVisual('ITLGHB00078')).toMatchObject({
+      family: 'unavailable', verified: false,
     })
   })
 })
