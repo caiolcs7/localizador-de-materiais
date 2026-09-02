@@ -1,0 +1,99 @@
+{
+  "id": "luminaria-ghb",
+  "nome": "Luminária GHB",
+  "sourceSheet": "Luminária GHB",
+  "items": [
+    {
+      "codigo": "ITPFALLM520AI4",
+      "descritivo": "PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M5 20MM - PESO UN: 0,00411 KG"
+    },
+    {
+      "codigo": "ITPFALLM516AI4",
+      "descritivo": "PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M5 16MM - PESO UN: 0,00361 KG"
+    },
+    {
+      "codigo": "ITPFPHM516PAAI6",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M5 16MM"
+    },
+    {
+      "codigo": "ITPFPHM408ESAI6",
+      "descritivo": "PARAF PHILLIPS CAB ESC INOX 316 M4 08MM"
+    },
+    {
+      "codigo": "ITPFPHM310PAAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M3 10MM - PESO UN: 0,00082 KG"
+    },
+    {
+      "codigo": "ITPFPHM406PAAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M4 06MM - PESO UN: 0,00134 KG"
+    },
+    {
+      "codigo": "ITPFPHM306PAAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M3 06MM - PESO UN: 0,00064 KG"
+    },
+    {
+      "codigo": "ITPFPHM408PAAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M4 08MM - PESO UN: 0,00144 KG"
+    },
+    {
+      "codigo": "ITPFPHM410PAAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M4 10MM - PESO UN: 0,00152 KG"
+    },
+    {
+      "codigo": "ITLGHB00078",
+      "descritivo": "GHB CALCO AL P/ ANEL REFLETOR NOVO"
+    },
+    {
+      "codigo": "ITARLEM03AI4",
+      "descritivo": "ARRUELA LISA AI M3 ESPECIAL (DIAMETRO EXTERNO 09MM) - PESO UN: 0,00034 KG"
+    },
+    {
+      "codigo": "ITARLSM005AI6",
+      "descritivo": "ARRUELA LISA AI M5"
+    },
+    {
+      "codigo": "ITARLSM004AI6",
+      "descritivo": "ARRUELA LISA AI M4"
+    },
+    {
+      "codigo": "ITARLSM003AI4",
+      "descritivo": "ARRUELA LISA AI M3 - PESO UN: 0,00012 KG"
+    },
+    {
+      "codigo": "ITPFPHM310ESAI6",
+      "descritivo": "PARAF PHILLIPS CAB ESC INOX 316 M3 10MM"
+    },
+    {
+      "codigo": "ITPRCSEM03AI4",
+      "descritivo": "PORCA AI SEXTAVADA M3 - PESO UN: 0,00032 KG"
+    },
+    {
+      "codigo": "ITARSRM004AI6",
+      "descritivo": "ARRUELA AI 316 SERR M4"
+    },
+    {
+      "codigo": "ITARSRM003AI6",
+      "descritivo": "ARRUELA SERR INOX 316 M3"
+    },
+    {
+      "codigo": "ITARPRM04AI6",
+      "descritivo": "ARRUELA PRESSAO AI M04"
+    },
+    {
+      "codigo": "ITTEPI00010",
+      "descritivo": "TERMINAL PRE ISOLADO PINO, 1.5MM - 2.5MM, COMP PINO 12MM, AZUL, REF.: TPP - 2.5 - 12"
+    },
+    {
+      "codigo": "ITTEOL00003",
+      "descritivo": "TERMINAL PRE ISOLADO OLHAL, 1.5MM - 2.5MM, DIM 5MM, AZUL, REF.: TP - 2,5 - 5"
+    },
+    {
+      "codigo": "ITARPRM05AI4",
+      "descritivo": "ARRUELA PRESSAO AI M5 - PESO UN: 0,00034 KG"
+    },
+    {
+      "codigo": "ITPFPHM408PAAI6",
+      "descritivo": "PARAF PHILLIPS CAB PAN INOX 316 M4 08MM"
+    }
+  ]
+}

@@ -13,6 +13,10 @@
   "luminaria-avf": "luminarias/lum-avf.webp",
   "luminaria-cas": "luminarias/lum-cas.webp",
   "luminaria-erj": "luminarias/lum-erj-rear.webp",
+  "luminaria-ghb": [
+    "luminarias/lum-ghb-profile.webp",
+    "luminarias/lum-ghb-front.webp"
+  ],
   "luminaria-l75": "luminarias/lum-l75.webp",
   "luminaria-mas": "luminarias/lum-mas.webp"
 }

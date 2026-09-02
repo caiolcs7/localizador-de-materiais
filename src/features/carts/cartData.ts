@@ -1,11 +1,14 @@
 import cartsSource from '../../data/cartsData.json'
 import cart016017Source from '../../data/cart016017.json'
+import cartGhbSource from '../../data/cartGHB.json'
 import type { LuminaireCart } from '../../types/cart'
 import { normalizeSearch } from '../../utils/normalize'
 
 export const cartsStorageKey = 'lm-carts-data-v2'
 export const cart016017MigrationKey = 'lm-carts-migration-016-017-v1'
 export const cart016017Id = 'luminaria-016-017'
+export const cartGhbMigrationKey = 'lm-carts-migration-ghb-v1'
+export const cartGhbId = 'luminaria-ghb'
 
 const cart948920ReplacementByCode = new Map<string, { codigo: string; descritivo: string }>([
   ['ITARLSM004AC', { codigo: 'ITARLSM004BC', descritivo: 'ARRUELA AC BICROMATIZADO LISA M4 - PESO UN: 0,00029 KG' }],
@@ -34,29 +37,61 @@ export function normalizeCarts(input: LuminaireCart[]) {
 export const defaultCarts = normalizeCarts([
   ...(cartsSource as LuminaireCart[]),
   cart016017Source as LuminaireCart,
+  cartGhbSource as LuminaireCart,
 ])
 
 const required016017 = defaultCarts.find(cart => cart.id === cart016017Id)!
+const requiredGhb = defaultCarts.find(cart => cart.id === cartGhbId)!
 
 function browserStorageValue(key: string) {
   return typeof localStorage === 'undefined' ? null : localStorage.getItem(key)
 }
 
-export function loadCurrentCarts(storageValue?: string | null, migrationApplied?: boolean): LuminaireCart[] {
+function browserStorageSet(key: string, value: string) {
+  if (typeof localStorage !== 'undefined') localStorage.setItem(key, value)
+}
+
+export function loadCurrentCarts(
+  storageValue?: string | null,
+  migrationApplied?: boolean,
+  ghbMigrationApplied?: boolean,
+): LuminaireCart[] {
+  const browserMode = storageValue === undefined
+
   try {
-    const raw = storageValue === undefined ? browserStorageValue(cartsStorageKey) : storageValue
-    if (!raw) return defaultCarts
+    const raw = browserMode ? browserStorageValue(cartsStorageKey) : storageValue
+    if (!raw) {
+      if (browserMode) browserStorageSet(cartGhbMigrationKey, '1')
+      return defaultCarts
+    }
 
     const parsed = JSON.parse(raw) as LuminaireCart[]
-    if (!Array.isArray(parsed) || !parsed.length) return defaultCarts
+    if (!Array.isArray(parsed) || !parsed.length) {
+      if (browserMode) browserStorageSet(cartGhbMigrationKey, '1')
+      return defaultCarts
+    }
 
-    const normalized = normalizeCarts(parsed)
+    let normalized = normalizeCarts(parsed)
+
     const alreadyMigrated = migrationApplied ?? browserStorageValue(cart016017MigrationKey) === '1'
     if (!alreadyMigrated && !normalized.some(cart => cart.id === cart016017Id)) {
-      return [...normalized, required016017]
+      normalized = [...normalized, required016017]
     }
+
+    const ghbAlreadyMigrated = ghbMigrationApplied ?? browserStorageValue(cartGhbMigrationKey) === '1'
+    if (!ghbAlreadyMigrated) {
+      if (!normalized.some(cart => cart.id === cartGhbId)) {
+        normalized = [...normalized, requiredGhb]
+      }
+      if (browserMode) {
+        browserStorageSet(cartsStorageKey, JSON.stringify(normalized))
+        browserStorageSet(cartGhbMigrationKey, '1')
+      }
+    }
+
     return normalized
   } catch {
+    if (browserMode) browserStorageSet(cartGhbMigrationKey, '1')
     return defaultCarts
   }
 }
