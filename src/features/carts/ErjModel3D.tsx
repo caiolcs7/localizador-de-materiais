@@ -20,7 +20,7 @@ function cylinder(
   return mesh
 }
 
-function buildErjModel() {
+export function buildErjModel() {
   const group = new THREE.Group()
   group.name = 'ERJ — referência visual 3D'
 
@@ -293,14 +293,14 @@ export default function ErjModel3D() {
 
   return <div className="erj-model-shell">
     <div className="erj-model-stage" ref={mountRef}>
-      {error && <div className="erj-model-error" role="status">{error}</div>}
+      {error && <div className="erj-model-error" role="status"><img src={`${import.meta.env.BASE_URL}luminarias/lum-erj-rear.webp`} alt="Vista traseira da luminária ERJ"/><span>{error}</span></div>}
       {!error && <div className="erj-model-hint">Arraste para girar · pinça ou roda para aproximar</div>}
     </div>
-    <div className="erj-model-controls" aria-label="Controles do modelo 3D">
+    {!error && <div className="erj-model-controls" aria-label="Controles do modelo 3D">
       <button type="button" onClick={() => rotate(-1)} aria-label="Girar modelo para a esquerda">← Girar</button>
       <button type="button" onClick={() => setAutoRotate(value => !value)}>{autoRotate ? 'Pausar rotação' : 'Rotação automática'}</button>
       <button type="button" onClick={reset}>Restaurar vista</button>
       <button type="button" onClick={() => rotate(1)} aria-label="Girar modelo para a direita">Girar →</button>
-    </div>
+    </div>}
   </div>
 }
