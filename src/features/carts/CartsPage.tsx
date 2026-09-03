@@ -188,7 +188,7 @@ export function CartsPage({ inventory, onOpenInventoryCode, onBackHome, onRefres
         </div>
       </section>}
 
-      {selected&&selectedImages.length>0&&!selectedIsErj&&<LuminaireImageCarousel images={selectedImages} luminaireName={selected.nome} onOpen={(src,label)=>setPhotoViewer({src,label})}/>}
+      {selected&&selectedImages.length>0&&!selectedIsErj&&<LuminaireImageCarousel key={selected.id} images={selectedImages} luminaireName={selected.nome} onOpen={(src,label)=>setPhotoViewer({src,label})}/>}
 
       <div className="carts-controls"><div className="sync-note"><MapPin size={16}/><div><b>Bombonas sincronizadas automaticamente</b><span>Ao editar a bombona/endereço de um código no Localizador, o Carrinho passa a mostrar a nova localização sem duplicar dados.</span></div></div><div className="table-search cart-search"><Search size={18}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Buscar código ou descritivo no carrinho"/></div></div>
 

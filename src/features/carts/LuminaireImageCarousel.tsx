@@ -16,6 +16,18 @@ type MouseDragState = {
 
 const DESKTOP_MAX_IMAGE_HEIGHT = 500
 const MAX_CAROUSEL_WIDTH = 1080
+const DEFAULT_CAROUSEL_RATIO = 16 / 10
+
+export function resolveCarouselFrameRatio(imageCount: number, ratios: Record<number, number>) {
+  const validRatios = Array.from({ length: imageCount }, (_, index) => ratios[index])
+    .filter(ratio => Number.isFinite(ratio) && ratio > 0)
+
+  // A largura do trilho precisa permanecer invariável durante a navegação.
+  // Esperamos todas as fotos e adotamos a mais larga como quadro do conjunto,
+  // mantendo as demais inteiras com object-fit: contain.
+  if (validRatios.length !== imageCount) return DEFAULT_CAROUSEL_RATIO
+  return Math.max(...validRatios)
+}
 
 export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
@@ -29,12 +41,9 @@ export function LuminaireImageCarousel({ images, luminaireName, onOpen }: Props)
     trackRef.current?.scrollTo({ left: 0, behavior: 'auto' })
   }, [images])
 
-  const activeRatio = imageRatios[activeIndex]
-  const validActiveRatio = activeRatio && Number.isFinite(activeRatio) && activeRatio > 0
-    ? activeRatio
-    : 16 / 10
-  const trackAspectRatio = String(validActiveRatio)
-  const idealWidth = Math.min(MAX_CAROUSEL_WIDTH, validActiveRatio * DESKTOP_MAX_IMAGE_HEIGHT)
+  const frameRatio = resolveCarouselFrameRatio(images.length, imageRatios)
+  const trackAspectRatio = String(frameRatio)
+  const idealWidth = Math.min(MAX_CAROUSEL_WIDTH, frameRatio * DESKTOP_MAX_IMAGE_HEIGHT)
 
   const registerImageRatio = (index: number, width: number, height: number) => {
     if (!width || !height) return

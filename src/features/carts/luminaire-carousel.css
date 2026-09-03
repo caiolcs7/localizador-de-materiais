@@ -8,6 +8,7 @@
   background:#fff;
   box-shadow:0 12px 32px rgb(15 23 42/.06);
   isolation:isolate;
+  transition:max-width .32s cubic-bezier(.22,1,.36,1),aspect-ratio .32s cubic-bezier(.22,1,.36,1);
 }
 
 .luminaire-carousel__track{
@@ -29,10 +30,9 @@
 .luminaire-carousel__track.is-dragging{cursor:grabbing;scroll-snap-type:none;scroll-behavior:auto}
 
 /*
- * O quadro acompanha a proporção real da foto e o componente limita sua
- * largura a partir de uma altura-alvo de 500px. Assim imagens quadradas ou
- * verticais não crescem demais, enquanto imagens panorâmicas mantêm o tamanho
- * visual da referência sem recorte e sem faixas artificiais.
+ * Todo o conjunto usa a proporção da imagem mais larga. A geometria deixa de
+ * mudar no meio da rolagem (o que desalinhava fotos com formatos diferentes),
+ * e object-fit preserva cada arquivo integralmente, sem recorte.
  */
 .luminaire-carousel__slide{
   position:relative;
@@ -181,6 +181,7 @@
 }
 
 @media(prefers-reduced-motion:reduce){
+  .luminaire-carousel{transition:none}
   .luminaire-carousel__track{scroll-behavior:auto}
   .luminaire-carousel__expand,.luminaire-carousel__arrow,.luminaire-carousel__progress button{transition:none}
 }
