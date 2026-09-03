@@ -1,6 +1,7 @@
 import cartsSource from '../../data/cartsData.json'
 import cart016017Source from '../../data/cart016017.json'
 import cartGhbSource from '../../data/cartGHB.json'
+import cartErvSource from '../../data/cartERV.json'
 import type { LuminaireCart } from '../../types/cart'
 import { normalizeSearch } from '../../utils/normalize'
 
@@ -9,6 +10,8 @@ export const cart016017MigrationKey = 'lm-carts-migration-016-017-v1'
 export const cart016017Id = 'luminaria-016-017'
 export const cartGhbMigrationKey = 'lm-carts-migration-ghb-v1'
 export const cartGhbId = 'luminaria-ghb'
+export const cartErvMigrationKey = 'lm-carts-migration-erv-v1'
+export const cartErvId = 'luminaria-erv'
 
 const cart948920ReplacementByCode = new Map<string, { codigo: string; descritivo: string }>([
   ['ITARLSM004AC', { codigo: 'ITARLSM004BC', descritivo: 'ARRUELA AC BICROMATIZADO LISA M4 - PESO UN: 0,00029 KG' }],
@@ -38,10 +41,12 @@ export const defaultCarts = normalizeCarts([
   ...(cartsSource as LuminaireCart[]),
   cart016017Source as LuminaireCart,
   cartGhbSource as LuminaireCart,
+  cartErvSource as LuminaireCart,
 ])
 
 const required016017 = defaultCarts.find(cart => cart.id === cart016017Id)!
 const requiredGhb = defaultCarts.find(cart => cart.id === cartGhbId)!
+const requiredErv = defaultCarts.find(cart => cart.id === cartErvId)!
 
 function browserStorageValue(key: string) {
   return typeof localStorage === 'undefined' ? null : localStorage.getItem(key)
@@ -55,19 +60,26 @@ export function loadCurrentCarts(
   storageValue?: string | null,
   migrationApplied?: boolean,
   ghbMigrationApplied?: boolean,
+  ervMigrationApplied?: boolean,
 ): LuminaireCart[] {
   const browserMode = storageValue === undefined
 
   try {
     const raw = browserMode ? browserStorageValue(cartsStorageKey) : storageValue
     if (!raw) {
-      if (browserMode) browserStorageSet(cartGhbMigrationKey, '1')
+      if (browserMode) {
+        browserStorageSet(cartGhbMigrationKey, '1')
+        browserStorageSet(cartErvMigrationKey, '1')
+      }
       return defaultCarts
     }
 
     const parsed = JSON.parse(raw) as LuminaireCart[]
     if (!Array.isArray(parsed) || !parsed.length) {
-      if (browserMode) browserStorageSet(cartGhbMigrationKey, '1')
+      if (browserMode) {
+        browserStorageSet(cartGhbMigrationKey, '1')
+        browserStorageSet(cartErvMigrationKey, '1')
+      }
       return defaultCarts
     }
 
@@ -89,9 +101,23 @@ export function loadCurrentCarts(
       }
     }
 
+    const ervAlreadyMigrated = ervMigrationApplied ?? browserStorageValue(cartErvMigrationKey) === '1'
+    if (!ervAlreadyMigrated) {
+      if (!normalized.some(cart => cart.id === cartErvId)) {
+        normalized = [...normalized, requiredErv]
+      }
+      if (browserMode) {
+        browserStorageSet(cartsStorageKey, JSON.stringify(normalized))
+        browserStorageSet(cartErvMigrationKey, '1')
+      }
+    }
+
     return normalized
   } catch {
-    if (browserMode) browserStorageSet(cartGhbMigrationKey, '1')
+    if (browserMode) {
+      browserStorageSet(cartGhbMigrationKey, '1')
+      browserStorageSet(cartErvMigrationKey, '1')
+    }
     return defaultCarts
   }
 }
