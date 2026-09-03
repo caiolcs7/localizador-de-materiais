@@ -7,6 +7,7 @@ export type MaterialVisualFamily =
   | 'serrated-washer'
   | 'retaining-ring'
   | 'pan-screw'
+  | 'cylindrical-phillips-screw'
   | 'countersunk-screw'
   | 'self-tapping-pan-screw'
   | 'self-tapping-countersunk-screw'
@@ -21,6 +22,8 @@ export type MaterialVisualFamily =
   | 'pin-terminal'
   | 'rivnut-open'
   | 'rivnut-closed'
+  | 'rivnut-smooth-open'
+  | 'rivnut-smooth-closed'
   | 'rivet-pack'
   | 'unavailable'
 
@@ -66,6 +69,11 @@ function metricSize(text: string) {
   const afterMetric = text.slice((metric.index ?? 0) + metric[0].length)
   const length = afterMetric.match(/^\s*(?:X\s*)?(\d+(?:[.,]\d+)?)\s*MM\b/)
   return length ? `M${metric[1]} × ${length[1].replace('.', ',')} mm` : `M${metric[1]}`
+}
+
+function rivnutSize(text: string) {
+  const match = text.match(/\bM\s*0?(\d+)\s*X\s*(\d+(?:[.,]\d+)?)\s*MM\b/)
+  return match ? `M${match[1]} × ${match[2].replace('.', ',')} mm` : metricSize(text)
 }
 
 function selfTappingSize(text: string) {
@@ -114,7 +122,12 @@ export function resolveMaterialVisual(code: string, description?: string | null)
     return { family: 'retaining-ring', ...finish, sizeLabel: shaft ? `Eixo Ø ${shaft[1].replace('.', ',')} mm` : null, verified: true }
   }
   if (text.includes('RIVKLE')) {
-    return { family: text.includes('FECHADO') ? 'rivnut-closed' : 'rivnut-open', ...finish, sizeLabel: metric, verified: true }
+    const closed = text.includes('FECHADO')
+    const smooth = text.includes('LISO')
+    const family: MaterialVisualFamily = smooth
+      ? closed ? 'rivnut-smooth-closed' : 'rivnut-smooth-open'
+      : closed ? 'rivnut-closed' : 'rivnut-open'
+    return { family, ...finish, sizeLabel: rivnutSize(text), verified: true }
   }
   if (text.includes('TERMINAL')) {
     const family = text.includes('OLHAL') ? 'ring-terminal' : text.includes('FEMEA') ? 'spade-terminal' : 'pin-terminal'
@@ -137,6 +150,9 @@ export function resolveMaterialVisual(code: string, description?: string | null)
     if (text.includes('ALLEN') && text.includes('ABAULADA')) return { family: 'button-socket-screw', ...finish, sizeLabel: metric, verified: true }
     if (text.includes('ALLEN')) return { family: 'socket-screw', ...finish, sizeLabel: metric, verified: true }
     if (text.includes('SEXTAVADO')) return { family: 'hex-bolt', ...finish, sizeLabel: metric, verified: true }
+    if (text.includes('PHILLIPS') && text.includes('CAB CILINDRICA')) {
+      return { family: 'cylindrical-phillips-screw', ...finish, sizeLabel: metric, verified: true }
+    }
     const selfTapping = text.includes('AUTO ATARR')
     const countersunk = text.includes('CAB ESC')
     const family = selfTapping
