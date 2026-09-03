@@ -1,0 +1,79 @@
+{
+  "id": "luminaria-erv",
+  "nome": "Luminária ERV",
+  "sourceSheet": "Luminária ERV",
+  "items": [
+    {
+      "codigo": "ITRKCHFE001",
+      "descritivo": "RIVKLE CAB CHATA, LISO, FECHADO, M5X19.3MM, AI 316, MACCOMEVAP"
+    },
+    {
+      "codigo": "ITARLSM008AI6",
+      "descritivo": "ARRUELA LISA AI M8"
+    },
+    {
+      "codigo": "ITTEOL00010",
+      "descritivo": "TERMINAL PRE ISOLADO OLHAL, 4.0MM - 6.0MM, DIM 6MM, AMARELO, REF.: TP-6-6"
+    },
+    {
+      "codigo": "ITPFPHM535CIAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB CILINDRICA AI M5 35MM"
+    },
+    {
+      "codigo": "ITPFPHM306PAAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M3 06MM - PESO UN: 0,00064 KG"
+    },
+    {
+      "codigo": "ITPFPHM410PAAI4",
+      "descritivo": "PARAFUSO AI PHILLIPS CAB PAN M4 10MM - PESO UN: 0,00152 KG"
+    },
+    {
+      "codigo": "ITPFALLM520AI4",
+      "descritivo": "PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M5 20MM - PESO UN: 0,00411 KG"
+    },
+    {
+      "codigo": "ITARLSM005AI6",
+      "descritivo": "ARRUELA LISA AI M5"
+    },
+    {
+      "codigo": "ITPFPHM406PAAI6",
+      "descritivo": "PARAF PHILLIPS CAB PAN INOX 316 M4 06MM"
+    },
+    {
+      "codigo": "ITPFALLM412AI4",
+      "descritivo": "PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M4 12MM - PESO UN: 0,00187 KG"
+    },
+    {
+      "codigo": "ITPFALLM416AI4",
+      "descritivo": "PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M4 16MM - PESO UN: 0,00213 KG"
+    },
+    {
+      "codigo": "ITRKCHAB001",
+      "descritivo": "RIVKLE CAB CHATA, SEMI SERRILHADO, ABERTO, M4X11.1MM, AI 316, MACCOMEVAP"
+    },
+    {
+      "codigo": "ITPFALLM418AI4",
+      "descritivo": "PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M4 18MM"
+    },
+    {
+      "codigo": "ITRKCHFE013",
+      "descritivo": "RIVKLE CAB CHATA, SEMI SERRILHADO, FECHADO, M4X16MM AI 316"
+    },
+    {
+      "codigo": "ITPFSEM620BC",
+      "descritivo": "PARAFUSO AC SEXTAVADO M6 20MM (BICROMATIZADO) - PESO UN: 0,00595 KG"
+    },
+    {
+      "codigo": "ITPFSEM820BC",
+      "descritivo": "PARAFUSO AC SEXTAVADO M8 20MM (BICROMATIZADO) - PESO UN: 0,01194 KG"
+    },
+    {
+      "codigo": "ITARPRM10BC",
+      "descritivo": "ARRUELA AC BICROMATIZADO PRESSAO M10 - PESO UN: 0,00214 KG"
+    },
+    {
+      "codigo": "ITARLSM010BC",
+      "descritivo": "ARRUELA AC BICROMATIZADO LISA M10 - PESO UN: 0,00285 KG"
+    }
+  ]
+}
