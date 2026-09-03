@@ -28,9 +28,6 @@ const expected = {
   'luminaria-erv': [
     'luminarias/lum-erv-hero.webp',
     'luminarias/lum-erv-front.webp',
-    'luminarias/lum-erv-profile.webp',
-    'luminarias/lum-erv-top.webp',
-    'luminarias/lum-erv-card.webp',
   ],
   'luminaria-ghb': [
     'luminarias/lum-ghb-profile.webp',
