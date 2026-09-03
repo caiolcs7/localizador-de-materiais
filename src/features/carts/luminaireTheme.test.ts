@@ -42,6 +42,12 @@ describe('getLuminaireTheme', () => {
     })
   })
 
+  it('keeps ERV in the requested dark-red identity', () => {
+    expect(getLuminaireTheme('Luminária ERV')).toMatchObject({
+      shortLabel: 'ERV', primary: '#8c1720', secondary: '#44070c', text: '#ffffff',
+    })
+  })
+
   it('creates a stable neutral label for a custom cart', () => {
     const theme = getLuminaireTheme('Luminária XYZ')
     expect(theme.shortLabel).toBe('XYZ')
