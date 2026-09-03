@@ -14,7 +14,7 @@ describe('material visual catalog', () => {
       }
     }
 
-    expect(expected.size).toBe(102)
+    expect(expected.size).toBe(114)
     expect(describedMaterials.size).toBe(expected.size)
     for (const [code, description] of expected) {
       expect(getMaterialDescription(code)).toBe(description)
@@ -64,6 +64,27 @@ describe('material visual catalog', () => {
     })
     expect(resolveMaterialVisual('ITLGHB00078')).toMatchObject({
       family: 'unavailable', verified: false,
+    })
+  })
+
+  it('classifies the photographed ERV hardware without inventing geometry', () => {
+    expect(resolveMaterialVisual('ITPFALLM418AI4')).toMatchObject({
+      family: 'socket-screw', finish: 'stainless', verified: true,
+    })
+    expect(resolveMaterialVisual('ITPFSEM820BC')).toMatchObject({
+      family: 'hex-bolt', finish: 'bichromate', verified: true,
+    })
+    expect(resolveMaterialVisual('ITTEOL00010')).toMatchObject({
+      family: 'ring-terminal', finish: 'yellow', verified: true,
+    })
+    expect(resolveMaterialVisual('ITPFPHM535CIAI4')).toMatchObject({
+      family: 'cylindrical-phillips-screw', finish: 'stainless', verified: true,
+    })
+    expect(resolveMaterialVisual('ITRKCHFE001')).toMatchObject({
+      family: 'rivnut-smooth-closed', finish: 'stainless', sizeLabel: 'M5 × 19,3 mm', verified: true,
+    })
+    expect(resolveMaterialVisual('ITRKCHFE013')).toMatchObject({
+      family: 'rivnut-closed', finish: 'stainless', sizeLabel: 'M4 × 16 mm', verified: true,
     })
   })
 })
