@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { LuminaireCart } from '../../types/cart'
-import { cart016017Id, cartGhbId, defaultCarts, loadCurrentCarts } from './cartData'
+import { cart016017Id, cartErvId, cartGhbId, defaultCarts, loadCurrentCarts } from './cartData'
 
 describe('cart default data and migration', () => {
   it('ships 016/017 with its ten photographed materials', () => {
@@ -55,21 +55,59 @@ describe('cart default data and migration', () => {
     ])
   })
 
+  it('ships ERV with the 18 unique photographed codes', () => {
+    const cart = defaultCarts.find(item => item.id === cartErvId)
+    const codes = cart?.items.map(item => item.codigo) ?? []
+
+    expect(cart).toMatchObject({ nome: 'Luminária ERV', sourceSheet: 'Luminária ERV' })
+    expect(codes).toHaveLength(18)
+    expect(new Set(codes).size).toBe(18)
+    expect(codes).toEqual([
+      'ITRKCHFE001',
+      'ITARLSM008AI6',
+      'ITTEOL00010',
+      'ITPFPHM535CIAI4',
+      'ITPFPHM306PAAI4',
+      'ITPFPHM410PAAI4',
+      'ITPFALLM520AI4',
+      'ITARLSM005AI6',
+      'ITPFPHM406PAAI6',
+      'ITPFALLM412AI4',
+      'ITPFALLM416AI4',
+      'ITRKCHAB001',
+      'ITPFALLM418AI4',
+      'ITRKCHFE013',
+      'ITPFSEM620BC',
+      'ITPFSEM820BC',
+      'ITARPRM10BC',
+      'ITARLSM010BC',
+    ])
+  })
+
   it('adds 016/017 once to data saved before this release', () => {
     const oldCart: LuminaireCart = { id: 'existing', nome: 'Existente', sourceSheet: 'Existente', items: [] }
-    const migrated = loadCurrentCarts(JSON.stringify([oldCart]), false, true)
+    const migrated = loadCurrentCarts(JSON.stringify([oldCart]), false, true, true)
     expect(migrated.map(cart => cart.id)).toEqual(['existing', cart016017Id])
 
-    const afterUserDeletion = loadCurrentCarts(JSON.stringify([oldCart]), true, true)
+    const afterUserDeletion = loadCurrentCarts(JSON.stringify([oldCart]), true, true, true)
     expect(afterUserDeletion.map(cart => cart.id)).toEqual(['existing'])
   })
 
   it('adds GHB once to data saved before this release', () => {
     const oldCart: LuminaireCart = { id: 'existing', nome: 'Existente', sourceSheet: 'Existente', items: [] }
-    const migrated = loadCurrentCarts(JSON.stringify([oldCart]), true, false)
+    const migrated = loadCurrentCarts(JSON.stringify([oldCart]), true, false, true)
     expect(migrated.map(cart => cart.id)).toEqual(['existing', cartGhbId])
 
-    const afterUserDeletion = loadCurrentCarts(JSON.stringify([oldCart]), true, true)
+    const afterUserDeletion = loadCurrentCarts(JSON.stringify([oldCart]), true, true, true)
+    expect(afterUserDeletion.map(cart => cart.id)).toEqual(['existing'])
+  })
+
+  it('adds ERV once to data saved before this release', () => {
+    const oldCart: LuminaireCart = { id: 'existing', nome: 'Existente', sourceSheet: 'Existente', items: [] }
+    const migrated = loadCurrentCarts(JSON.stringify([oldCart]), true, true, false)
+    expect(migrated.map(cart => cart.id)).toEqual(['existing', cartErvId])
+
+    const afterUserDeletion = loadCurrentCarts(JSON.stringify([oldCart]), true, true, true)
     expect(afterUserDeletion.map(cart => cart.id)).toEqual(['existing'])
   })
 })
