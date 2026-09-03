@@ -4,6 +4,7 @@ const carts = [
   ...JSON.parse(fs.readFileSync(new URL('../src/data/cartsData.json', import.meta.url), 'utf8')),
   JSON.parse(fs.readFileSync(new URL('../src/data/cart016017.json', import.meta.url), 'utf8')),
   JSON.parse(fs.readFileSync(new URL('../src/data/cartGHB.json', import.meta.url), 'utf8')),
+  JSON.parse(fs.readFileSync(new URL('../src/data/cartERV.json', import.meta.url), 'utf8')),
 ]
 const assert = (condition, message) => { if (!condition) throw new Error(message) }
 
@@ -21,6 +22,7 @@ const expectedCounts = new Map([
   ['Luminária CAS', 9],
   ['Luminária 016/017', 10],
   ['Luminária GHB', 23],
+  ['Luminária ERV', 18],
 ])
 
 const allowedDuplicateCounts = new Map([
@@ -28,7 +30,7 @@ const allowedDuplicateCounts = new Map([
 ])
 
 assert(Array.isArray(carts), 'cartsData.json precisa ser uma lista')
-assert(carts.length === 13, `Esperadas 13 luminárias; encontradas ${carts.length}`)
+assert(carts.length === 14, `Esperadas 14 luminárias; encontradas ${carts.length}`)
 assert(new Set(carts.map(cart => cart.id)).size === carts.length, 'Há IDs de luminária duplicados')
 
 let total = 0
@@ -61,8 +63,8 @@ for (const cart of carts) {
   }
 }
 
-assert(total === 191, `Esperadas 191 relações luminária/material; encontradas ${total}`)
-assert(allCodes.size === 102, `Esperados 102 códigos distintos; encontrados ${allCodes.size}`)
+assert(total === 209, `Esperadas 209 relações luminária/material; encontradas ${total}`)
+assert(allCodes.size === 114, `Esperados 114 códigos distintos; encontrados ${allCodes.size}`)
 
 const has = (sheet, code) => carts.some(cart => cart.sourceSheet === sheet && cart.items.some(item => item.codigo === code))
 assert(has('Luminária AVF', 'ITPFPHM410PAAI6'), 'AVF sem ITPFPHM410PAAI6')
@@ -131,4 +133,32 @@ for (const [code, description] of expectedGhb) {
   assert(cartGhb.items.some(item => item.codigo === code && item.descritivo === description), `Carrinho GHB sem dados exatos de ${code}`)
 }
 
-console.log(`OK: 13 luminárias; 191 relações; 102 códigos distintos; carrinhos 016/017 e GHB e substituições validados.`)
+const cartErv = carts.find(cart => cart.sourceSheet === 'Luminária ERV')
+assert(cartErv?.id === 'luminaria-erv' && cartErv?.nome === 'Luminária ERV', 'Carrinho ERV ausente ou com metadados incorretos')
+const expectedErv = new Map([
+  ['ITRKCHFE001', 'RIVKLE CAB CHATA, LISO, FECHADO, M5X19.3MM, AI 316, MACCOMEVAP'],
+  ['ITARLSM008AI6', 'ARRUELA LISA AI M8'],
+  ['ITTEOL00010', 'TERMINAL PRE ISOLADO OLHAL, 4.0MM - 6.0MM, DIM 6MM, AMARELO, REF.: TP-6-6'],
+  ['ITPFPHM535CIAI4', 'PARAFUSO AI PHILLIPS CAB CILINDRICA AI M5 35MM'],
+  ['ITPFPHM306PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M3 06MM - PESO UN: 0,00064 KG'],
+  ['ITPFPHM410PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M4 10MM - PESO UN: 0,00152 KG'],
+  ['ITPFALLM520AI4', 'PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M5 20MM - PESO UN: 0,00411 KG'],
+  ['ITARLSM005AI6', 'ARRUELA LISA AI M5'],
+  ['ITPFPHM406PAAI6', 'PARAF PHILLIPS CAB PAN INOX 316 M4 06MM'],
+  ['ITPFALLM412AI4', 'PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M4 12MM - PESO UN: 0,00187 KG'],
+  ['ITPFALLM416AI4', 'PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M4 16MM - PESO UN: 0,00213 KG'],
+  ['ITRKCHAB001', 'RIVKLE CAB CHATA, SEMI SERRILHADO, ABERTO, M4X11.1MM, AI 316, MACCOMEVAP'],
+  ['ITPFALLM418AI4', 'PARAFUSO AI 304 ALLEN CAB CILINDRICA INOX 304 M4 18MM'],
+  ['ITRKCHFE013', 'RIVKLE CAB CHATA, SEMI SERRILHADO, FECHADO, M4X16MM AI 316'],
+  ['ITPFSEM620BC', 'PARAFUSO AC SEXTAVADO M6 20MM (BICROMATIZADO) - PESO UN: 0,00595 KG'],
+  ['ITPFSEM820BC', 'PARAFUSO AC SEXTAVADO M8 20MM (BICROMATIZADO) - PESO UN: 0,01194 KG'],
+  ['ITARPRM10BC', 'ARRUELA AC BICROMATIZADO PRESSAO M10 - PESO UN: 0,00214 KG'],
+  ['ITARLSM010BC', 'ARRUELA AC BICROMATIZADO LISA M10 - PESO UN: 0,00285 KG'],
+])
+assert(expectedErv.size === 18, `ERV: esperados 18 códigos únicos; encontrados ${expectedErv.size}`)
+assert(new Set(cartErv.items.map(item => item.codigo)).size === 18, 'ERV contém código duplicado')
+for (const [code, description] of expectedErv) {
+  assert(cartErv.items.some(item => item.codigo === code && item.descritivo === description), `Carrinho ERV sem dados exatos de ${code}`)
+}
+
+console.log(`OK: 14 luminárias; 209 relações; 114 códigos distintos; carrinhos 016/017, GHB e ERV e substituições validados.`)
