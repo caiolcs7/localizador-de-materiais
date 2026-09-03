@@ -1,6 +1,6 @@
 # Localizador de Materiais
 
-PWA interna para localizar materiais por código, bombona ou endereço físico. A base inicial foi gerada a partir de `PLANILHAS_UNIFICADAS_POR_CODIGO(2).xlsx` e contém 633 registros.
+PWA interna para localizar materiais por código, bombona ou endereço físico. A base inicial foi gerada a partir de `PLANILHAS_UNIFICADAS_POR_CODIGO(2).xlsx` e contém 633 registros. A aba **Calculadora** integra o cálculo industrial por tara ao mesmo aplicativo.
 
 ## Stack
 
@@ -10,6 +10,12 @@ PWA interna para localizar materiais por código, bombona ou endereço físico. 
 - PWA via vite-plugin-pwa / Workbox
 - Lucide Icons
 - Vitest para regras críticas
+
+## Calculadora industrial
+
+A calculadora usa a fórmula `((peso bruto - tara) × 1000 ÷ gramatura) × rendimento`, com rendimento padrão de 95% e truncamento para unidades completas. Inclui Bombona Azul (6,400 kg), Bombona Marrom (9,200 kg), Caixa Vermelha (3,000 kg) e Galão (1,000 kg), histórico manual, identificação por produto e endereço, revisão auditada e configurações administrativas.
+
+O estado permanece compatível com o armazenamento local do BombonaCalc 4.2.1. O histórico da calculadora é independente da base de materiais em IndexedDB.
 
 ## Rodar em desenvolvimento
 
@@ -28,7 +34,7 @@ Abra o endereço indicado pelo Vite. Para testar câmera em celular fora de `loc
 npm test
 ```
 
-Os testes cobrem busca exata, múltiplas localizações, equivalência AI4/AI6, case-insensitive, bloqueio de BC↔AI4 e sugestão sem autoaceite.
+Os testes cobrem busca exata, múltiplas localizações, equivalência AI4/AI6, case-insensitive, bloqueio de BC↔AI4, sugestão sem autoaceite, fórmula da calculadora, leitura decimal, migração/persistência do histórico e expiração da sessão administrativa.
 
 ## Build de produção
 

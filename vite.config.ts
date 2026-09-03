@@ -21,6 +21,7 @@ export default defineConfig({
       includeAssets: [
         'icons/icon-192.png',
         'icons/icon-512.png',
+        'calculator-logo.png',
         'luminarias/lum-010.webp',
         'luminarias/lum-016-hero.webp',
         'luminarias/lum-016-profile.webp',
