@@ -39,11 +39,17 @@ const oldReferenceBlock = `      {selected&&selectedImage&&!selectedIsErj&&<div 
       </div>}
 `
 
-const newReferenceBlock = `      {selected&&selectedImages.length>0&&!selectedIsErj&&<LuminaireImageCarousel images={selectedImages} luminaireName={selected.nome} onOpen={(src,label)=>setPhotoViewer({src,label})}/>}
+const previousCarouselBlock = `      {selected&&selectedImages.length>0&&!selectedIsErj&&<LuminaireImageCarousel images={selectedImages} luminaireName={selected.nome} onOpen={(src,label)=>setPhotoViewer({src,label})}/>}
+`
+
+const newReferenceBlock = `      {selected&&selectedImages.length>0&&!selectedIsErj&&<LuminaireImageCarousel key={selected.id} images={selectedImages} luminaireName={selected.nome} onOpen={(src,label)=>setPhotoViewer({src,label})}/>}
 `
 
 if (source.includes(oldReferenceBlock)) {
   source = source.replace(oldReferenceBlock, newReferenceBlock)
+  changed = true
+} else if (source.includes(previousCarouselBlock)) {
+  source = source.replace(previousCarouselBlock, newReferenceBlock)
   changed = true
 } else if (!source.includes(newReferenceBlock)) {
   throw new Error('Legacy luminaire reference/gallery block not found.')
