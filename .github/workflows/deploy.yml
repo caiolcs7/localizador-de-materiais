@@ -1,4 +1,4 @@
-name: Build GitHub Pages into main
+name: Quality checks
 
 on:
   push:
@@ -6,15 +6,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: pages-build
+  group: quality-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[pages-build]')
     runs-on: ubuntu-latest
 
     steps:
@@ -30,19 +29,7 @@ jobs:
           package-manager-cache: false
 
       - name: Instalar dependências
-        run: npm install --no-audit --no-fund
-
-      - name: Aplicar botão de edição no final da página
-        run: node scripts/apply-carts-unlock-footer.mjs
-
-      - name: Atualizar materiais da luminária 948/920
-        run: node scripts/apply-948-920-material-update.mjs
-
-      - name: Mostrar luminárias dentro dos resultados
-        run: node scripts/move-cart-memberships-into-results.mjs
-
-      - name: Aplicar carrossel das luminárias
-        run: node scripts/apply-luminaire-carousel.mjs
+        run: npm ci --no-audit --no-fund
 
       - name: Validar base inicial
         run: npm run verify:data
@@ -59,28 +46,5 @@ jobs:
       - name: Executar testes automatizados
         run: npm test
 
-      - name: Restaurar entrada fonte do Vite
-        run: cp index.source.html index.html
-
       - name: Gerar build do Vite
         run: npm run build
-
-      - name: Publicar build na raiz da main
-        shell: bash
-        run: |
-          rm -rf assets
-          rm -f manifest.webmanifest registerSW.js sw.js workbox-*.js .nojekyll
-          cp -R dist/* ./
-          touch .nojekyll
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-
-          if git diff --cached --quiet; then
-            echo "Nenhuma alteração no build."
-            exit 0
-          fi
-
-          git commit -m "chore: publish Vite build [pages-build]"
-          git push origin HEAD:main

@@ -12,8 +12,8 @@ type Props = {
   items: InventoryLocation[]
   carts: LuminaireCart[]
   equivalent?: boolean
-  onEdit: (item: InventoryLocation) => void
-  onDelete: (item: InventoryLocation) => void
+  onEdit?: (item: InventoryLocation) => void
+  onDelete?: (item: InventoryLocation) => void
   onCopy: (value: string) => void
 }
 
@@ -71,8 +71,8 @@ export function ResultCards({ items, carts, equivalent, onEdit, onDelete, onCopy
           </div>
           <div className="result-actions">
             <button title="Copiar localização" onClick={() => onCopy(`${item.codigo} | ${item.bombona} | ${item.endereco}`)}><Copy size={17}/></button>
-            <button title="Editar" onClick={() => onEdit(item)}><Edit3 size={17}/></button>
-            <button title="Excluir" onClick={() => onDelete(item)}><Trash2 size={17}/></button>
+            {onEdit && <button title="Editar" onClick={() => onEdit(item)}><Edit3 size={17}/></button>}
+            {onDelete && <button title="Excluir" onClick={() => onDelete(item)}><Trash2 size={17}/></button>}
           </div>
         </article>
       })}
