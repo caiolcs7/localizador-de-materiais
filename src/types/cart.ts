@@ -7,6 +7,7 @@ export type CartItem = {
   observacoes?: string | null
   categoria?: string | null
   linhaOrigem?: number | null
+  version?: number
 }
 
 export type LuminaireCart = {
@@ -14,4 +15,6 @@ export type LuminaireCart = {
   nome: string
   sourceSheet: string
   items: CartItem[]
+  sortOrder?: number
+  version?: number
 }

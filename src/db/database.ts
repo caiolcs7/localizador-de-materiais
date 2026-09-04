@@ -1,7 +1,5 @@
 import Dexie, { type Table } from 'dexie'
 import type { InventoryLocation } from '../types/inventory'
-import seed from '../data/seedInventory.json'
-import moniqueAdditions from '../data/moniqueAdditions.json'
 import { formatBombona, normalizeSearch } from '../utils/normalize'
 
 class InventoryDB extends Dexie {
@@ -21,7 +19,11 @@ export const db = new InventoryDB()
 const codeSet = (record: InventoryLocation) =>
   new Set([record.codigo, ...(record.aliases ?? [])].map(normalizeSearch))
 
-export async function ensureSeeded() {
+export async function ensureLocalFallbackSeeded() {
+  const [{ default: seed }, { default: moniqueAdditions }] = await Promise.all([
+    import('../data/seedInventory.json'),
+    import('../data/moniqueAdditions.json'),
+  ])
   const seeded = await db.meta.get('seeded-v1')
   if (!seeded) {
     const count = await db.locations.count()
@@ -67,4 +69,12 @@ export async function ensureSeeded() {
     if (missing.length) await db.locations.bulkAdd(missing)
     await db.meta.put({ key: 'monique-luminarias-v1', value: { expected: additions.length, added: missing.length } })
   }
+}
+
+export async function replaceInventoryCache(records: InventoryLocation[]) {
+  await db.transaction('rw', db.locations, db.meta, async () => {
+    await db.locations.clear()
+    await db.locations.bulkPut(records)
+    await db.meta.put({ key: 'supabase-last-sync', value: new Date().toISOString() })
+  })
 }

@@ -14,6 +14,8 @@ export interface InventoryLocation {
   grupo?: string | null
   arquivoOrigem?: string | null
   registroTipo?: string | null
+  duplicateOverride?: boolean
+  version?: number
   criadoEm: string
   atualizadoEm: string
 }

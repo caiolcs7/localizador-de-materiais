@@ -11,9 +11,11 @@
     "test": "vitest run",
     "verify:data": "node scripts/verify-seed.mjs",
     "verify:carts": "node scripts/verify-carts.mjs",
-    "verify:luminaire-images": "node scripts/verify-luminaire-images.mjs"
+    "verify:luminaire-images": "node scripts/verify-luminaire-images.mjs",
+    "db:seed:generate": "node scripts/generate-supabase-seed.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.115.0",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "dexie": "^4.0.10",

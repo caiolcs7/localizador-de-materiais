@@ -4,7 +4,6 @@ import {
   Calculator,
   Clipboard,
   Eye,
-  Lock,
   Pencil,
   Play,
   Plus,
@@ -14,15 +13,8 @@ import {
   Settings,
   Trash2,
   Undo2,
-  Unlock,
   X,
 } from 'lucide-react'
-import {
-  closeCalculatorAdminSession,
-  isCalculatorAdminSessionActive,
-  openCalculatorAdminSession,
-  validateCalculatorAdminPin,
-} from './calculatorAdmin'
 import {
   CALCULATOR_APP_VERSION,
   CALCULATOR_FORMULA_VERSION,
@@ -61,7 +53,6 @@ type ModalState =
   | { type: 'save' }
   | { type: 'edit'; record: CalculatorHistoryRecord }
   | { type: 'details'; record: CalculatorHistoryRecord }
-  | { type: 'pin' }
   | { type: 'clear-history' }
   | null
 
@@ -73,6 +64,7 @@ interface NotificationState {
 
 interface CalculatorPageProps {
   onBackHome: () => void
+  isAdmin?: boolean
 }
 
 function uppercase(value: string): string {
@@ -129,7 +121,7 @@ function validateAdministration(
   return null
 }
 
-export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
+export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProps) {
   const initial = useMemo(loadInitialState, [])
   const [state, setState] = useState(initial.state)
   const [storageError] = useState(initial.error)
@@ -149,9 +141,6 @@ export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
   const [editAddress, setEditAddress] = useState('')
   const [editQuantity, setEditQuantity] = useState('')
   const [editError, setEditError] = useState('')
-  const [pin, setPin] = useState('')
-  const [pinError, setPinError] = useState('')
-  const [adminUnlocked, setAdminUnlocked] = useState(isCalculatorAdminSessionActive)
   const [adminContainers, setAdminContainers] = useState<CalculatorContainer[]>(state.recipientes)
   const [adminYieldPercentage, setAdminYieldPercentage] = useState(state.configuracoes.taxaRendimento * 100)
   const [adminRounding, setAdminRounding] = useState<RoundingPolicy>(state.configuracoes.politicaArredondamento)
@@ -189,14 +178,6 @@ export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
     const timeout = window.setTimeout(() => setNotification(null), notification.action ? 6000 : 3200)
     return () => window.clearTimeout(timeout)
   }, [notification])
-
-  useEffect(() => {
-    if (!adminUnlocked) return
-    const interval = window.setInterval(() => {
-      if (!isCalculatorAdminSessionActive()) setAdminUnlocked(false)
-    }, 15000)
-    return () => window.clearInterval(interval)
-  }, [adminUnlocked])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -380,9 +361,7 @@ export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
 
   const openSettings = () => {
     setSettingsOpen(true)
-    const unlocked = isCalculatorAdminSessionActive()
-    setAdminUnlocked(unlocked)
-    if (unlocked) {
+    if (isAdmin) {
       setAdminContainers(state.recipientes.map(container => ({ ...container })))
       setAdminYieldPercentage(state.configuracoes.taxaRendimento * 100)
       setAdminRounding(state.configuracoes.politicaArredondamento)
@@ -390,30 +369,9 @@ export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const requestAdminUnlock = () => {
-    setPin('')
-    setPinError('')
-    setModal({ type: 'pin' })
-  }
-
-  const submitPin = async () => {
-    if (!await validateCalculatorAdminPin(pin)) {
-      setPinError('PIN incorreto.')
-      return
-    }
-    openCalculatorAdminSession()
-    setAdminUnlocked(true)
-    setAdminContainers(state.recipientes.map(container => ({ ...container })))
-    setAdminYieldPercentage(state.configuracoes.taxaRendimento * 100)
-    setAdminRounding(state.configuracoes.politicaArredondamento)
-    setModal(null)
-    notify('Administração desbloqueada por 10 minutos.')
-  }
-
   const ensureAdminSession = (): boolean => {
-    if (isCalculatorAdminSessionActive()) return true
-    setAdminUnlocked(false)
-    requestAdminUnlock()
+    if (isAdmin) return true
+    notify('Esta alteração está disponível somente na área administrativa.')
     return false
   }
 
@@ -480,13 +438,6 @@ export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
     notify('Histórico apagado.')
   }
 
-  const lockAdministration = () => {
-    closeCalculatorAdminSession()
-    setAdminUnlocked(false)
-    setAdminError('')
-    notify('Administração bloqueada.')
-  }
-
   if (settingsOpen) {
     return <section className="calculator-page calculator-settings-page">
       <div className="calculator-page-heading">
@@ -509,15 +460,12 @@ export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
           </label>
         </section>
 
-        <section className="calculator-card">
+        {isAdmin&&<section className="calculator-card">
           <div className="calculator-section-title">
-            <div><h3>Administração</h3><p>Taras, fórmula e histórico exigem o PIN administrativo.</p></div>
-            <span className={`calculator-admin-status ${adminUnlocked ? 'unlocked' : ''}`}>{adminUnlocked ? 'Liberado' : 'Bloqueado'}</span>
+            <div><h3>Administração</h3><p>Taras, fórmula e histórico disponíveis nesta área autenticada.</p></div>
+            <span className="calculator-admin-status unlocked">Liberado</span>
           </div>
-          {!adminUnlocked ? <div className="calculator-admin-locked">
-            <Lock size={20}/><p>Desbloqueie para editar recipientes, rendimento, arredondamento e dados locais.</p>
-            <button className="secondary-button" type="button" onClick={requestAdminUnlock}><Unlock size={16}/>Desbloquear administração</button>
-          </div> : <div className="calculator-admin-content">
+          <div className="calculator-admin-content">
             <div className="calculator-admin-subhead"><div><h4>Recipientes</h4><p>Ao menos um recipiente deve permanecer ativo.</p></div><button className="secondary-button" type="button" onClick={addAdminContainer}><Plus size={16}/>Adicionar</button></div>
             <div className="calculator-container-editor">
               {adminContainers.map(container => <div className="calculator-container-editor-row" key={container.id}>
@@ -536,11 +484,10 @@ export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
             <div className="calculator-admin-actions">
               <button className="primary-button" type="button" onClick={saveAdministration}><Save size={16}/>Salvar alterações</button>
               <button className="secondary-button" type="button" onClick={restoreDefaults}><RotateCcw size={16}/>Restaurar padrões</button>
-              <button className="calculator-text-button" type="button" onClick={lockAdministration}><Lock size={15}/>Bloquear</button>
             </div>
             <div className="calculator-danger-zone"><div><strong>Histórico local</strong><p>Apaga todos os registros salvos neste dispositivo.</p></div><button type="button" onClick={() => { if (ensureAdminSession()) setModal({ type: 'clear-history' }) }}><Trash2 size={16}/>Apagar histórico</button></div>
-          </div>}
-        </section>
+          </div>
+        </section>}
 
         <section className="calculator-card calculator-system-info">
           <div className="calculator-section-title"><div><h3>Sistema</h3></div></div>
@@ -573,13 +520,6 @@ export function CalculatorPage({ onBackHome }: CalculatorPageProps) {
 
     if (modal.type === 'details') return <CalculatorModal title="Detalhes do cálculo" wide onClose={close}>
       <CalculatorRecordDetails record={modal.record}/>
-    </CalculatorModal>
-
-    if (modal.type === 'pin') return <CalculatorModal title="PIN administrativo" onClose={close}>
-      <p>Digite o PIN para acessar as configurações protegidas.</p>
-      <div className="calculator-modal-fields"><label><span>PIN</span><input autoFocus type="password" inputMode="numeric" maxLength={8} value={pin} onChange={event => setPin(event.target.value.replace(/\D/g, ''))} onKeyDown={event => { if (event.key === 'Enter') void submitPin() }}/></label></div>
-      {pinError && <div className="calculator-form-error">{pinError}</div>}
-      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="primary-button" type="button" onClick={() => void submitPin()}>Desbloquear</button></div>
     </CalculatorModal>
 
     return <CalculatorModal title="Apagar histórico" onClose={close}>
