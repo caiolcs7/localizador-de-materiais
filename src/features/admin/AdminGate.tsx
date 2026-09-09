@@ -7,6 +7,40 @@ type Props = {
   children: (session: Session, logout: () => Promise<void>) => ReactNode
 }
 
+type AdminLoginFormProps = {
+  email: string
+  password: string
+  error: string
+  busy: boolean
+  onEmailChange: (value: string) => void
+  onPasswordChange: (value: string) => void
+  onSubmit: (event: React.FormEvent) => void
+}
+
+export function AdminLoginForm({ email, password, error, busy, onEmailChange, onPasswordChange, onSubmit }: AdminLoginFormProps) {
+  return <main className="admin-login-page">
+    <section className="admin-login-shell" aria-labelledby="admin-login-title">
+      <form className="admin-login-form" onSubmit={onSubmit}>
+        <div className="admin-login-title" id="admin-login-title">
+          Bem Vindo!
+          <span>faça login para continuar.</span>
+        </div>
+        <label className="admin-login-field">
+          <span>E-mail</span>
+          <input autoFocus className="admin-login-input" type="email" autoComplete="username" required value={email} onChange={event => onEmailChange(event.target.value)} placeholder="Email" aria-describedby={error?'admin-login-error':undefined}/>
+        </label>
+        <label className="admin-login-field">
+          <span>Senha</span>
+          <input className="admin-login-input" type="password" autoComplete="current-password" required minLength={8} maxLength={72} value={password} onChange={event => onPasswordChange(event.target.value)} placeholder="Senha" aria-describedby={error?'admin-login-error':undefined}/>
+        </label>
+        {error && <div className="admin-login-error" id="admin-login-error" role="alert">{error}</div>}
+        <button className="admin-login-confirm" type="submit" disabled={busy} aria-label={busy?'Entrando':'Entrar'}>{busy?<span>Entrando…</span>:<span aria-hidden="true">→</span>}</button>
+      </form>
+      <a href="/">Voltar para o Localizador público</a>
+    </section>
+  </main>
+}
+
 async function validateAdministrator(session: Session | null) {
   if (!session) return null
   const client = requireSupabase()
@@ -82,25 +116,13 @@ export function AdminGate({ children }: Props) {
   if (checking) return <div className="admin-loading">Validando acesso administrativo…</div>
   if (session) return <>{children(session, logout)}</>
 
-  return <main className="admin-login-page">
-    <section className="admin-login-shell" aria-labelledby="admin-login-title">
-      <form className="admin-login-form" onSubmit={login}>
-        <div className="admin-login-title" id="admin-login-title">
-          Bem-vindo!
-          <span>Faça login para continuar.</span>
-        </div>
-        <label className="admin-login-field">
-          <span>E-mail</span>
-          <input autoFocus className="admin-login-input" type="email" autoComplete="username" required value={email} onChange={event => { setEmail(event.target.value); setError('') }} placeholder="E-mail"/>
-        </label>
-        <label className="admin-login-field">
-          <span>Senha</span>
-          <input className="admin-login-input" type="password" autoComplete="current-password" required minLength={8} maxLength={72} value={password} onChange={event => { setPassword(event.target.value); setError('') }} placeholder="Senha"/>
-        </label>
-        {error && <div className="admin-login-error" role="alert">{error}</div>}
-        <button className="admin-login-confirm" type="submit" disabled={busy} aria-label={busy ? 'Entrando' : 'Entrar'}>{busy ? <span>Entrando…</span> : <span aria-hidden="true">→</span>}</button>
-      </form>
-      <a href="/">Voltar para o Localizador público</a>
-    </section>
-  </main>
+  return <AdminLoginForm
+    email={email}
+    password={password}
+    error={error}
+    busy={busy}
+    onEmailChange={value=>{setEmail(value);setError('')}}
+    onPasswordChange={value=>{setPassword(value);setError('')}}
+    onSubmit={login}
+  />
 }
