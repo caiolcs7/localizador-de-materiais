@@ -26,6 +26,9 @@ function stripMaterial(code: string) {
   for (const suffix of materialSuffixes) {
     if (code.endsWith(suffix)) return { body: code.slice(0, -suffix.length), material: suffix as MaterialCode }
   }
+  // Legacy/incomplete suffix AI means the inox grade digit is missing.
+  // Treat it as incomplete material data, never as the standalone complement A.
+  if (code.endsWith('AI')) return { body: code.slice(0, -2), material: null as MaterialCode | null }
   return { body: code, material: null as MaterialCode | null }
 }
 
