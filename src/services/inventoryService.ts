@@ -4,6 +4,8 @@ import { requireSupabase, supabase } from '../lib/supabase'
 import type { Database } from '../types/database'
 import type { InventoryLocation, ItemDraft, SearchResult } from '../types/inventory'
 import { equivalentAI, formatBombona, inferRua, normalizeSearch } from '../utils/normalize'
+import { getMaterialDescription } from '../features/materials/materialCatalog'
+import { matchesMaterialSearch } from '../features/materials/materialCode'
 
 type InventoryRow = Database['public']['Tables']['inventory_locations']['Row']
 
@@ -94,6 +96,14 @@ export async function searchInventory(raw: string): Promise<SearchResult> {
   if (prefix.length) return { kind: 'prefix', items: prefix.slice(0, 80) }
   const contains = all.filter(item => item.codigoNormalizado.includes(query))
   if (contains.length) return { kind: 'contains', items: contains.slice(0, 80) }
+
+  const descriptive = all.filter(item => matchesMaterialSearch(
+    item.codigo,
+    getMaterialDescription(item.codigo, item.descritivo),
+    raw,
+  ))
+  if (descriptive.length) return { kind: 'contains', items: descriptive.slice(0, 80) }
+
   if (query.length >= 5) {
     const codes = [...new Set(all.map(item => item.codigoNormalizado))]
     const scored = codes.map(code => ({ code, distance: levenshtein(query, code) })).sort((a, b) => a.distance - b.distance)

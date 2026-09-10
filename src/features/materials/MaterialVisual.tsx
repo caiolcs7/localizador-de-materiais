@@ -45,19 +45,21 @@ function washer(family: MaterialVisualFamily, fill: string, maskId: string) {
 function screw(family: MaterialVisualFamily, fill: string) {
   const countersunk = family.includes('countersunk')
   const selfTapping = family.includes('self-tapping')
+  const slotted = family.includes('slotted')
   const socket = family === 'socket-screw' || family === 'button-socket-screw'
   const button = family === 'button-socket-screw'
   const hex = family === 'hex-bolt'
-  const cylindricalPhillips = family === 'cylindrical-phillips-screw'
+  const cylindrical = family === 'cylindrical-phillips-screw' || family === 'slotted-cylindrical-screw'
   return <g>
     <path d={selfTapping ? 'M61 71H136L150 78 136 86H61Z' : 'M58 71H144V86H58Z'} fill={fill} className="material-outline"/>
     {threadLines(64, 140)}
     {hex ? <path d="M22 55l14-10h25l13 10v40L61 105H36L22 95Z" fill={fill} className="material-outline"/> :
       countersunk ? <path d="M20 53h47l-9 33H29Z" fill={fill} className="material-outline"/> :
-      (socket && !button) || cylindricalPhillips ? <path d="M24 44h40v52H24Z" rx="5" fill={fill} className="material-outline"/> :
+      (socket && !button) || cylindrical ? <path d="M24 44h40v52H24Z" fill={fill} className="material-outline"/> :
       <path d={button ? 'M18 71c1-23 13-32 29-32s28 9 29 32v15H18Z' : 'M16 65c2-22 15-31 31-31s29 9 31 31v21H16Z'} fill={fill} className="material-outline"/>}
     {hex ? <path d="M29 57h38M29 92h38" className="material-highlight"/> :
       socket ? <path d="M34 57l10-7 10 7v13l-10 7-10-7Z" className="material-drive"/> :
+      slotted ? <path d="M31 57h32" className="material-drive"/> :
       <path d="M32 57h30M47 44v27" className="material-drive"/>}
     <path d="M65 75h74" className="material-highlight"/>
   </g>

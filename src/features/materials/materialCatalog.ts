@@ -1,5 +1,6 @@
 import { normalizeSearch } from '../../utils/normalize'
 import { defaultCarts } from '../carts/cartData'
+import { inferMaterialDescription } from './materialCode'
 
 export type MaterialVisualFamily =
   | 'flat-washer'
@@ -11,6 +12,11 @@ export type MaterialVisualFamily =
   | 'countersunk-screw'
   | 'self-tapping-pan-screw'
   | 'self-tapping-countersunk-screw'
+  | 'slotted-pan-screw'
+  | 'slotted-cylindrical-screw'
+  | 'slotted-countersunk-screw'
+  | 'self-tapping-slotted-pan-screw'
+  | 'self-tapping-slotted-countersunk-screw'
   | 'socket-screw'
   | 'button-socket-screw'
   | 'hex-bolt'
@@ -49,8 +55,14 @@ for (const cart of carts) {
   }
 }
 
+function usableFallback(value?: string | null) {
+  const trimmed = value?.trim()
+  if (!trimmed || /^SALVO POR MONIQUE$/i.test(trimmed)) return null
+  return trimmed
+}
+
 export function getMaterialDescription(code: string, fallback?: string | null) {
-  return describedMaterials.get(normalizeSearch(code)) || fallback?.trim() || null
+  return describedMaterials.get(normalizeSearch(code)) || usableFallback(fallback) || inferMaterialDescription(code)
 }
 
 function normalizeDescription(value: string) {
@@ -77,7 +89,7 @@ function rivnutSize(text: string) {
 }
 
 function selfTappingSize(text: string) {
-  const match = text.match(/\b(3[.,]9|4[.,]2)\s*MM\s+(\d+(?:[.,]\d+)?)\s*MM\b/)
+  const match = text.match(/\b(\d+[.,]\d+)\s*MM\s+(\d+(?:[.,]\d+)?)\s*MM\b/)
   return match ? `Ø ${match[1].replace('.', ',')} × ${match[2].replace('.', ',')} mm` : null
 }
 
@@ -93,9 +105,16 @@ function terminalSize(text: string) {
   return parts.length ? parts.join(' · ') : null
 }
 
-function finishFor(text: string): Pick<MaterialVisualSpec, 'finish' | 'finishLabel'> {
+function finishFor(text: string, code: string): Pick<MaterialVisualSpec, 'finish' | 'finishLabel'> {
   if (text.includes('AZUL')) return { finish: 'blue', finishLabel: 'Isolação azul' }
   if (text.includes('AMARELO')) return { finish: 'yellow', finishLabel: 'Isolação amarela' }
+
+  const normalizedCode = normalizeSearch(code)
+  if (normalizedCode.endsWith('AI6')) return { finish: 'stainless', finishLabel: 'Inox 316' }
+  if (normalizedCode.endsWith('AI4')) return { finish: 'stainless', finishLabel: 'Inox 304' }
+  if (normalizedCode.endsWith('BC')) return { finish: 'bichromate', finishLabel: 'Aço bicromatizado' }
+  if (normalizedCode.endsWith('AC')) return { finish: 'steel', finishLabel: 'Aço carbono' }
+
   if (text.includes('AI 316') || text.includes('INOX 316')) return { finish: 'stainless', finishLabel: 'Inox 316' }
   if (text.includes('AI 304') || text.includes('INOX 304')) return { finish: 'stainless', finishLabel: 'Inox 304' }
   if (text.includes('BICROMATIZAD')) return { finish: 'bichromate', finishLabel: 'Aço bicromatizado' }
@@ -108,9 +127,12 @@ export function resolveMaterialVisual(code: string, description?: string | null)
   const raw = getMaterialDescription(code, description)
   if (!raw) return null
   const text = normalizeDescription(raw)
-  const finish = finishFor(text)
+  const finish = finishFor(text, code)
   const metric = metricSize(text)
 
+  if (text.includes('DESCRITIVO TECNICO NAO IDENTIFICADO') || text.includes('ESPECIFICACAO TECNICA NAO CONFIRMADA')) {
+    return { family: 'unavailable', ...finish, sizeLabel: metric, verified: false }
+  }
   if (text.includes('VEDACAO')) {
     return { family: 'unavailable', finish: 'rubber', finishLabel: 'Material não especificado', sizeLabel: null, verified: false }
   }
@@ -122,12 +144,15 @@ export function resolveMaterialVisual(code: string, description?: string | null)
     return { family: 'retaining-ring', ...finish, sizeLabel: shaft ? `Eixo Ø ${shaft[1].replace('.', ',')} mm` : null, verified: true }
   }
   if (text.includes('RIVKLE')) {
+    const sizeLabel = rivnutSize(text)
+    const geometryKnown = text.includes('LISO') || text.includes('SERRILHADO') || text.includes('SERR ')
+    if (!sizeLabel || !geometryKnown) return { family: 'unavailable', ...finish, sizeLabel, verified: false }
     const closed = text.includes('FECHADO')
     const smooth = text.includes('LISO')
     const family: MaterialVisualFamily = smooth
       ? closed ? 'rivnut-smooth-closed' : 'rivnut-smooth-open'
       : closed ? 'rivnut-closed' : 'rivnut-open'
-    return { family, ...finish, sizeLabel: rivnutSize(text), verified: true }
+    return { family, ...finish, sizeLabel, verified: true }
   }
   if (text.includes('TERMINAL')) {
     const family = text.includes('OLHAL') ? 'ring-terminal' : text.includes('FEMEA') ? 'spade-terminal' : 'pin-terminal'
@@ -143,18 +168,31 @@ export function resolveMaterialVisual(code: string, description?: string | null)
     const family = text.includes('PRESSAO') ? 'spring-washer' : text.includes('SERR') ? 'serrated-washer' : 'flat-washer'
     return { family, ...finish, sizeLabel: metric, verified: true }
   }
-  if (text.includes('PORCA') && text.includes('SEXTAVADA')) {
+  if (text.includes('PORCA') && text.includes('SEXTAVAD')) {
     return { family: 'hex-nut', ...finish, sizeLabel: metric, verified: true }
   }
   if (text.includes('PARAFUSO') || text.includes('PARAF ')) {
+    const selfTapping = text.includes('AUTO ATARR') || text.includes('TARRAXANTE')
+    const countersunk = text.includes('CAB ESC')
+
+    if (text.includes('ALLEN') && text.includes('CAB PAN')) return { family: 'button-socket-screw', ...finish, sizeLabel: metric, verified: true }
     if (text.includes('ALLEN') && text.includes('ABAULADA')) return { family: 'button-socket-screw', ...finish, sizeLabel: metric, verified: true }
     if (text.includes('ALLEN')) return { family: 'socket-screw', ...finish, sizeLabel: metric, verified: true }
     if (text.includes('SEXTAVADO')) return { family: 'hex-bolt', ...finish, sizeLabel: metric, verified: true }
+
+    if (text.includes('FENDA')) {
+      const cylindrical = text.includes('CAB CILINDRICA')
+      const family: MaterialVisualFamily = cylindrical
+        ? 'slotted-cylindrical-screw'
+        : selfTapping
+          ? countersunk ? 'self-tapping-slotted-countersunk-screw' : 'self-tapping-slotted-pan-screw'
+          : countersunk ? 'slotted-countersunk-screw' : 'slotted-pan-screw'
+      return { family, ...finish, sizeLabel: selfTappingSize(text) ?? metric, verified: true }
+    }
+
     if (text.includes('PHILLIPS') && text.includes('CAB CILINDRICA')) {
       return { family: 'cylindrical-phillips-screw', ...finish, sizeLabel: metric, verified: true }
     }
-    const selfTapping = text.includes('AUTO ATARR')
-    const countersunk = text.includes('CAB ESC')
     const family = selfTapping
       ? countersunk ? 'self-tapping-countersunk-screw' : 'self-tapping-pan-screw'
       : countersunk ? 'countersunk-screw' : 'pan-screw'
