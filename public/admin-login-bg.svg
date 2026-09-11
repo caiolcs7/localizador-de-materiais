@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1459 720" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#0b3157"/>
+      <stop offset=".45" stop-color="#284b66"/>
+      <stop offset=".69" stop-color="#395168"/>
+      <stop offset="1" stop-color="#071a30"/>
+    </linearGradient>
+    <linearGradient id="veil" x1="0" x2="1">
+      <stop offset="0" stop-color="#071f3b" stop-opacity=".64"/>
+      <stop offset=".52" stop-color="#0c3156" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#06182d" stop-opacity=".24"/>
+    </linearGradient>
+    <radialGradient id="mist" cx="48%" cy="18%" r="72%">
+      <stop offset="0" stop-color="#b7b0a4" stop-opacity=".36"/>
+      <stop offset=".32" stop-color="#8695a2" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#123d64" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rack" x1="0" x2="1">
+      <stop offset="0" stop-color="#20374f"/>
+      <stop offset=".48" stop-color="#0d1e32"/>
+      <stop offset="1" stop-color="#061323"/>
+    </linearGradient>
+    <linearGradient id="bin" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#263d55"/>
+      <stop offset="1" stop-color="#0f2237"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#aa64dc"/>
+      <stop offset=".48" stop-color="#6931ba"/>
+      <stop offset="1" stop-color="#31146d"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffc24f"/>
+      <stop offset=".48" stop-color="#f28d17"/>
+      <stop offset="1" stop-color="#c86409"/>
+    </linearGradient>
+    <filter id="blur12"><feGaussianBlur stdDeviation="12"/></filter>
+    <filter id="blur4"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="grain" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="17" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+      <feComponentTransfer in="mono" result="faded"><feFuncA type="table" tableValues="0 .055"/></feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="faded" mode="soft-light"/>
+    </filter>
+    <filter id="logoShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#020912" flood-opacity=".5"/>
+    </filter>
+  </defs>
+
+  <rect width="1459" height="720" fill="url(#bg)"/>
+  <rect width="1459" height="720" fill="url(#mist)"/>
+
+  <!-- Industrial depth behind the sharp rack -->
+  <g opacity=".22" filter="url(#blur12)">
+    <rect x="850" y="0" width="355" height="720" fill="#17364f"/>
+    <g stroke="#a3b0ba" stroke-opacity=".26" stroke-width="10">
+      <path d="M910 0v720M1035 0v720M1150 0v720"/>
+      <path d="M845 128h380M845 278h380M845 430h380M845 590h380"/>
+    </g>
+    <g fill="#182f45">
+      <rect x="900" y="65" width="118" height="90" rx="8"/><rect x="900" y="180" width="118" height="92" rx="8"/>
+      <rect x="1048" y="88" width="100" height="105" rx="8"/><rect x="1048" y="314" width="100" height="108" rx="8"/>
+      <rect x="902" y="470" width="120" height="98" rx="8"/><rect x="1046" y="500" width="102" height="95" rx="8"/>
+    </g>
+  </g>
+
+  <!-- Main right-side rack -->
+  <g transform="translate(1132 -8) skewY(-1)" filter="url(#grain)">
+    <rect x="0" y="0" width="327" height="740" fill="url(#rack)"/>
+    <rect x="2" y="0" width="16" height="740" fill="#536577" opacity=".5"/>
+    <rect x="159" y="0" width="13" height="740" fill="#35495f" opacity=".9"/>
+    <rect x="307" y="0" width="20" height="740" fill="#26394e"/>
+    <g fill="#3a4e62" opacity=".88">
+      <rect x="0" y="40" width="327" height="18"/><rect x="0" y="240" width="327" height="18"/>
+      <rect x="0" y="442" width="327" height="18"/><rect x="0" y="650" width="327" height="19"/>
+    </g>
+    <g stroke="#6c7d8d" stroke-opacity=".35" stroke-width="2">
+      <path d="M18 58h289M18 258h289M18 460h289M18 668h289"/>
+    </g>
+    <g>
+      <rect x="187" y="70" width="127" height="157" rx="9" fill="url(#bin)" stroke="#455a70"/>
+      <rect x="187" y="273" width="127" height="154" rx="9" fill="url(#bin)" stroke="#455a70"/>
+      <rect x="187" y="475" width="127" height="162" rx="9" fill="url(#bin)" stroke="#455a70"/>
+      <rect x="26" y="75" width="122" height="145" rx="8" fill="#172d43" opacity=".78"/>
+      <rect x="26" y="280" width="122" height="145" rx="8" fill="#152a40" opacity=".75"/>
+      <rect x="26" y="485" width="122" height="148" rx="8" fill="#13273b" opacity=".72"/>
+    </g>
+    <g fill="#e4e8ec" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="23" opacity=".92">
+      <text x="204" y="137">BIN-A1</text><text x="204" y="340">BIN-A2</text>
+    </g>
+    <g fill="#8b9aaa" opacity=".42" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="700">
+      <text x="34" y="242">RACK 05</text><text x="34" y="446">RACK 06</text>
+    </g>
+  </g>
+
+  <!-- Ceiling light streaks -->
+  <g opacity=".42" filter="url(#blur4)" fill="#f4f3e8">
+    <path d="M1225 3l22 5-35 44-22-6z"/><path d="M1283 0l26 3-38 52-25-5z"/>
+  </g>
+
+  <!-- Technical left geometry -->
+  <g fill="none" stroke="#6a99be" stroke-width="1" opacity=".19">
+    <path d="M0 5L293 174 0 345"/>
+    <path d="M40 367l277-160v302L40 666z"/>
+    <path d="M226 0v720M318 0v720" opacity=".36"/>
+    <path d="M0 545h445M0 584h445M0 621h445" opacity=".32"/>
+  </g>
+  <g fill="#2d5d87" opacity=".095"><path d="M40 367l277-160v302L40 666z"/><path d="M0 0l294 174L0 345z"/></g>
+
+  <!-- Reference-style geometric brand mark -->
+  <g transform="translate(1035 55)" filter="url(#logoShadow)">
+    <path d="M81 4 8 47v91l73 43V94L43 72l38-22z" fill="url(#purple)" stroke="#16243a" stroke-width="4"/>
+    <path d="m87 4 73 43v91l-73 43V94l38-22-38-22z" fill="url(#orange)" stroke="#16243a" stroke-width="4"/>
+    <path d="m81 4 6 0 73 43-37 22-39-23-39 23L8 47z" fill="none" stroke="#d6c7e7" stroke-opacity=".45" stroke-width="3"/>
+    <path d="M8 47 81 90v91L8 138zM160 47 87 90v91l73-43z" fill="none" stroke="#101e35" stroke-width="5"/>
+    <path d="M22 57 78 90 56 103 21 82zm0 36 31 18v37l-31-18zm125-36-56 33 22 13 35-21zm0 36-31 18v37l31-18z" fill="none" stroke="#17233a" stroke-width="4" opacity=".95"/>
+    <path d="M73 109 53 97 32 109v28l21 12 20-12v-13l-15 8-10-6v-7l10-6 15 8zm22 0 20-12 21 12v28l-21 12-20-12v-13l15 8 10-6v-7l-10-6-15 8z" fill="none" stroke="#1a2740" stroke-width="5"/>
+    <path d="M81 8v76M87 8v76" stroke="#d4c7e5" stroke-opacity=".34" stroke-width="2"/>
+  </g>
+
+  <rect width="1459" height="720" fill="url(#veil)"/>
+</svg>

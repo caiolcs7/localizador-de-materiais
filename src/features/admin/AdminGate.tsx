@@ -1,5 +1,16 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import {
+  ArrowRight,
+  BarChart3,
+  Box,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+  QrCode,
+  Search,
+} from 'lucide-react'
 import { requireSupabase } from '../../lib/supabase'
 import './admin.css'
 
@@ -17,27 +28,110 @@ type AdminLoginFormProps = {
   onSubmit: (event: React.FormEvent) => void
 }
 
+const loginFeatures = [
+  { icon: Search, title: 'BUSCA INTELIGENTE', description: 'Encontre itens em segundos' },
+  { icon: Box, title: 'INVENTÁRIO PRECISO', description: 'Controle total de cada unidade' },
+  { icon: QrCode, title: 'LEITURA DE CÓDIGO', description: 'Rastreamento QR/Barra' },
+  { icon: BarChart3, title: 'RELATÓRIOS CLAROS', description: 'Otimize seus processos' },
+] as const
+
 export function AdminLoginForm({ email, password, error, busy, onEmailChange, onPasswordChange, onSubmit }: AdminLoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false)
+
   return <main className="admin-login-page">
-    <section className="admin-login-shell" aria-labelledby="admin-login-title">
-      <form className="admin-login-form" onSubmit={onSubmit}>
-        <div className="admin-login-title" id="admin-login-title">
-          Bem Vindo!
-          <span>faça login para continuar.</span>
+    <header className="admin-login-brand" aria-label="Localizador de Materiais">
+      <h1>Localizador de <span>Materiais</span></h1>
+      <p>ORGANIZAÇÃO <i>•</i> EFICIÊNCIA <i>•</i> RESULTADOS</p>
+    </header>
+
+    <aside className="admin-login-message admin-login-message-left" aria-hidden="true">
+      <p>CONTROLE<br/>ORGANIZAÇÃO<br/>PRODUTIVIDADE</p>
+      <span/>
+    </aside>
+
+    <section className="admin-login-card" aria-labelledby="admin-login-title">
+      <div className="admin-login-heading">
+        <h2 id="admin-login-title">Bem-Vindo</h2>
+        <p>Faça login para gerenciar seu estoque.</p>
+      </div>
+
+      <form className="admin-login-form" onSubmit={onSubmit} noValidate>
+        <label className="admin-login-sr-only" htmlFor="admin-email">E-mail</label>
+        <div className={`admin-login-field${email ? ' has-value' : ''}`}>
+          <Mail size={19} aria-hidden="true"/>
+          <input
+            id="admin-email"
+            autoFocus
+            type="email"
+            inputMode="email"
+            autoComplete="username"
+            required
+            value={email}
+            onChange={event => onEmailChange(event.target.value)}
+            placeholder="Email"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'admin-login-error' : undefined}
+          />
         </div>
-        <label className="admin-login-field">
-          <span>E-mail</span>
-          <input autoFocus className="admin-login-input" type="email" autoComplete="username" required value={email} onChange={event => onEmailChange(event.target.value)} placeholder="Email" aria-describedby={error?'admin-login-error':undefined}/>
-        </label>
-        <label className="admin-login-field">
-          <span>Senha</span>
-          <input className="admin-login-input" type="password" autoComplete="current-password" required minLength={8} maxLength={72} value={password} onChange={event => onPasswordChange(event.target.value)} placeholder="Senha" aria-describedby={error?'admin-login-error':undefined}/>
-        </label>
+
+        <label className="admin-login-sr-only" htmlFor="admin-password">Senha</label>
+        <div className={`admin-login-field${password ? ' has-value' : ''}`}>
+          <LockKeyhole size={18} aria-hidden="true"/>
+          <input
+            id="admin-password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            required
+            minLength={8}
+            maxLength={72}
+            value={password}
+            onChange={event => onPasswordChange(event.target.value)}
+            placeholder="Senha"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'admin-login-error' : undefined}
+          />
+          <button
+            className="admin-login-password-toggle"
+            type="button"
+            onClick={() => setShowPassword(current => !current)}
+            aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+            aria-pressed={showPassword}
+          >
+            {showPassword ? <Eye size={18}/> : <EyeOff size={18}/>}
+          </button>
+        </div>
+
         {error && <div className="admin-login-error" id="admin-login-error" role="alert">{error}</div>}
-        <button className="admin-login-confirm" type="submit" disabled={busy} aria-label={busy?'Entrando':'Entrar'}>{busy?<span>Entrando…</span>:<span aria-hidden="true">→</span>}</button>
+
+        <button className="admin-login-confirm" type="submit" disabled={busy}>
+          {busy
+            ? <><span className="admin-login-spinner" aria-hidden="true"/><span>Acessando...</span></>
+            : <><span>ACESSAR PLATAFORMA</span><ArrowRight size={17} aria-hidden="true"/></>}
+        </button>
+
+        <div className="admin-login-links" aria-label="Ajuda de acesso">
+          <span>Esqueceu a senha?</span>
+          <span>Não tem conta? <u>Solicitar acesso.</u></span>
+        </div>
       </form>
-      <a href="/">Voltar para o Localizador público</a>
     </section>
+
+    <aside className="admin-login-message admin-login-message-right" aria-hidden="true">
+      <p>CADA ITEM<br/>NO SEU LUGAR.<br/>SEMPRE.</p>
+      <span/>
+    </aside>
+
+    <section className="admin-login-features" aria-label="Recursos do Localizador de Materiais">
+      {loginFeatures.map(({ icon: Icon, title, description }) => <article className="admin-login-feature" key={title}>
+        <div className="admin-login-feature-icon" aria-hidden="true"><Icon size={24}/></div>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </article>)}
+    </section>
+
+    <footer className="admin-login-footer">
+      ALMOXARIFADO INTEGRADO <b>|</b> LOCALIZADOR DE MATERIAIS PRO © 2026
+    </footer>
   </main>
 }
 
@@ -85,10 +179,17 @@ export function AdminGate({ children }: Props) {
   async function login(event: React.FormEvent) {
     event.preventDefault()
     setError('')
+
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail || !password) {
+      setError('Preencha o e-mail e a senha.')
+      return
+    }
+
     setBusy(true)
     const client = requireSupabase()
     const { data, error: loginError } = await client.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password,
     })
     if (loginError || !data.session) {
@@ -113,7 +214,7 @@ export function AdminGate({ children }: Props) {
     setSession(null)
   }
 
-  if (checking) return <div className="admin-loading">Validando acesso administrativo…</div>
+  if (checking) return <div className="admin-loading"><span className="admin-loading-spinner" aria-hidden="true"/>Validando acesso administrativo…</div>
   if (session) return <>{children(session, logout)}</>
 
   return <AdminLoginForm
