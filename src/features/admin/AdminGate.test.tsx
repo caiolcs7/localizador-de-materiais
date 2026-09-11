@@ -23,6 +23,11 @@ describe('login administrativo', () => {
     expect(html).toContain('autoComplete="current-password"')
     expect(html).toContain('aria-label="Acessar plataforma"')
     expect(html).toContain('ACESSAR PLATAFORMA')
+    expect(html).toContain('BUSCA INTELIGENTE')
+    expect(html).toContain('INVENTÁRIO PRECISO')
+    expect(html).toContain('LEITURA DE CÓDIGO')
+    expect(html).toContain('RELATÓRIOS CLAROS')
+    expect(html).not.toContain('admin-login-artboard')
   })
 
   it('exibe erro de acesso e bloqueia o botão durante o envio', () => {
