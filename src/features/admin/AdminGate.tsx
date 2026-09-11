@@ -38,11 +38,11 @@ const loginFeatures = [
 export function AdminLoginForm({ email, password, error, busy, onEmailChange, onPasswordChange, onSubmit }: AdminLoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
 
-  return <main className="admin-login-page">
-    <header className="admin-login-brand" aria-label="Localizador de Materiais">
+  return <div className="admin-login-page" role="main">
+    <div className="admin-login-brand" role="banner" aria-label="Localizador de Materiais">
       <h1>Localizador de <span>Materiais</span></h1>
       <p>ORGANIZAÇÃO <i>•</i> EFICIÊNCIA <i>•</i> RESULTADOS</p>
-    </header>
+    </div>
 
     <aside className="admin-login-message admin-login-message-left" aria-hidden="true">
       <p>CONTROLE<br/>ORGANIZAÇÃO<br/>PRODUTIVIDADE</p>
@@ -129,10 +129,10 @@ export function AdminLoginForm({ email, password, error, busy, onEmailChange, on
       </article>)}
     </section>
 
-    <footer className="admin-login-footer">
+    <div className="admin-login-footer" role="contentinfo">
       ALMOXARIFADO INTEGRADO <b>|</b> LOCALIZADOR DE MATERIAIS PRO © 2026
-    </footer>
-  </main>
+    </div>
+  </div>
 }
 
 async function validateAdministrator(session: Session | null) {
