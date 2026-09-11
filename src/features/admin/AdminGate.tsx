@@ -103,7 +103,12 @@ export function AdminLoginForm({ email, password, error, busy, onEmailChange, on
 
         {error && <div className="admin-login-error" id="admin-login-error" role="alert">{error}</div>}
 
-        <button className="admin-login-confirm" type="submit" disabled={busy}>
+        <button
+          className="admin-login-confirm"
+          type="submit"
+          disabled={busy}
+          aria-label={busy ? 'Entrando' : 'Acessar plataforma'}
+        >
           {busy
             ? <><span className="admin-login-spinner" aria-hidden="true"/><span>Acessando...</span></>
             : <><span>ACESSAR PLATAFORMA</span><ArrowRight size={17} aria-hidden="true"/></>}
