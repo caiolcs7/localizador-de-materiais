@@ -2,14 +2,10 @@ import { useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import {
   ArrowRight,
-  BarChart3,
-  Box,
   Eye,
   EyeOff,
   LockKeyhole,
   Mail,
-  QrCode,
-  Search,
 } from 'lucide-react'
 import { requireSupabase } from '../../lib/supabase'
 import './admin.css'
@@ -28,29 +24,15 @@ type AdminLoginFormProps = {
   onSubmit: (event: React.FormEvent) => void
 }
 
-const loginFeatures = [
-  { icon: Search, title: 'BUSCA INTELIGENTE', description: 'Encontre itens em segundos' },
-  { icon: Box, title: 'INVENTÁRIO PRECISO', description: 'Controle total de cada unidade' },
-  { icon: QrCode, title: 'LEITURA DE CÓDIGO', description: 'Rastreamento QR/Barra' },
-  { icon: BarChart3, title: 'RELATÓRIOS CLAROS', description: 'Otimize seus processos' },
-] as const
-
 export function AdminLoginForm({ email, password, error, busy, onEmailChange, onPasswordChange, onSubmit }: AdminLoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
 
   return <div className="admin-login-page" role="main">
-    <div className="admin-login-brand" role="banner" aria-label="Localizador de Materiais">
-      <h1>Localizador de <span>Materiais</span></h1>
-      <p>ORGANIZAÇÃO <i>•</i> EFICIÊNCIA <i>•</i> RESULTADOS</p>
-    </div>
-
-    <aside className="admin-login-message admin-login-message-left" aria-hidden="true">
-      <p>CONTROLE<br/>ORGANIZAÇÃO<br/>PRODUTIVIDADE</p>
-      <span/>
-    </aside>
+    <div className="admin-login-artboard" aria-hidden="true"/>
 
     <section className="admin-login-card" aria-labelledby="admin-login-title">
-      <div className="admin-login-heading">
+      <div className="admin-login-heading admin-login-sr-only">
+        <h1>Localizador de Materiais</h1>
         <h2 id="admin-login-title">Bem-Vindo</h2>
         <p>Faça login para gerenciar seu estoque.</p>
       </div>
@@ -58,7 +40,7 @@ export function AdminLoginForm({ email, password, error, busy, onEmailChange, on
       <form className="admin-login-form" onSubmit={onSubmit} noValidate>
         <label className="admin-login-sr-only" htmlFor="admin-email">E-mail</label>
         <div className={`admin-login-field${email ? ' has-value' : ''}`}>
-          <Mail size={19} aria-hidden="true"/>
+          <Mail className="admin-login-live-icon" size={19} aria-hidden="true"/>
           <input
             id="admin-email"
             autoFocus
@@ -75,8 +57,8 @@ export function AdminLoginForm({ email, password, error, busy, onEmailChange, on
         </div>
 
         <label className="admin-login-sr-only" htmlFor="admin-password">Senha</label>
-        <div className={`admin-login-field${password ? ' has-value' : ''}`}>
-          <LockKeyhole size={18} aria-hidden="true"/>
+        <div className={`admin-login-field${password ? ' has-value' : ''}${showPassword ? ' password-visible' : ''}`}>
+          <LockKeyhole className="admin-login-live-icon" size={18} aria-hidden="true"/>
           <input
             id="admin-password"
             type={showPassword ? 'text' : 'password'}
@@ -114,29 +96,12 @@ export function AdminLoginForm({ email, password, error, busy, onEmailChange, on
             : <><span>ACESSAR PLATAFORMA</span><ArrowRight size={17} aria-hidden="true"/></>}
         </button>
 
-        <div className="admin-login-links" aria-label="Ajuda de acesso">
+        <div className="admin-login-links admin-login-sr-only" aria-label="Ajuda de acesso">
           <span>Esqueceu a senha?</span>
           <span>Não tem conta? <u>Solicitar acesso.</u></span>
         </div>
       </form>
     </section>
-
-    <aside className="admin-login-message admin-login-message-right" aria-hidden="true">
-      <p>CADA ITEM<br/>NO SEU LUGAR.<br/>SEMPRE.</p>
-      <span/>
-    </aside>
-
-    <section className="admin-login-features" aria-label="Recursos do Localizador de Materiais">
-      {loginFeatures.map(({ icon: Icon, title, description }) => <article className="admin-login-feature" key={title}>
-        <div className="admin-login-feature-icon" aria-hidden="true"><Icon size={24}/></div>
-        <h3>{title}</h3>
-        <p>{description}</p>
-      </article>)}
-    </section>
-
-    <div className="admin-login-footer" role="contentinfo">
-      ALMOXARIFADO INTEGRADO <b>|</b> LOCALIZADOR DE MATERIAIS PRO © 2026
-    </div>
   </div>
 }
 
