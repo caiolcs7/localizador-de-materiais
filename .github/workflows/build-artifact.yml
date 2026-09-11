@@ -14,15 +14,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Upload deploy source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: source
+          path: |
+            .
+            !.git/**
+            !node_modules/**
+            !dist/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
+
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
-      - name: Build
-        run: npm run build
+
+      - name: Build for Vercel
+        run: GITHUB_ACTIONS=false npm run build
+
       - name: Upload dist artifact
         uses: actions/upload-artifact@v4
         with:
