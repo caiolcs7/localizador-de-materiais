@@ -186,7 +186,7 @@
 .admin-session button{border:0;background:transparent;color:var(--muted);font-size:10px;padding:6px}
 .admin-mode-badge{font-size:9px;font-weight:850;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:999px;padding:4px 7px}
 
-@media (max-width:760px){
+@media (max-width:760px), (max-aspect-ratio:5/3){
   .admin-login-page{overflow:auto;background:#082846}
   .admin-login-stage{
     position:relative;
