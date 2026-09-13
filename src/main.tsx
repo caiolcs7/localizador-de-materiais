@@ -7,9 +7,39 @@ import './status-enhancements.css'
 
 declare global { interface Window { __LM_BOOT_OK__?: boolean } }
 window.__LM_BOOT_OK__ = true
-registerSW({ immediate: true })
 
 const isAdminRoute = window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/')
+const adminServiceWorkerResetKey = 'lm-admin-sw-reset-v1'
+
+async function releaseAdminFromServiceWorker() {
+  if (!('serviceWorker' in navigator)) return
+
+  try {
+    const wasControlled = Boolean(navigator.serviceWorker.controller)
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    await Promise.all(registrations.map(registration => registration.unregister()))
+
+    if (wasControlled) {
+      if (sessionStorage.getItem(adminServiceWorkerResetKey) !== '1') {
+        sessionStorage.setItem(adminServiceWorkerResetKey, '1')
+        window.location.reload()
+      }
+      return
+    }
+
+    sessionStorage.removeItem(adminServiceWorkerResetKey)
+  } catch (error) {
+    console.warn('Não foi possível liberar a rota administrativa do Service Worker.', error)
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  if (isAdminRoute) {
+    void releaseAdminFromServiceWorker()
+  } else {
+    registerSW({ immediate: true })
+  }
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
