@@ -56,6 +56,7 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/admin(?:\/|$)/],
         globPatterns: ['**/*.{js,css,html,ico,png,webp,svg,json}']
       }
     })
