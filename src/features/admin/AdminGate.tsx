@@ -36,29 +36,18 @@ const loginFeatures = [
 ] as const
 
 function AdminBrandMark() {
-  return <div className="admin-login-mark" aria-hidden="true">
-    <svg viewBox="0 0 168 190" role="img">
-      <defs>
-        <linearGradient id="admin-purple" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor="#b56be7"/>
-          <stop offset=".48" stopColor="#6730bb"/>
-          <stop offset="1" stopColor="#30136d"/>
-        </linearGradient>
-        <linearGradient id="admin-orange" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor="#ffc85b"/>
-          <stop offset=".48" stopColor="#f28c17"/>
-          <stop offset="1" stopColor="#c55d08"/>
-        </linearGradient>
-      </defs>
-      <path d="M81 4 8 47v91l73 43V94L43 72l38-22z" fill="url(#admin-purple)" stroke="#17243a" strokeWidth="4"/>
-      <path d="m87 4 73 43v91l-73 43V94l38-22-38-22z" fill="url(#admin-orange)" stroke="#17243a" strokeWidth="4"/>
-      <path d="m81 4 6 0 73 43-37 22-39-23-39 23L8 47z" fill="none" stroke="#e5d9ee" strokeOpacity=".5" strokeWidth="3"/>
-      <path d="M8 47 81 90v91L8 138zM160 47 87 90v91l73-43z" fill="none" stroke="#101e35" strokeWidth="5"/>
-      <path d="M22 57 78 90 56 103 21 82zm0 36 31 18v37l-31-18zm125-36-56 33 22 13 35-21zm0 36-31 18v37l31-18z" fill="none" stroke="#17233a" strokeWidth="4"/>
-      <path d="M73 109 53 97 32 109v28l21 12 20-12v-13l-15 8-10-6v-7l10-6 15 8zm22 0 20-12 21 12v28l-21 12-20-12v-13l15 8 10-6v-7l-10-6-15 8z" fill="none" stroke="#1a2740" strokeWidth="5"/>
-      <path d="M81 8v76M87 8v76" stroke="#e3d9eb" strokeOpacity=".42" strokeWidth="2"/>
-    </svg>
-  </div>
+  return (
+    <div className="admin-login-mark" aria-hidden="true">
+      <img
+        src="/admin-company-logo.svg"
+        alt=""
+        width="336"
+        height="360"
+        decoding="async"
+        draggable={false}
+      />
+    </div>
+  )
 }
 
 function updateFeatureTilt(event: React.PointerEvent<HTMLElement>) {
@@ -156,11 +145,6 @@ export function AdminLoginForm({ email, password, error, busy, onEmailChange, on
               ? <><span className="admin-login-spinner" aria-hidden="true"/><span>Acessando...</span></>
               : <><span>ACESSAR PLATAFORMA</span><ArrowRight size={17} aria-hidden="true"/></>}
           </button>
-
-          <div className="admin-login-links" aria-label="Ajuda de acesso">
-            <span>Esqueceu a senha?</span>
-            <span>Não tem conta? <u>Solicitar acesso.</u></span>
-          </div>
         </form>
       </section>
 
@@ -185,7 +169,7 @@ export function AdminLoginForm({ email, password, error, busy, onEmailChange, on
       </section>
 
       <div className="admin-login-footer" role="contentinfo">
-        ALMOXARIFADO INTEGRADO <b>|</b> LOCALIZADOR DE MATERIAIS PRO © 2024
+        ALMOXARIFADO INTEGRADO <b>|</b> LOCALIZADOR DE MATERIAIS PRO
       </div>
     </div>
   </div>
