@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { requireSupabase } from '../../lib/supabase'
 import './admin.css'
+import './admin-login-refresh.css'
 
 type Props = {
   children: (session: Session, logout: () => Promise<void>) => ReactNode
