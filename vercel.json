@@ -4,7 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/((?!assets/|icons/|luminarias/|admin-login-bg.svg|manifest.webmanifest|sw.js|workbox-).*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|icons/|luminarias/|admin-login-bg.svg|admin-login-bg.webp|admin-company-logo.svg|admin-company-logo.webp|manifest.webmanifest|sw.js|workbox-).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
