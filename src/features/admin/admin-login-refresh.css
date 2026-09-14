@@ -1,0 +1,215 @@
+/* 2026-09 admin login refinement: responsive containment, real-world background, company mark */
+.admin-login-page{
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(circle at 50% 20%,rgba(71,104,132,.18),transparent 46%),
+    linear-gradient(180deg,#0b2a47 0%,#08243f 58%,#071b30 100%);
+}
+.admin-login-page::before{
+  content:"";
+  position:absolute;
+  inset:-8%;
+  z-index:-2;
+  pointer-events:none;
+  background-image:
+    linear-gradient(90deg,rgba(4,23,41,.32),rgba(7,31,53,.06) 48%,rgba(4,20,36,.34)),
+    url("https://images.unsplash.com/photo-1727199079123-ba845d5ab4f6?auto=format&fit=crop&w=2400&q=82"),
+    url("/admin-login-bg.svg");
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  opacity:.74;
+  filter:saturate(.78) contrast(1.04);
+}
+.admin-login-page::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(1,10,20,.34) 100%);
+}
+
+.admin-login-stage{
+  background-image:
+    linear-gradient(180deg,rgba(3,20,37,.28),rgba(3,18,34,.42)),
+    url("https://images.unsplash.com/photo-1727199079123-ba845d5ab4f6?auto=format&fit=crop&w=2400&q=82"),
+    url("/admin-login-bg.svg");
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+}
+.admin-login-mark{filter:drop-shadow(0 .58cqw .68cqw rgba(1,8,16,.66))}
+.admin-login-mark img{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:contain;
+  user-select:none;
+  pointer-events:none;
+  filter:saturate(.98) contrast(1.03);
+}
+
+/* The fixed composition now scales with a contain strategy instead of being cropped. */
+@media (min-width:761px){
+  .admin-login-page{
+    height:100vh;
+    height:100svh;
+    min-height:100vh;
+    min-height:100svh;
+    overflow:hidden;
+  }
+  .admin-login-stage{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:min(100vw,calc(100svh * 2.026388889));
+    min-height:0;
+    aspect-ratio:1459/720;
+    transform:translate(-50%,-50%);
+    container-type:inline-size;
+    display:block;
+    padding:0;
+    overflow:hidden;
+    box-shadow:0 0 5.2cqw rgba(0,0,0,.28);
+  }
+
+  .admin-login-brand,
+  .admin-login-mark,
+  .admin-login-card,
+  .admin-login-features,
+  .admin-login-footer{
+    position:absolute;
+    margin:0;
+  }
+
+  .admin-login-brand{
+    order:initial;
+    left:50%;
+    right:auto;
+    top:7.55cqw;
+    bottom:auto;
+    width:31cqw;
+    transform:translateX(-50%);
+  }
+  .admin-login-brand h1{font-size:2.06cqw;text-shadow:0 .14cqw .75cqw rgba(2,18,34,.42)}
+  .admin-login-brand p{margin:.68cqw 0 0;font-size:.69cqw;letter-spacing:.31em}
+
+  .admin-login-mark{
+    order:initial;
+    left:auto;
+    right:12.9cqw;
+    top:3.05cqw;
+    bottom:auto;
+    width:13.1cqw;
+    transform:none;
+  }
+
+  .admin-login-card{
+    order:initial;
+    left:50%;
+    right:auto;
+    top:12.4cqw;
+    bottom:auto;
+    width:28cqw;
+    min-height:20.65cqw;
+    margin:0;
+    padding:2.5cqw 3.55cqw 2.15cqw;
+    transform:translateX(-50%);
+    border:.07cqw solid rgba(145,197,231,.68);
+    border-radius:.9cqw;
+    box-shadow:0 1.24cqw 3.1cqw rgba(0,0,0,.28),inset 0 .07cqw 0 rgba(255,255,255,.045),0 0 0 .07cqw rgba(13,35,55,.2);
+  }
+  .admin-login-heading h2{font-size:1.92cqw;text-shadow:0 .14cqw .68cqw rgba(0,0,0,.2)}
+  .admin-login-heading p{margin:.55cqw 0 1.45cqw;font-size:.96cqw}
+  .admin-login-form{gap:.68cqw}
+  .admin-login-field{
+    height:3.02cqw;
+    grid-template-columns:1.5cqw minmax(0,1fr) auto;
+    gap:.48cqw;
+    padding:0 .75cqw;
+    border-width:.07cqw;
+    border-radius:.55cqw;
+  }
+  .admin-login-field>svg{width:1.3cqw;height:1.3cqw}
+  .admin-login-field input{font-size:.89cqw}
+  .admin-login-password-toggle{width:1.92cqw;height:2.06cqw;margin-right:-.34cqw;border-radius:.41cqw}
+  .admin-login-password-toggle svg{width:1.23cqw;height:1.23cqw}
+  .admin-login-error{margin:.07cqw 0 -.07cqw;padding:.48cqw .62cqw;border-width:.07cqw;border-radius:.48cqw;font-size:.72cqw}
+  .admin-login-confirm{
+    height:3.02cqw;
+    gap:.68cqw;
+    margin-top:.62cqw;
+    padding:0 1.1cqw;
+    border-radius:.48cqw;
+    font-size:.89cqw;
+  }
+  .admin-login-confirm svg{width:1.16cqw;height:1.16cqw}
+  .admin-login-spinner{width:.9cqw;height:.9cqw;border-width:.14cqw}
+
+  .admin-login-message{display:block}
+  .admin-login-features{
+    order:initial;
+    left:50%;
+    right:auto;
+    top:auto;
+    bottom:5.18cqw;
+    width:46.6cqw;
+    margin:0;
+    grid-template-columns:repeat(4,1fr);
+    gap:1.92cqw;
+    transform:translateX(-50%);
+    perspective:48cqw;
+  }
+  .admin-login-feature{padding:.34cqw .18cqw}
+  .admin-login-feature::before{inset:-.42cqw -.28cqw -.55cqw;border-width:.07cqw;border-radius:.82cqw}
+  .admin-login-feature-icon{
+    width:3.29cqw;
+    height:3.29cqw;
+    margin:0 auto .55cqw;
+    border-width:.07cqw;
+    border-radius:.82cqw;
+    transform:translateZ(1.3cqw);
+  }
+  .admin-login-feature-icon svg{width:1.65cqw;height:1.65cqw}
+  .admin-login-feature-copy{transform:translateZ(.72cqw)}
+  .admin-login-feature h3{font-size:.82cqw}
+  .admin-login-feature p{margin:.34cqw -.82cqw 0;font-size:.69cqw;white-space:nowrap}
+
+  .admin-login-footer{
+    order:initial;
+    left:50%;
+    right:auto;
+    top:auto;
+    bottom:1.38cqw;
+    width:35.64cqw;
+    margin:0;
+    padding-top:1.03cqw;
+    transform:translateX(-50%);
+    font-size:.62cqw;
+    letter-spacing:.235em;
+    white-space:nowrap;
+    line-height:1;
+  }
+}
+
+/* Keep the existing mobile flow, but use the same realistic background and the new mark. */
+@media (max-width:760px){
+  .admin-login-page::before{
+    position:fixed;
+    inset:-10%;
+    opacity:.68;
+    filter:blur(5px) saturate(.74) contrast(1.03);
+  }
+  .admin-login-stage{
+    background-image:
+      linear-gradient(180deg,rgba(3,24,45,.54),rgba(3,24,45,.72)),
+      url("https://images.unsplash.com/photo-1727199079123-ba845d5ab4f6?auto=format&fit=crop&w=1600&q=80"),
+      url("/admin-login-bg.svg");
+    background-position:center;
+    background-size:cover;
+  }
+  .admin-login-mark{width:96px;filter:drop-shadow(0 7px 9px rgba(2,9,18,.62))}
+  .admin-login-mark img{width:100%;height:auto}
+}
