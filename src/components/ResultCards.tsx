@@ -17,6 +17,10 @@ type Props = {
   onEdit?: (item: InventoryLocation) => void
   onDelete?: (item: InventoryLocation) => void
   onCopy: (value: string) => void
+  hasMore?: boolean
+  loadingMore?: boolean
+  resetKey?: string
+  onLoadMore?: () => void
 }
 
 function LuminaireUsage({ code, carts }: { code: string; carts: LuminaireCart[] }) {
@@ -47,9 +51,9 @@ function LuminaireUsage({ code, carts }: { code: string; carts: LuminaireCart[] 
   </div>
 }
 
-export function ResultCards({ items, carts, equivalent, onEdit, onDelete, onCopy }: Props) {
+export function ResultCards({ items, carts, equivalent, onEdit, onDelete, onCopy, hasMore, loadingMore, resetKey, onLoadMore }: Props) {
   const [visibleCount, setVisibleCount] = useState(60)
-  useEffect(() => setVisibleCount(60), [items])
+  useEffect(() => setVisibleCount(60), [resetKey])
   const visibleItems = items.slice(0, visibleCount)
   const knownByCode = new Map<string, number>()
   const codeCount = new Set(items.map(item => normalizeSearch(item.codigo))).size
@@ -61,21 +65,23 @@ export function ResultCards({ items, carts, equivalent, onEdit, onDelete, onCopy
 
   return <section className="results">
     <div className="results-summary">
-      <div><b>{items.length} {items.length === 1 ? 'localização encontrada' : 'localizações encontradas'}</b>{equivalent && <span className="badge">Correspondência equivalente AI4/AI6</span>}</div>
+      <div><b>{items.length} {items.length === 1 ? 'localização carregada' : 'localizações carregadas'}{hasMore ? '+' : ''}</b>{equivalent && <span className="badge">Correspondência equivalente AI4/AI6</span>}</div>
       {knownByCode.size > 0 && <span>Saldo dos códigos: <b>{total}</b>{knownByCode.size < codeCount ? ' (parcial)' : ''}</span>}
     </div>
     <div className="result-list">
       {visibleItems.map(item => {
         const description = getMaterialDescription(item.codigo, item.descritivo)
         const hasBombona = hasVerifiedBombona(item.bombona)
-        const copyValue = hasBombona ? `${item.codigo} | ${item.bombona} | ${item.endereco}` : `${item.codigo} | ${item.endereco}`
+        const copyValue = hasBombona
+          ? [item.codigo, item.bombona, item.endereco].filter(Boolean).join(' | ')
+          : [item.codigo, item.endereco].filter(Boolean).join(' | ')
         return <article className="result-card" key={item.id}>
           <div className="result-card-content">
             <MaterialVisual code={item.codigo} description={description}/>
             <div className="result-main">
               <span className="code-line">{item.codigo}</span>
               {hasBombona ? <strong>{item.bombona}</strong> : <span className="result-location-label">Endereço de estoque</span>}
-              <div className="address"><MapPin size={16}/>{item.endereco}</div>
+              <div className={`address ${item.endereco ? '' : 'missing'}`}><MapPin size={16}/>{item.endereco || 'Sem endereço cadastrado'}</div>
               {description && <p>{description}</p>}
               <small>Quantidade: {item.quantidade == null ? '—' : item.quantidade}</small>
               <LuminaireUsage code={item.codigo} carts={carts}/>
@@ -89,6 +95,7 @@ export function ResultCards({ items, carts, equivalent, onEdit, onDelete, onCopy
         </article>
       })}
     </div>
-    {visibleItems.length<items.length&&<button className="load-more-button" onClick={()=>setVisibleCount(count=>count+60)}>Mostrar mais 60 <span>{items.length-visibleItems.length} restantes</span></button>}
+    {visibleItems.length < items.length && <button className="load-more-button" onClick={() => setVisibleCount(count => count + 60)}>Mostrar mais 60 <span>{items.length - visibleItems.length} carregados restantes</span></button>}
+    {visibleItems.length === items.length && hasMore && onLoadMore && <button className="load-more-button" disabled={loadingMore} onClick={onLoadMore}>{loadingMore ? 'Buscando mais resultados…' : 'Buscar mais resultados no banco'}</button>}
   </section>
 }

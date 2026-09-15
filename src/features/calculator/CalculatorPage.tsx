@@ -1,20 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   Calculator,
   Clipboard,
   Eye,
+  LoaderCircle,
   Pencil,
   Play,
   Plus,
   RotateCcw,
   Save,
+  ScanLine,
   Search,
   Settings,
   Trash2,
   Undo2,
   X,
 } from 'lucide-react'
+import { findInventoryProductByCode } from '../../services/inventoryService'
+import type { InventoryLocation } from '../../types/inventory'
+import { cleanScannedCode } from '../../utils/normalize'
 import {
   CALCULATOR_APP_VERSION,
   CALCULATOR_FORMULA_VERSION,
@@ -47,7 +52,10 @@ import type {
   CalculatorState,
   RoundingPolicy,
 } from './calculatorTypes'
+import { extractWeightFromDescription, formatGrams, formatGramsInput, type WeightExtraction } from './weightExtraction'
 import './calculator.css'
+
+const ScannerModal = lazy(() => import('../scanner/ScannerModal').then(module => ({ default: module.ScannerModal })))
 
 type ModalState =
   | { type: 'save' }
@@ -61,6 +69,13 @@ interface NotificationState {
   actionLabel?: string
   action?: () => void
 }
+
+type ProductLookupState =
+  | { status: 'idle' }
+  | { status: 'searching'; code: string }
+  | { status: 'not-found'; code: string }
+  | { status: 'error'; code: string; message: string }
+  | { status: 'found'; code: string; product: InventoryLocation; weight: WeightExtraction }
 
 interface CalculatorPageProps {
   onBackHome: () => void
@@ -128,6 +143,8 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
   const [selectedContainerId, setSelectedContainerId] = useState(state.configuracoes.recipientePadraoId)
   const [grossWeightText, setGrossWeightText] = useState('')
   const [grammageText, setGrammageText] = useState('')
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const [productLookup, setProductLookup] = useState<ProductLookupState>({ status: 'idle' })
   const [historySearch, setHistorySearch] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [modal, setModal] = useState<ModalState>(null)
@@ -146,6 +163,7 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
   const [adminRounding, setAdminRounding] = useState<RoundingPolicy>(state.configuracoes.politicaArredondamento)
   const [adminError, setAdminError] = useState('')
   const lastSaveRef = useRef({ signature: '', moment: 0 })
+  const lookupAbortRef = useRef<AbortController | null>(null)
   const logoSrc = `${import.meta.env.BASE_URL}calculator-logo.png`
 
   const activeContainers = useMemo(
@@ -187,6 +205,8 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [modal])
 
+  useEffect(() => () => lookupAbortRef.current?.abort(), [])
+
   const notify = (message: string, action?: Pick<NotificationState, 'actionLabel' | 'action'>) => {
     setNotification({ message, ...action })
   }
@@ -204,8 +224,8 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
 
   const openSaveModal = () => {
     if (!calculation.sucesso || !selectedContainer) return
-    setSaveProductId('')
-    setSaveAddress('')
+    setSaveProductId(productLookup.status === 'found' ? productLookup.product.codigo : '')
+    setSaveAddress(productLookup.status === 'found' ? productLookup.product.endereco : '')
     setSaveError('')
     setModal({ type: 'save' })
   }
@@ -355,8 +375,46 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
   }
 
   const clearFields = () => {
+    lookupAbortRef.current?.abort()
     setGrossWeightText('')
     setGrammageText('')
+    setProductLookup({ status: 'idle' })
+  }
+
+  const readProductCode = async (rawValue: string) => {
+    const code = cleanScannedCode(rawValue)
+    setScannerOpen(false)
+    if (!code) {
+      setProductLookup({ status: 'error', code: '', message: 'O código lido é inválido.' })
+      return
+    }
+
+    lookupAbortRef.current?.abort()
+    const controller = new AbortController()
+    lookupAbortRef.current = controller
+    setProductLookup({ status: 'searching', code })
+    try {
+      const product = await findInventoryProductByCode(code, controller.signal)
+      if (controller.signal.aborted) return
+      if (!product) {
+        setProductLookup({ status: 'not-found', code })
+        return
+      }
+      const weight = extractWeightFromDescription(product.descritivo)
+      setProductLookup({ status: 'found', code: product.codigo, product, weight })
+      if (weight.valid) setGrammageText(formatGramsInput(weight.grams))
+    } catch (error) {
+      if (controller.signal.aborted) return
+      setProductLookup({
+        status: 'error',
+        code,
+        message: error instanceof Error && error.name === 'TimeoutError'
+          ? 'A consulta excedeu o tempo limite. Tente novamente.'
+          : 'Não foi possível consultar o banco de dados. Tente novamente.',
+      })
+    } finally {
+      if (lookupAbortRef.current === controller) lookupAbortRef.current = null
+    }
   }
 
   const openSettings = () => {
@@ -550,7 +608,20 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
         </section>
 
         <section className="calculator-card">
-          <div className="calculator-section-title"><div><h3>Valores do cálculo</h3><p>Use vírgula ou ponto como separador decimal.</p></div></div>
+          <div className="calculator-section-title calculator-values-title"><div><h3>Valores do cálculo</h3><p>Use vírgula ou ponto como separador decimal.</p></div><button className="calculator-scan-button" type="button" onClick={() => setScannerOpen(true)}><ScanLine size={18}/>Ler Data Matrix</button></div>
+          {productLookup.status !== 'idle' && <div className={`calculator-product-lookup ${productLookup.status}`} aria-live="polite">
+            {productLookup.status === 'searching' && <div className="calculator-product-searching"><LoaderCircle size={19}/><span><b>Buscando produto…</b><small>{productLookup.code}</small></span></div>}
+            {productLookup.status === 'not-found' && <div><b>Produto não encontrado no banco de dados.</b><small>Código lido: {productLookup.code}</small></div>}
+            {productLookup.status === 'error' && <div><b>{productLookup.message}</b>{productLookup.code && <small>Código lido: {productLookup.code}</small>}</div>}
+            {productLookup.status === 'found' && <>
+              <dl>
+                <div><dt>Código</dt><dd>{productLookup.product.codigo}</dd></div>
+                <div><dt>Descritivo</dt><dd>{productLookup.product.descritivo?.trim() || 'Não informado no banco.'}</dd></div>
+                <div><dt>Gramatura</dt><dd>{productLookup.weight.valid ? formatGrams(productLookup.weight.grams) : 'Não identificada'}</dd></div>
+              </dl>
+              {!productLookup.weight.valid && <p>{productLookup.weight.reason === 'ambiguous' ? 'Mais de uma gramatura possível foi encontrada. Informe manualmente.' : 'Gramatura não encontrada no descritivo. Informe manualmente.'}</p>}
+            </>}
+          </div>}
           <div className="calculator-input-grid">
             <label className={calculation.campoErro === 'pesoBruto' ? 'invalid' : ''}><span>Peso bruto</span><div className="calculator-input-unit"><input value={grossWeightText} inputMode="decimal" autoComplete="off" placeholder="0,000" aria-invalid={calculation.campoErro === 'pesoBruto' || undefined} onChange={event => setGrossWeightText(sanitizeDecimalInput(event.target.value))}/><em>kg</em></div><small>{calculation.campoErro === 'pesoBruto' ? calculation.mensagem : ''}</small></label>
             <label className={calculation.campoErro === 'gramatura' ? 'invalid' : ''}><span>Gramatura</span><div className="calculator-input-unit"><input value={grammageText} inputMode="decimal" autoComplete="off" placeholder="0" aria-invalid={calculation.campoErro === 'gramatura' || undefined} onChange={event => setGrammageText(sanitizeDecimalInput(event.target.value))}/><em>g</em></div><small>{calculation.campoErro === 'gramatura' ? calculation.mensagem : ''}</small></label>
@@ -572,6 +643,7 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
         </section>
       </aside>
     </div>
+    {scannerOpen && <Suspense fallback={<div className="calculator-modal-backdrop"><div className="calculator-scanner-loading" role="status"><LoaderCircle size={24}/>Carregando leitor…</div></div>}><ScannerModal title="Ler Data Matrix do produto" subtitle="Aponte a câmera para o código do material" onDetected={readProductCode} onClose={() => setScannerOpen(false)}/></Suspense>}
     {modal && renderModal()}
     {notification && <CalculatorNotification notification={notification} onClose={() => setNotification(null)}/>} 
   </section>

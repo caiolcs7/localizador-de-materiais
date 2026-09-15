@@ -7,7 +7,7 @@ type ItemModalProps = {
   initial?: Partial<InventoryLocation>
   allowDuplicateOverride?: boolean
   onClose: () => void
-  onSaved: () => void
+  onSaved: (record: InventoryLocation) => void
 }
 
 export function ItemModal({ initial, allowDuplicateOverride = false, onClose, onSaved }: ItemModalProps) {
@@ -22,7 +22,8 @@ export function ItemModal({ initial, allowDuplicateOverride = false, onClose, on
     try {
       const result = await saveLocation({ id: initial?.id, codigo: form.codigo, bombona: form.bombona, endereco: form.endereco, descritivo: form.descritivo || null, quantidade: quantity, observacoes: form.observacoes || null } as ItemDraft, allowDuplicate)
       if (result.duplicate) { setDuplicateId(result.duplicate.id); setError('Este registro já existe.') ; return }
-      onSaved(); onClose()
+      if (!result.record) throw new Error('O banco não retornou o material salvo.')
+      onSaved(result.record); onClose()
     } catch(e) { setError(e instanceof Error ? e.message : 'Não foi possível salvar.') }
   }
   return <div className="modal-backdrop"><div className="form-modal"><div className="modal-head"><div><b>{initial?.id ? 'Editar localização' : 'Novo item'}</b><span>Preencha apenas o necessário</span></div><button className="icon-button" onClick={onClose}><X size={20}/></button></div>

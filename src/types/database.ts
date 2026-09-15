@@ -151,7 +151,7 @@ export type Database = {
           created_by: string | null
           descritivo: string | null
           duplicate_override: boolean
-          endereco: string
+          endereco: string | null
           endereco_original: string | null
           grupo: string | null
           id: string
@@ -174,7 +174,7 @@ export type Database = {
           created_by?: string | null
           descritivo?: string | null
           duplicate_override?: boolean
-          endereco: string
+          endereco?: string | null
           endereco_original?: string | null
           grupo?: string | null
           id?: string
@@ -197,7 +197,7 @@ export type Database = {
           created_by?: string | null
           descritivo?: string | null
           duplicate_override?: boolean
-          endereco?: string
+          endereco?: string | null
           endereco_original?: string | null
           grupo?: string | null
           id?: string
@@ -252,7 +252,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      search_inventory_locations: {
+        Args: {
+          p_bombona: string
+          p_limit: number
+          p_normalized: string
+          p_offset: number
+          p_only_available: boolean
+          p_query: string
+        }
+        Returns: Database['public']['Tables']['inventory_locations']['Row'][]
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,17 +1,17 @@
 import { requireSupabase } from '../../lib/supabase'
-import { getAllLocations, syncInventory } from '../../services/inventoryService'
+import { fetchAllInventory, invalidateInventorySearchCache } from '../../services/inventoryService'
 import type { InventoryLocation } from '../../types/inventory'
 import { formatBombona, inferRua, normalizeSearch } from '../../utils/normalize'
 
 export async function exportBackup() {
-  const data = await getAllLocations()
+  const data = await fetchAllInventory()
   download(JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), records: data }, null, 2), `localizador-backup-${new Date().toISOString().slice(0,10)}.json`, 'application/json')
 }
 
 export async function importBackup(file: File) {
   const parsed = JSON.parse(await file.text()) as { records?: InventoryLocation[] }
   if (!Array.isArray(parsed.records)) throw new Error('Backup inválido: lista de registros ausente.')
-  if (parsed.records.length > 10000) throw new Error('Backup inválido: o limite é de 10.000 registros.')
+  if (parsed.records.length > 50000) throw new Error('Backup inválido: o limite é de 50.000 registros.')
   if (!parsed.records.every(r => r && typeof r.id === 'string' && typeof r.codigo === 'string' && typeof r.bombona === 'string' && typeof r.endereco === 'string')) throw new Error('Backup inválido: há registros malformados.')
 
   const normalized = parsed.records.map(r => {
@@ -47,12 +47,12 @@ export async function importBackup(file: File) {
     const { error } = await client.from('inventory_locations').upsert(rows.slice(start, start + 250), { onConflict: 'id' })
     if (error) throw new Error(`Não foi possível importar o lote ${Math.floor(start / 250) + 1}. Nenhum registro foi apagado.`, { cause: error })
   }
-  await syncInventory()
+  invalidateInventorySearchCache()
   return normalized.length
 }
 
 export async function exportCSV() {
-  const rows = await getAllLocations()
+  const rows = await fetchAllInventory()
   const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
   const lines = ['Código;Bombona;Endereço;Descritivo;Quantidade;Observações', ...rows.map(r => [r.codigo,r.bombona,r.endereco,r.descritivo ?? '',r.quantidade ?? '',r.observacoes ?? ''].map(esc).join(';'))]
   download('\ufeff' + lines.join('\n'), 'localizador-materiais.csv', 'text/csv;charset=utf-8')

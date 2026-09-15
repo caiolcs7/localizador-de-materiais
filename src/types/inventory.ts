@@ -25,4 +25,4 @@ export type ItemDraft = Omit<InventoryLocation, 'id' | 'codigoNormalizado' | 'cr
 }
 
 export type SearchKind = 'exact' | 'equivalent' | 'bombona' | 'endereco' | 'prefix' | 'contains' | 'suggestion'
-export interface SearchResult { kind: SearchKind; items: InventoryLocation[]; suggestion?: string }
+export interface SearchResult { kind: SearchKind; items: InventoryLocation[]; suggestion?: string; hasMore?: boolean }
