@@ -1,0 +1,87 @@
+.stock-filter {
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.stock-filter input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stock-filter-toggle {
+  width: 43px;
+  height: 24px;
+  flex: none;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface2);
+  transition: border-color .16s, background .16s;
+}
+
+.stock-filter-toggle span {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  box-shadow: 0 1px 3px rgb(15 23 42 / .2);
+  transition: transform .16s, background .16s;
+}
+
+.stock-filter input:checked + .stock-filter-toggle {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+}
+
+.stock-filter input:checked + .stock-filter-toggle span {
+  background: var(--accent);
+  transform: translateX(19px);
+}
+
+.stock-filter input:focus-visible + .stock-filter-toggle {
+  outline: 3px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  outline-offset: 2px;
+}
+
+.stock-filter-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.stock-filter-copy b { font-size: 12px; }
+.stock-filter-copy small { color: var(--muted); font-size: 10px; }
+.stock-filter--compact { margin: 0 0 12px; }
+
+.load-more-button {
+  min-height: 42px;
+  margin: 14px auto 0;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 750;
+}
+
+.load-more-button:hover { border-color: var(--accent); color: var(--accent); }
+.load-more-button span { color: var(--muted); font-size: 10px; font-weight: 600; }
+
+@media (max-width: 760px) {
+  .stock-filter { margin-left: 0; }
+  .stock-filter-copy small { max-width: 270px; line-height: 1.3; }
+}

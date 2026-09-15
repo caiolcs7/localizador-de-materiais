@@ -35,6 +35,18 @@ describe('material visual catalog', () => {
     expect(resolveMaterialVisual('CODIGO-SEM-DESCRITIVO')).toBeNull()
   })
 
+  it('creates visuals only for simple, unambiguous cable and tape descriptions', () => {
+    expect(resolveMaterialVisual('CC100000052', 'CABO FLEX VD 2,50MM 105 C 750V ISOL. PVC')).toMatchObject({
+      family: 'electrical-cable', finish: 'wire-green', sizeLabel: '2,50 mm²', verified: true,
+    })
+    expect(resolveMaterialVisual('J920002003', 'FITA ISOLANTE VERDE 16MM X 20MT')).toMatchObject({
+      family: 'insulating-tape', finish: 'wire-green', sizeLabel: '16 mm × 20 m', verified: true,
+    })
+    expect(resolveMaterialVisual('CHICOTE001', 'CABO MONTADO COM GARRA 2,5MM VERDE')).toMatchObject({
+      family: 'unavailable', verified: false,
+    })
+  })
+
   it('prioritizes the technical cart description over a generic inventory note', () => {
     expect(getMaterialDescription('ITARSRM003BC', 'Salvo Por Monique')).toContain('ARRUELA AC BICROMATIZADO')
     expect(resolveMaterialVisual('ITARSRM003BC', 'Salvo Por Monique')).toMatchObject({

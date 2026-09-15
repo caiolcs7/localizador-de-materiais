@@ -19,6 +19,42 @@ function finishFill(finish: MaterialFinish, metalId: string, goldId: string) {
   return finish === 'bichromate' ? `url(#${goldId})` : `url(#${metalId})`
 }
 
+function insulatedColor(finish: MaterialFinish) {
+  const colors: Partial<Record<MaterialFinish, string>> = {
+    blue: '#1769c2',
+    yellow: '#efc51b',
+    'wire-black': '#22252a',
+    'wire-white': '#f3f4f6',
+    'wire-red': '#c62f35',
+    'wire-green': '#1f8a4c',
+    'wire-orange': '#e87522',
+  }
+  return colors[finish] ?? '#59636f'
+}
+
+function electricalCable(finish: MaterialFinish) {
+  const color = insulatedColor(finish)
+  const split = finish === 'wire-green-yellow'
+  return <g>
+    <ellipse cx="76" cy="66" rx="48" ry="32" fill="none" stroke={color} strokeWidth="14" className="material-cable"/>
+    {split && <ellipse cx="76" cy="66" rx="48" ry="32" fill="none" stroke="#efc51b" strokeWidth="5" strokeDasharray="15 10"/>}
+    <path d="M111 85c18 1 28 7 33 19" fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" className="material-cable"/>
+    {split && <path d="M111 85c18 1 28 7 33 19" fill="none" stroke="#efc51b" strokeWidth="5" strokeDasharray="15 10" strokeLinecap="round"/>}
+    <path d="M144 104l8 8" className="material-copper"/>
+    <path d="M42 48c19-13 50-15 68-1" className="material-cable-highlight"/>
+  </g>
+}
+
+function insulatingTape(finish: MaterialFinish) {
+  const color = insulatedColor(finish)
+  return <g transform="rotate(-10 80 62)">
+    <ellipse cx="80" cy="62" rx="52" ry="33" fill={color} className="material-outline"/>
+    <ellipse cx="80" cy="57" rx="36" ry="22" fill="rgba(255,255,255,.22)" className="material-outline"/>
+    <ellipse cx="80" cy="59" rx="22" ry="13" className="material-hole"/>
+    <path d="M31 62c7 25 30 35 49 35s43-10 51-35" className="material-shadow-line"/>
+  </g>
+}
+
 function washer(family: MaterialVisualFamily, fill: string, maskId: string) {
   if (family === 'spring-washer') {
     return <g transform="rotate(-12 80 60)">
@@ -158,6 +194,8 @@ function visualFor(family: MaterialVisualFamily, finish: MaterialFinish, fill: s
   if (family === 'grounding-stud') return groundingStud(fill)
   if (family === 'screw-washer-set') return screwWasherSet(fill, maskId)
   if (family === 'rivet-pack') return rivetPack()
+  if (family === 'electrical-cable') return electricalCable(finish)
+  if (family === 'insulating-tape') return insulatingTape(finish)
   if (family === 'unavailable') return unavailable()
   return screw(family, fill)
 }

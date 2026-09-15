@@ -45,6 +45,20 @@ const levenshtein = (a: string, b: string) => {
   return matrix[b.length]
 }
 
+function addressPriority(item: InventoryLocation) {
+  const address = item.endereco.trim().toUpperCase()
+  if (address.startsWith('R')) return 0
+  if (address.startsWith('EXT')) return 1
+  return 2
+}
+
+function sortSearchResults(items: InventoryLocation[]) {
+  return items.sort((a, b) => addressPriority(a) - addressPriority(b)
+    || a.codigo.localeCompare(b.codigo, 'pt-BR', { numeric: true })
+    || a.endereco.localeCompare(b.endereco, 'pt-BR', { numeric: true })
+    || a.bombona.localeCompare(b.bombona, 'pt-BR', { numeric: true }))
+}
+
 async function fetchAllInventory() {
   const client = requireSupabase()
   const pageSize = 1000
@@ -85,24 +99,27 @@ export async function searchInventory(raw: string): Promise<SearchResult> {
   if (!query) return { kind: 'contains', items: [] }
   const all = await db.locations.toArray()
   const exact = all.filter(item => item.codigoNormalizado === query || (item.aliases ?? []).some(alias => normalizeSearch(alias) === query))
-  if (exact.length) return { kind: 'exact', items: exact }
+  if (exact.length) return { kind: 'exact', items: sortSearchResults(exact) }
   const equivalent = all.filter(item => equivalentAI(item.codigo, query))
-  if (equivalent.length) return { kind: 'equivalent', items: equivalent }
+  if (equivalent.length) return { kind: 'equivalent', items: sortSearchResults(equivalent) }
   const bombona = all.filter(item => normalizeSearch(formatBombona(item.bombona)) === bombonaQuery)
-  if (bombona.length) return { kind: 'bombona', items: bombona }
+  if (bombona.length) return { kind: 'bombona', items: sortSearchResults(bombona) }
   const endereco = all.filter(item => normalizeSearch(item.endereco) === query)
-  if (endereco.length) return { kind: 'endereco', items: endereco }
+  if (endereco.length) return { kind: 'endereco', items: sortSearchResults(endereco) }
   const prefix = all.filter(item => item.codigoNormalizado.startsWith(query))
-  if (prefix.length) return { kind: 'prefix', items: prefix.slice(0, 80) }
   const contains = all.filter(item => item.codigoNormalizado.includes(query))
-  if (contains.length) return { kind: 'contains', items: contains.slice(0, 80) }
-
   const descriptive = all.filter(item => matchesMaterialSearch(
     item.codigo,
     getMaterialDescription(item.codigo, item.descritivo),
     raw,
   ))
-  if (descriptive.length) return { kind: 'contains', items: descriptive.slice(0, 80) }
+  const seen = new Set<string>()
+  const combined = [...prefix, ...contains, ...descriptive].filter(item => {
+    if (seen.has(item.id)) return false
+    seen.add(item.id)
+    return true
+  })
+  if (combined.length) return { kind: prefix.length ? 'prefix' : 'contains', items: sortSearchResults(combined) }
 
   if (query.length >= 5) {
     const codes = [...new Set(all.map(item => item.codigoNormalizado))]

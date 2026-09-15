@@ -16,6 +16,8 @@ import { buildItemStatusRows, type ItemsStatusFilter } from './features/items/it
 import { ThemeSwitch } from './features/theme/ThemeSwitch'
 import { AdminUsersPanel } from './features/admin/AdminUsersPanel'
 import { deduplicateRecentSearches, isCompleteSearch, loadRecentSearches, mergeRecentSearch } from './features/search/recentSearches'
+import { StockFilter } from './features/inventory/StockFilter'
+import { isVisibleWithStockFilter } from './features/inventory/stockVisibility'
 import './styles.css'
 import './brand.css'
 import './navigation.css'
@@ -35,6 +37,7 @@ export default function App({ adminMode=false, adminEmail, onLogout }: AppProps)
   const [carts,setCarts]=useState<LuminaireCart[]>([]); const [online,setOnline]=useState(true)
   const [scanner,setScanner]=useState(false); const [editor,setEditor]=useState<Partial<InventoryLocation>|null>(null); const [showItems,setShowItems]=useState(false); const [showData,setShowData]=useState(false); const [showCarts,setShowCarts]=useState(false); const [showCalculator,setShowCalculator]=useState(false); const [mobileMenu,setMobileMenu]=useState(false)
   const [itemsStatus,setItemsStatus]=useState<ItemsStatusFilter>('all')
+  const [onlyAvailable,setOnlyAvailable]=useState(true); const [itemVisibleLimit,setItemVisibleLimit]=useState(80)
   const [recent,setRecent]=useState<string[]>(loadInitialRecentSearches); const [favorites,setFavorites]=useState<string[]>(()=>loadList(favoriteKey)); const [toast,setToast]=useState(''); const [dark,setDark]=useState(()=>{try{return localStorage.getItem('lm-theme')==='dark'}catch{return false}})
   const initialRecentRef=useRef(recent)
   const refresh=useCallback(async()=>setAll(await getAllLocations()),[])
@@ -62,6 +65,8 @@ export default function App({ adminMode=false, adminEmail, onLogout }: AppProps)
     const bq=normalizeSearch(formatBombona(query))
     return itemRows.filter(row=>{
       if(itemsStatus!=='all'&&row.status!==itemsStatus)return false
+      const description=getMaterialDescription(row.codigo,row.descritivo)
+      if(onlyAvailable&&!isVisibleWithStockFilter(row,description))return false
       if(!q)return true
       return normalizeSearch(row.codigo).includes(q)
         || normalizeSearch(formatBombona(row.bombona)).includes(bq)
@@ -69,7 +74,13 @@ export default function App({ adminMode=false, adminEmail, onLogout }: AppProps)
         || normalizeSearch(row.descritivo??'').includes(q)
         || normalizeSearch(row.carts.join(' ')).includes(q)
     })
-  },[itemRows,itemsStatus,query])
+  },[itemRows,itemsStatus,onlyAvailable,query])
+  const visibleItemRows=useMemo(()=>filteredItemRows.slice(0,itemVisibleLimit),[filteredItemRows,itemVisibleLimit])
+  const filteredSearchItems=useMemo(()=>onlyAvailable
+    ? result.items.filter(item=>isVisibleWithStockFilter(item,getMaterialDescription(item.codigo,item.descritivo)))
+    : result.items,[onlyAvailable,result.items])
+  const hiddenSearchCount=result.items.length-filteredSearchItems.length
+  useEffect(()=>setItemVisibleLimit(80),[itemsStatus,onlyAvailable,query])
 
   const openHome=()=>{setShowCarts(false);setShowItems(false);setShowData(false);setShowCalculator(false);setMobileMenu(false)}
   const detect=(value:string)=>{const cleaned=cleanScannedCode(value);setScanner(false);if(!cleaned){notify('Leitura inválida');return}setQuery(cleaned);openHome();notify('Código lido')}
@@ -80,8 +91,16 @@ export default function App({ adminMode=false, adminEmail, onLogout }: AppProps)
       <button className={`nav-3d ${!showItems&&!showData&&!showCarts&&!showCalculator?'active':''}`} onClick={openHome}><Home size={18}/>Início</button><button className="nav-3d" onClick={()=>{setScanner(true);setMobileMenu(false)}}><Camera size={18}/>Scanner</button><button className="nav-3d" onClick={()=>{setEditor({});setMobileMenu(false)}}><PackagePlus size={18}/>Novo item</button><button className={`nav-3d ${showItems?'active':''}`} onClick={()=>{setShowItems(true);setShowData(false);setShowCarts(false);setShowCalculator(false);setMobileMenu(false)}}><Archive size={18}/>Itens</button><button className={`nav-3d ${showCarts?'active':''}`} onClick={()=>{setShowCarts(true);setShowItems(false);setShowData(false);setShowCalculator(false);setMobileMenu(false)}}><ShoppingCart size={18}/>Carrinhos</button><button className={`nav-3d ${showCalculator?'active':''}`} onClick={()=>{setShowCalculator(true);setShowItems(false);setShowData(false);setShowCarts(false);setMobileMenu(false)}}><CalculatorIcon size={18}/>Calculadora</button>{adminMode&&<button className={`nav-3d ${showData?'active':''}`} onClick={()=>{setShowData(true);setShowItems(false);setShowCarts(false);setShowCalculator(false);setMobileMenu(false)}}><Database size={18}/>Dados</button>}<div className="theme-nav-slot"><span className="theme-nav-label">Tema {dark?'escuro':'claro'}</span><ThemeSwitch dark={dark} onChange={setDark}/></div>{adminMode&&onLogout&&<button className="nav-3d" onClick={()=>void onLogout()} title={adminEmail}><LogOut size={18}/>Sair</button>}
     </nav><button className="menu-button" onClick={()=>setMobileMenu(!mobileMenu)}>{mobileMenu?<X/>:<Menu/>}</button></header>
     <main>
-      {!showItems&&!showData&&!showCarts&&!showCalculator && <><section className="hero"><div className="eyebrow">LOCALIZAÇÃO RÁPIDA</div><h1>Onde está o material?</h1><p>Pesquise por código, bombona ou endereço físico.</p><div className="search-wrap"><Search size={21}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar código, bombona ou endereço..."/><button className="scan-short" onClick={()=>setScanner(true)}><Camera size={19}/><span>Escanear</span></button></div></section>
-      {query.trim() && result.items.length>0 && <ResultCards items={result.items} carts={carts} equivalent={result.kind==='equivalent'} onEdit={adminMode?setEditor:undefined} onDelete={adminMode?deleteItem:undefined} onCopy={copy}/>}
+      {!showItems&&!showData&&!showCarts&&!showCalculator && <><section className="hero"><div className="eyebrow">LOCALIZAÇÃO RÁPIDA</div><h1>Onde está o material?</h1><p>Pesquise por código, descritivo, bombona ou endereço físico.</p><div className="search-wrap"><Search size={21}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar código, item, bombona ou endereço..."/><button className="scan-short" onClick={()=>setScanner(true)}><Camera size={19}/><span>Escanear</span></button></div><StockFilter checked={onlyAvailable} onChange={setOnlyAvailable}/></section>
+      {query.trim() && filteredSearchItems.length>0 && <ResultCards
+        items={filteredSearchItems}
+        carts={carts}
+        equivalent={result.kind==='equivalent'}
+        onEdit={adminMode?setEditor:undefined}
+        onDelete={adminMode?deleteItem:undefined}
+        onCopy={copy}
+      />}
+      {query.trim() && result.items.length>0 && filteredSearchItems.length===0 && <div className="empty-search"><b>Nenhum item com saldo positivo</b><span>{hiddenSearchCount} {hiddenSearchCount===1?'resultado está oculto':'resultados estão ocultos'} pelo filtro de estoque.</span><button className="primary-button" onClick={()=>setOnlyAvailable(false)}>Mostrar também sem estoque</button></div>}
       {query.trim() && result.items.length===0 && <div className="empty-search"><b>Código não encontrado</b><span>{query}</span>{result.suggestion&&<button onClick={()=>setQuery(result.suggestion!)}>Você quis dizer <b>{result.suggestion}</b>?</button>}<button className="primary-button" onClick={()=>setEditor({codigo:query})}>Cadastrar este código</button></div>}
       {!query.trim() && <section className="quick"><div><div className="section-head"><b>Recentes</b><button onClick={()=>{setRecent([]);removeList(recentKey);removeList(legacyRecentKey)}}>Limpar</button></div><div className="chips">{recent.length?recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>):<span>Nenhuma pesquisa recente.</span>}</div></div><div><div className="section-head"><b>Favoritos</b></div><div className="chips">{favorites.length?favorites.map(x=><button key={x} onClick={()=>setQuery(x)}><Star size={14}/>{x}</button>):<span>Marque consultas frequentes nos resultados.</span>}</div></div></section>}</>}
       {showItems && <section className="page"><div className="page-title"><div><h2>Itens</h2><p>{all.length} localizações cadastradas · {itemCounts.unlocated} códigos sem endereço</p></div><div className="page-actions-wrap"><button className="secondary-button" onClick={openHome}><Home size={16}/>Voltar ao início</button><button className="primary-button" onClick={()=>setEditor({})}><PackagePlus size={17}/>Novo item</button></div></div>
@@ -91,8 +110,10 @@ export default function App({ adminMode=false, adminEmail, onLogout }: AppProps)
           <button className={itemsStatus==='unlocated'?'active':''} onClick={()=>setItemsStatus('unlocated')}>Código sem endereço <span>{itemCounts.unlocated}</span></button>
           <button className={itemsStatus==='empty'?'active':''} onClick={()=>setItemsStatus('empty')}>Endereço vazio <span>{itemCounts.empty}</span></button>
         </div>
+        <StockFilter checked={onlyAvailable} onChange={setOnlyAvailable} compact/>
         <div className="table-search"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Filtrar código, bombona, endereço, descritivo ou luminária"/></div>
-        <div className="table-wrap"><table className="items-table"><thead><tr><th>Código</th><th>Bombona</th><th>Endereço</th><th>Status</th><th>Descritivo</th><th>Quantidade</th>{adminMode&&<th>Ações</th>}</tr></thead><tbody>{filteredItemRows.map(row=>{const description=getMaterialDescription(row.codigo,row.descritivo);return <tr key={row.key}><td><div className="item-code-cell"><MaterialVisual code={row.codigo} description={description} compact/><b>{row.codigo}</b></div></td><td>{row.bombona||'—'}</td><td>{row.endereco||'—'}</td><td><span className={`item-status-badge ${row.status}`}>{row.status==='located'?'Código + endereço':row.status==='unlocated'?'Código sem endereço':'Endereço vazio'}</span></td><td><div className="item-description-cell"><span>{description||'—'}</span>{row.carts.length>0&&<small>Carrinhos: {row.carts.join(' · ')}</small>}</div></td><td>{row.quantidade??'—'}</td>{adminMode&&<td>{row.inventoryItem?<button className="table-action" onClick={()=>setEditor(row.inventoryItem!)}>{row.status==='empty'?'Preencher':'Editar'}</button>:<button className="table-action" onClick={()=>setEditor({codigo:row.codigo,descritivo:description})}>Cadastrar endereço</button>}</td>}</tr>})}{filteredItemRows.length===0&&<tr className="table-empty-row"><td colSpan={adminMode?7:6}>Nenhum item encontrado neste filtro.</td></tr>}</tbody></table></div>
+        <div className="table-wrap"><table className="items-table"><thead><tr><th>Código</th><th>Bombona</th><th>Endereço</th><th>Status</th><th>Descritivo</th><th>Quantidade</th>{adminMode&&<th>Ações</th>}</tr></thead><tbody>{visibleItemRows.map(row=>{const description=getMaterialDescription(row.codigo,row.descritivo);return <tr key={row.key}><td><div className="item-code-cell"><MaterialVisual code={row.codigo} description={description} compact/><b>{row.codigo}</b></div></td><td>{row.bombona==='N/T'?'—':row.bombona||'—'}</td><td>{row.endereco||'—'}</td><td><span className={`item-status-badge ${row.status}`}>{row.status==='located'?'Código + endereço':row.status==='unlocated'?'Código sem endereço':'Endereço vazio'}</span></td><td><div className="item-description-cell"><span>{description||'—'}</span>{row.carts.length>0&&<small>Carrinhos: {row.carts.join(' · ')}</small>}</div></td><td>{row.quantidade??'—'}</td>{adminMode&&<td>{row.inventoryItem?<button className="table-action" onClick={()=>setEditor(row.inventoryItem!)}>{row.status==='empty'?'Preencher':'Editar'}</button>:<button className="table-action" onClick={()=>setEditor({codigo:row.codigo,descritivo:description})}>Cadastrar endereço</button>}</td>}</tr>})}{filteredItemRows.length===0&&<tr className="table-empty-row"><td colSpan={adminMode?7:6}>Nenhum item encontrado neste filtro.</td></tr>}</tbody></table></div>
+        {visibleItemRows.length<filteredItemRows.length&&<button className="load-more-button" onClick={()=>setItemVisibleLimit(limit=>limit+80)}>Mostrar mais 80 <span>{filteredItemRows.length-visibleItemRows.length} restantes</span></button>}
       </section>}
       {showCarts && <CartsPage inventory={all} carts={carts} isAdmin={adminMode} onOpenInventoryCode={openHomeSearch} onBackHome={openHome} onRefreshInventory={refresh} onRefreshCarts={refreshCarts}/>}
       {showCalculator && <Suspense fallback={<div className="loading">Carregando calculadora…</div>}><CalculatorPage onBackHome={openHome} isAdmin={adminMode}/></Suspense>}

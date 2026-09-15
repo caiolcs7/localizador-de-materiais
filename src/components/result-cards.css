@@ -52,6 +52,15 @@ html[data-theme='dark'] .result-luminaire-chip {
   box-shadow: 0 1px 2px rgb(0 0 0 / .18);
 }
 
+.result-location-label {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
 @media (max-width: 760px) {
   .result-luminaires {
     align-items: flex-start;

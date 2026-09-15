@@ -8,6 +8,9 @@
 .material-visual--compact figcaption span{font-size:9px}
 .material-visual--compact figcaption small{display:none}
 .material-visual--uncertain svg{filter:none}
+.material-cable{filter:drop-shadow(0 3px 2px rgb(15 23 42/.18))}
+.material-cable-highlight{fill:none;stroke:rgba(255,255,255,.5);stroke-width:3;stroke-linecap:round}
+.material-copper{fill:none;stroke:#b96c2e;stroke-width:6;stroke-linecap:round}
 .material-outline{stroke:#55606d;stroke-width:1.5;stroke-linejoin:round}
 .material-highlight{fill:none;stroke:rgb(255 255 255/.68);stroke-width:2;stroke-linecap:round}
 .material-edge,.material-shadow-line{fill:none;stroke:#56616d;stroke-width:2;stroke-linecap:round}

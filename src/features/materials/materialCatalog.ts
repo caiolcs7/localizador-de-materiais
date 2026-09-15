@@ -31,9 +31,24 @@ export type MaterialVisualFamily =
   | 'rivnut-smooth-open'
   | 'rivnut-smooth-closed'
   | 'rivet-pack'
+  | 'electrical-cable'
+  | 'insulating-tape'
   | 'unavailable'
 
-export type MaterialFinish = 'stainless' | 'bichromate' | 'steel' | 'blue' | 'yellow' | 'rubber' | 'mixed'
+export type MaterialFinish =
+  | 'stainless'
+  | 'bichromate'
+  | 'steel'
+  | 'blue'
+  | 'yellow'
+  | 'rubber'
+  | 'mixed'
+  | 'wire-black'
+  | 'wire-white'
+  | 'wire-red'
+  | 'wire-green'
+  | 'wire-green-yellow'
+  | 'wire-orange'
 
 export type MaterialVisualSpec = {
   family: MaterialVisualFamily
@@ -73,6 +88,42 @@ function normalizeDescription(value: string) {
     .replace(/[–—]/g, '-')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function electricalSize(text: string) {
+  const match = text.match(/\b(?:\d+\s*X\s*)?(\d+(?:[.,]\d+)?)\s*MM(?:2|²)?\b/)
+  return match ? `${match[1].replace('.', ',')} mm²` : null
+}
+
+function cableFinish(text: string): Pick<MaterialVisualSpec, 'finish' | 'finishLabel'> | null {
+  if (/\b(?:VD\s*\/\s*AM|VERDE\s*\/\s*AMAREL[OA]|VERDE E AMAREL[OA])\b/.test(text)) {
+    return { finish: 'wire-green-yellow', finishLabel: 'Verde/amarelo' }
+  }
+  if (/\b(?:VERDE|VD)\b/.test(text)) return { finish: 'wire-green', finishLabel: 'Verde' }
+  if (/\b(?:VERMELH[OA]|VM)\b/.test(text)) return { finish: 'wire-red', finishLabel: 'Vermelho' }
+  if (/\b(?:AZUL|AZ)\b/.test(text)) return { finish: 'blue', finishLabel: 'Azul' }
+  if (/\b(?:AMAREL[OA]|AM)\b/.test(text)) return { finish: 'yellow', finishLabel: 'Amarelo' }
+  if (/\b(?:BRANC[OA]|BR)\b/.test(text)) return { finish: 'wire-white', finishLabel: 'Branco' }
+  if (/\b(?:LARANJA|LR)\b/.test(text)) return { finish: 'wire-orange', finishLabel: 'Laranja' }
+  if (/\b(?:PRET[OA]|PT)\b/.test(text)) return { finish: 'wire-black', finishLabel: 'Preto' }
+  return null
+}
+
+function simpleCable(text: string): MaterialVisualSpec | null {
+  if (!/\bCABO\s+(?:FLEX(?:IVEL)?|SOLAR|PP)\b/.test(text)) return null
+  if (/\b(?:MONTAD[OA]|CHICOTE|CONJUNTO|CJ)\b/.test(text)) return null
+  const sizeLabel = electricalSize(text)
+  const finish = cableFinish(text)
+  if (!sizeLabel || !finish) return null
+  return { family: 'electrical-cable', ...finish, sizeLabel, verified: true }
+}
+
+function simpleInsulatingTape(text: string): MaterialVisualSpec | null {
+  if (!text.includes('FITA ISOLANTE') || /\b(?:LIQUID[OA]|TINTA)\b/.test(text)) return null
+  const dimensions = text.match(/\b(\d+(?:[.,]\d+)?)\s*MM\s*X\s*(\d+(?:[.,]\d+)?)\s*(?:M|MT)\b/)
+  const sizeLabel = dimensions ? `${dimensions[1].replace('.', ',')} mm × ${dimensions[2].replace('.', ',')} m` : null
+  const finish = cableFinish(text) ?? { finish: 'mixed' as const, finishLabel: 'Cor não informada' }
+  return { family: 'insulating-tape', ...finish, sizeLabel, verified: true }
 }
 
 function metricSize(text: string) {
@@ -129,6 +180,11 @@ export function resolveMaterialVisual(code: string, description?: string | null)
   const text = normalizeDescription(raw)
   const finish = finishFor(text, code)
   const metric = metricSize(text)
+
+  const cable = simpleCable(text)
+  if (cable) return cable
+  const tape = simpleInsulatingTape(text)
+  if (tape) return tape
 
   if (text.includes('DESCRITIVO TECNICO NAO IDENTIFICADO') || text.includes('ESPECIFICACAO TECNICA NAO CONFIRMADA')) {
     return { family: 'unavailable', ...finish, sizeLabel: metric, verified: false }

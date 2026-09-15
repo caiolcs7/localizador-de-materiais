@@ -249,6 +249,11 @@ function fold(value: string) {
 
 function canonicalToken(token: string) {
   const aliases: Record<string, string> = {
+    CABOS: 'CABO',
+    PARAFUSOS: 'PARAFUSO',
+    PORCAS: 'PORCA',
+    ARRUELAS: 'ARRUELA',
+    TERMINAIS: 'TERMINAL',
     CABECA: 'CAB',
     CABEÇA: 'CAB',
     PANELA: 'PAN',

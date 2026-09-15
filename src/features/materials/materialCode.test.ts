@@ -39,4 +39,10 @@ describe('material code grammar', () => {
     expect(matchesMaterialSearch('ITPFPHM420PAAI4', description, 'phillips cabeça panela inox 304 m4x20')).toBe(true)
     expect(matchesMaterialSearch('ITPFPHM420PAAI4', description, 'm4 x 10')).toBe(false)
   })
+
+  it('finds items by singular or plural description terms', () => {
+    expect(matchesMaterialSearch('CC100000052', 'CABO FLEX VD 2,50MM 105 C 750V ISOL. PVC', 'cabo')).toBe(true)
+    expect(matchesMaterialSearch('CC100000052', 'CABO FLEX VD 2,50MM 105 C 750V ISOL. PVC', 'cabos')).toBe(true)
+    expect(matchesMaterialSearch('ITPFPHM420PAAI4', 'PARAFUSO AI PHILLIPS CAB PAN M4 20MM', 'parafusos')).toBe(true)
+  })
 })
