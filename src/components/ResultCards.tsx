@@ -10,6 +10,8 @@ import { hasVerifiedBombona } from '../features/inventory/stockVisibility'
 import { normalizeSearch } from '../utils/normalize'
 import './result-cards.css'
 
+const quantityFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 4 })
+
 type Props = {
   items: InventoryLocation[]
   carts: LuminaireCart[]
@@ -66,7 +68,7 @@ export function ResultCards({ items, carts, equivalent, onEdit, onDelete, onCopy
   return <section className="results">
     <div className="results-summary">
       <div><b>{items.length} {items.length === 1 ? 'localização carregada' : 'localizações carregadas'}{hasMore ? '+' : ''}</b>{equivalent && <span className="badge">Correspondência equivalente AI4/AI6</span>}</div>
-      {knownByCode.size > 0 && <span>Saldo dos códigos: <b>{total}</b>{knownByCode.size < codeCount ? ' (parcial)' : ''}</span>}
+      {knownByCode.size > 0 && <span>Saldo dos códigos: <b>{quantityFormatter.format(total)}</b>{knownByCode.size < codeCount ? ' (parcial)' : ''}</span>}
     </div>
     <div className="result-list">
       {visibleItems.map(item => {
