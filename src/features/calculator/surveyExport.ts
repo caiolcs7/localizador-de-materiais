@@ -198,10 +198,16 @@ function workbookEntries(survey: CalculatorSurvey): Array<{ name: string; conten
   ]
 }
 
+function copyIntoArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.byteLength)
+  new Uint8Array(buffer).set(bytes)
+  return buffer
+}
+
 export function exportSurveyToXlsx(survey: CalculatorSurvey): void {
   if (!survey.itens.length) throw new Error('O levantamento ainda não possui itens para exportar.')
   const bytes = createZip(workbookEntries(survey))
-  const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const blob = new Blob([copyIntoArrayBuffer(bytes)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   const date = new Date().toISOString().slice(0, 10)
