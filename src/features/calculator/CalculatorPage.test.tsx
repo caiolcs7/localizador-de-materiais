@@ -16,11 +16,11 @@ function createMemoryStorage(): Storage {
 }
 
 describe('CalculatorPage', () => {
-  it('renderiza a calculadora integrada com recipientes, leitor e levantamentos', () => {
+  it('renderiza a calculadora integrada com leitor, levantamentos e cadastro manual', () => {
     const originalLocalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
     const storage = createMemoryStorage()
     storage.setItem(CALCULATOR_SURVEYS_STORAGE_KEY, JSON.stringify({
-      schema: 1,
+      schema: 2,
       levantamentoAtivoId: 'levantamento-r01',
       levantamentos: [{
         id: 'levantamento-r01',
@@ -43,7 +43,9 @@ describe('CalculatorPage', () => {
       expect(html).toContain('R01')
       expect(html).toContain('Salvar no levantamento')
       expect(html).toContain('Ler Data Matrix')
-      expect(html).toContain('Exportar Excel')
+      expect(html).toContain('Adicionar item manualmente')
+      expect(html).toContain('Exportar para Excel')
+      expect(html).toContain('Com endereço')
       expect(html).not.toContain('Salvar no histórico')
     } finally {
       if (originalLocalStorage) Object.defineProperty(globalThis, 'localStorage', originalLocalStorage)
