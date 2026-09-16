@@ -1,7 +1,7 @@
 import type { CalculatorHistoryRecord, RoundingPolicy } from './calculatorTypes'
 
 export const CALCULATOR_SURVEYS_STORAGE_KEY = 'bombonacalc_levantamentos_v1'
-const SURVEY_SCHEMA_VERSION = 1
+const SURVEY_SCHEMA_VERSION = 2
 const SURVEY_LIMIT = 100
 const ITEM_LIMIT_PER_SURVEY = 3000
 
@@ -11,6 +11,7 @@ export interface CalculatorSurveyItem {
   id: string
   codigo: string
   descritivo: string
+  endereco: string
   quantidade: number
   criadoEm: string
   atualizadoEm: string
@@ -61,6 +62,10 @@ function normalizeCode(value: unknown): string {
   return normalizeText(value).toLocaleUpperCase('pt-BR')
 }
 
+function normalizeAddress(value: unknown): string {
+  return normalizeText(value).toLocaleUpperCase('pt-BR')
+}
+
 function safeNumber(value: unknown, fallback = 0): number {
   const number = Number(value)
   return Number.isFinite(number) ? number : fallback
@@ -78,6 +83,7 @@ function normalizeItem(value: unknown): CalculatorSurveyItem | null {
     id: normalizeText(source.id) || createId('item'),
     codigo,
     descritivo: normalizeText(source.descritivo),
+    endereco: normalizeAddress(source.endereco),
     quantidade,
     criadoEm: normalizeText(source.criadoEm) || now,
     atualizadoEm: normalizeText(source.atualizadoEm) || normalizeText(source.criadoEm) || now,
@@ -146,6 +152,7 @@ function migratedState(history: CalculatorHistoryRecord[]): CalculatorSurveyStat
         id: record.id || createId('item'),
         codigo: normalizeCode(record.identificacao.produtoId),
         descritivo: '',
+        endereco: normalizeAddress(record.identificacao.endereco),
         quantidade: Math.max(0, Math.floor(record.calculo.quantidadeFinal)),
         criadoEm: record.criadoEm || now,
         atualizadoEm: record.auditoria.atualizadoEm || record.criadoEm || now,
@@ -243,7 +250,7 @@ export function upsertCalculatorSurveyItem(
 export function updateCalculatorSurveyItem(
   surveyId: string,
   itemId: string,
-  patch: Pick<CalculatorSurveyItem, 'codigo' | 'descritivo' | 'quantidade'>,
+  patch: Pick<CalculatorSurveyItem, 'codigo' | 'descritivo' | 'endereco' | 'quantidade'>,
   storage = defaultStorage(),
 ): CalculatorSurveyState {
   return updateSurveyState(state => {
@@ -261,6 +268,7 @@ export function updateCalculatorSurveyItem(
       ...survey.itens[index],
       codigo,
       descritivo: normalizeText(patch.descritivo),
+      endereco: normalizeAddress(patch.endereco),
       quantidade: Math.max(0, Math.floor(safeNumber(patch.quantidade))),
       atualizadoEm: now,
     }
