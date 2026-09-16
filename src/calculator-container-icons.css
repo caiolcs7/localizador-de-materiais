@@ -1,0 +1,71 @@
+/*
+ * Imagens dos recipientes da calculadora.
+ *
+ * A calculadora mantém a cor de cada recipiente como dado editável. Para não
+ * acoplar imagens ao modelo persistido (e preservar compatibilidade com dados
+ * existentes), os quatro recipientes padrão recebem miniaturas pela cor padrão
+ * que já os identifica. Recipientes personalizados continuam usando a faixa de cor.
+ */
+
+.calculator-page .calculator-containers > button {
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  min-height: 78px;
+}
+
+.calculator-page .calculator-containers > button > i {
+  width: 58px !important;
+  height: 58px !important;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 11px;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  box-shadow: 0 3px 10px rgb(15 23 42 / 10%);
+}
+
+/* Bombona Azul · #2563eb */
+.calculator-page .calculator-containers > button > i[style*="#2563eb"],
+.calculator-page .calculator-containers > button > i[style*="rgb(37, 99, 235)"] {
+  background-color: #f8fafc !important;
+  background-image: url("./assets/calculator-containers/bombona-azul.webp") !important;
+}
+
+/* Bombona Marrom · #8b5a2b */
+.calculator-page .calculator-containers > button > i[style*="#8b5a2b"],
+.calculator-page .calculator-containers > button > i[style*="rgb(139, 90, 43)"] {
+  background-color: #f8fafc !important;
+  background-image: url("./assets/calculator-containers/bombona-marrom.webp") !important;
+}
+
+/* Caixa Vermelha · #ef4444 */
+.calculator-page .calculator-containers > button > i[style*="#ef4444"],
+.calculator-page .calculator-containers > button > i[style*="rgb(239, 68, 68)"] {
+  background-color: #f8fafc !important;
+  background-image: url("./assets/calculator-containers/caixa-vermelha.webp") !important;
+}
+
+/* Galão · #06b6d4 */
+.calculator-page .calculator-containers > button > i[style*="#06b6d4"],
+.calculator-page .calculator-containers > button > i[style*="rgb(6, 182, 212)"] {
+  background-color: #f8fafc !important;
+  background-image: url("./assets/calculator-containers/galao.webp") !important;
+}
+
+.calculator-page .calculator-containers > button.active > i {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  box-shadow:
+    0 4px 12px rgb(15 23 42 / 12%),
+    0 0 0 2px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+@media (max-width: 720px) {
+  .calculator-page .calculator-containers > button {
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    min-height: 72px;
+  }
+
+  .calculator-page .calculator-containers > button > i {
+    width: 52px !important;
+    height: 52px !important;
+  }
+}

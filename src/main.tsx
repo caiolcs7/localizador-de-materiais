@@ -4,6 +4,7 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import { AdminGate } from './features/admin/AdminGate'
 import './status-enhancements.css'
+import './calculator-container-icons.css'
 
 declare global { interface Window { __LM_BOOT_OK__?: boolean } }
 window.__LM_BOOT_OK__ = true
