@@ -1,20 +1,17 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
-  Calculator,
+  Camera,
   Clipboard,
-  Eye,
+  FileSpreadsheet,
   LoaderCircle,
   Pencil,
-  Play,
   Plus,
   RotateCcw,
   Save,
-  ScanLine,
   Search,
   Settings,
   Trash2,
-  Undo2,
   X,
 } from 'lucide-react'
 import { findInventoryProductByCode } from '../../services/inventoryService'
@@ -22,7 +19,6 @@ import type { InventoryLocation } from '../../types/inventory'
 import { cleanScannedCode } from '../../utils/normalize'
 import {
   CALCULATOR_APP_VERSION,
-  CALCULATOR_FORMULA_VERSION,
   calculateProduction,
   createCalculatorId,
   createSlug,
@@ -35,39 +31,42 @@ import {
 } from './calculatorLogic'
 import {
   CalculatorStorageError,
-  addCalculatorHistory,
-  clearCalculatorHistory,
   createDefaultCalculatorState,
   loadCalculatorState,
-  removeCalculatorHistoryRecord,
-  replaceCalculatorHistoryRecord,
   restoreCalculatorDefaults,
-  restoreCalculatorHistoryRecord,
   saveCalculatorAdministration,
   saveCalculatorPreferences,
 } from './calculatorStorage'
-import type {
-  CalculatorContainer,
-  CalculatorHistoryRecord,
-  CalculatorState,
-  RoundingPolicy,
-} from './calculatorTypes'
+import {
+  CalculatorSurveyStorageError,
+  clearCalculatorSurveys,
+  createCalculatorSurvey,
+  loadCalculatorSurveyState,
+  removeCalculatorSurvey,
+  removeCalculatorSurveyItem,
+  selectCalculatorSurvey,
+  updateCalculatorSurveyItem,
+  upsertCalculatorSurveyItem,
+  type CalculatorSurveyItem,
+  type CalculatorSurveyState,
+} from './calculatorSurveyStorage'
+import type { CalculatorContainer, CalculatorState, RoundingPolicy } from './calculatorTypes'
+import { exportSurveyToXlsx } from './surveyExport'
 import { extractWeightFromDescription, formatGrams, formatGramsInput, type WeightExtraction } from './weightExtraction'
 import './calculator.css'
+import './survey.css'
 
 const ScannerModal = lazy(() => import('../scanner/ScannerModal').then(module => ({ default: module.ScannerModal })))
 
 type ModalState =
   | { type: 'save' }
-  | { type: 'edit'; record: CalculatorHistoryRecord }
-  | { type: 'details'; record: CalculatorHistoryRecord }
-  | { type: 'clear-history' }
+  | { type: 'edit-item'; item: CalculatorSurveyItem }
+  | { type: 'delete-survey' }
+  | { type: 'clear-surveys' }
   | null
 
 interface NotificationState {
   message: string
-  actionLabel?: string
-  action?: () => void
 }
 
 type ProductLookupState =
@@ -93,6 +92,17 @@ function loadInitialState(): { state: CalculatorState; error: string } {
     return {
       state: createDefaultCalculatorState(),
       error: error instanceof Error ? error.message : 'O armazenamento da calculadora não está disponível.',
+    }
+  }
+}
+
+function loadInitialSurveys(history: CalculatorState['historico']): { state: CalculatorSurveyState; error: string } {
+  try {
+    return { state: loadCalculatorSurveyState(history), error: '' }
+  } catch (error) {
+    return {
+      state: { schema: 1, levantamentoAtivoId: null, levantamentos: [] },
+      error: error instanceof Error ? error.message : 'Os levantamentos locais não puderam ser carregados.',
     }
   }
 }
@@ -130,39 +140,39 @@ function validateAdministration(
   if (!Number.isFinite(yieldPercentage) || yieldPercentage < 1 || yieldPercentage > 100) {
     return 'O rendimento deve ficar entre 1% e 100%.'
   }
-  if (roundingPolicy !== 'truncar' && roundingPolicy !== 'arredondar') {
-    return 'Política de arredondamento inválida.'
-  }
+  if (roundingPolicy !== 'truncar' && roundingPolicy !== 'arredondar') return 'Política de arredondamento inválida.'
   return null
 }
 
-export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProps) {
+export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPageProps) {
   const initial = useMemo(loadInitialState, [])
+  const initialSurveys = useMemo(() => loadInitialSurveys(initial.state.historico), [initial.state.historico])
   const [state, setState] = useState(initial.state)
-  const [storageError] = useState(initial.error)
+  const [surveyState, setSurveyState] = useState(initialSurveys.state)
   const [selectedContainerId, setSelectedContainerId] = useState(state.configuracoes.recipientePadraoId)
   const [grossWeightText, setGrossWeightText] = useState('')
   const [grammageText, setGrammageText] = useState('')
   const [scannerOpen, setScannerOpen] = useState(false)
   const [productLookup, setProductLookup] = useState<ProductLookupState>({ status: 'idle' })
-  const [historySearch, setHistorySearch] = useState('')
+  const [surveyNameDraft, setSurveyNameDraft] = useState('')
+  const [surveySearch, setSurveySearch] = useState('')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [modal, setModal] = useState<ModalState>(null)
-  const [notification, setNotification] = useState<NotificationState | null>(
-    storageError ? { message: storageError } : null,
-  )
-  const [saveProductId, setSaveProductId] = useState('')
-  const [saveAddress, setSaveAddress] = useState('')
+  const [notification, setNotification] = useState<NotificationState | null>(() => {
+    const message = initial.error || initialSurveys.error
+    return message ? { message } : null
+  })
+  const [saveCode, setSaveCode] = useState('')
+  const [saveDescription, setSaveDescription] = useState('')
   const [saveError, setSaveError] = useState('')
-  const [editProductId, setEditProductId] = useState('')
-  const [editAddress, setEditAddress] = useState('')
+  const [editCode, setEditCode] = useState('')
+  const [editDescription, setEditDescription] = useState('')
   const [editQuantity, setEditQuantity] = useState('')
   const [editError, setEditError] = useState('')
   const [adminContainers, setAdminContainers] = useState<CalculatorContainer[]>(state.recipientes)
   const [adminYieldPercentage, setAdminYieldPercentage] = useState(state.configuracoes.taxaRendimento * 100)
   const [adminRounding, setAdminRounding] = useState<RoundingPolicy>(state.configuracoes.politicaArredondamento)
   const [adminError, setAdminError] = useState('')
-  const lastSaveRef = useRef({ signature: '', moment: 0 })
   const lookupAbortRef = useRef<AbortController | null>(null)
   const logoSrc = `${import.meta.env.BASE_URL}calculator-logo.png`
 
@@ -181,11 +191,16 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
     taxaRendimento: state.configuracoes.taxaRendimento,
     politicaArredondamento: state.configuracoes.politicaArredondamento,
   }), [grossWeightText, grammageText, selectedContainer, state.configuracoes])
-
-  const normalizedHistorySearch = uppercase(historySearch.trim())
-  const filteredHistory = useMemo(() => normalizedHistorySearch
-    ? state.historico.filter(record => record.identificacao.produtoId.includes(normalizedHistorySearch))
-    : state.historico, [normalizedHistorySearch, state.historico])
+  const activeSurvey = useMemo(
+    () => surveyState.levantamentos.find(survey => survey.id === surveyState.levantamentoAtivoId) ?? null,
+    [surveyState],
+  )
+  const normalizedSurveySearch = uppercase(surveySearch.trim())
+  const filteredSurveyItems = useMemo(() => {
+    const items = activeSurvey?.itens ?? []
+    if (!normalizedSurveySearch) return items
+    return items.filter(item => uppercase(`${item.codigo} ${item.descritivo}`).includes(normalizedSurveySearch))
+  }, [activeSurvey, normalizedSurveySearch])
 
   useEffect(() => {
     if (!selectedContainer && activeContainers[0]) setSelectedContainerId(activeContainers[0].id)
@@ -193,7 +208,7 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
 
   useEffect(() => {
     if (!notification) return
-    const timeout = window.setTimeout(() => setNotification(null), notification.action ? 6000 : 3200)
+    const timeout = window.setTimeout(() => setNotification(null), 3400)
     return () => window.clearTimeout(timeout)
   }, [notification])
 
@@ -207,9 +222,7 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
 
   useEffect(() => () => lookupAbortRef.current?.abort(), [])
 
-  const notify = (message: string, action?: Pick<NotificationState, 'actionLabel' | 'action'>) => {
-    setNotification({ message, ...action })
-  }
+  const notify = (message: string) => setNotification({ message })
 
   const runStorageOperation = (operation: () => CalculatorState): CalculatorState | null => {
     try {
@@ -222,155 +235,14 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
     }
   }
 
-  const openSaveModal = () => {
-    if (!calculation.sucesso || !selectedContainer) return
-    setSaveProductId(productLookup.status === 'found' ? productLookup.product.codigo : '')
-    setSaveAddress(productLookup.status === 'found' ? productLookup.product.endereco : '')
-    setSaveError('')
-    setModal({ type: 'save' })
-  }
-
-  const saveCurrentCalculation = () => {
-    if (!calculation.sucesso || !selectedContainer) {
-      setSaveError('O cálculo deixou de ser válido. Feche esta janela e calcule novamente.')
-      return
-    }
-    const productId = uppercase(saveProductId.trim())
-    const address = uppercase(saveAddress.trim())
-    if (!productId) { setSaveError('Informe o ID do produto.'); return }
-    if (!address) { setSaveError('Informe o endereço.'); return }
-
-    const signature = [
-      selectedContainer.id,
-      calculation.detalhes.pesoBrutoKg,
-      calculation.detalhes.gramaturaG,
-      calculation.resultado,
-      productId,
-      address,
-    ].join('|')
-    const now = Date.now()
-    if (signature === lastSaveRef.current.signature && now - lastSaveRef.current.moment < 1200) return
-
-    const record: CalculatorHistoryRecord = {
-      id: createCalculatorId(),
-      criadoEm: new Date().toISOString(),
-      identificacao: { produtoId: productId, endereco: address },
-      recipiente: { ...selectedContainer },
-      entrada: {
-        pesoBrutoKg: calculation.detalhes.pesoBrutoKg,
-        gramaturaG: calculation.detalhes.gramaturaG,
-      },
-      calculo: {
-        pesoLiquidoKg: calculation.detalhes.pesoLiquidoKg,
-        quantidadeEstimada: calculation.detalhes.quantidadeEstimada,
-        quantidadeComRendimento: calculation.detalhes.quantidadeComRendimento,
-        taxaRendimento: calculation.detalhes.taxaRendimento,
-        politicaArredondamento: calculation.detalhes.politicaArredondamento,
-        quantidadeCalculadaOriginal: calculation.detalhes.quantidadeFinal,
-        quantidadeFinal: calculation.detalhes.quantidadeFinal,
-        versaoFormula: CALCULATOR_FORMULA_VERSION,
-      },
-      auditoria: { atualizadoEm: null, revisao: 0, alteracoes: [] },
-      versaoAplicativo: CALCULATOR_APP_VERSION,
-    }
-
-    if (runStorageOperation(() => addCalculatorHistory(record))) {
-      lastSaveRef.current = { signature, moment: now }
-      setModal(null)
-      notify(`Produto ${productId} salvo no histórico.`)
-    }
-  }
-
-  const useHistoryRecord = (record: CalculatorHistoryRecord) => {
-    const container = activeContainers.find(item => item.id === record.recipiente.id)
-    if (!container) {
-      setModal({ type: 'details', record })
-      notify('O recipiente deste registro não está ativo.')
-      return
-    }
-    setSelectedContainerId(container.id)
-    setGrossWeightText(String(record.entrada.pesoBrutoKg).replace('.', ','))
-    setGrammageText(String(record.entrada.gramaturaG).replace('.', ','))
-    setSettingsOpen(false)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    notify('Valores carregados. O registro não foi salvo novamente.')
-  }
-
-  const openEditModal = (record: CalculatorHistoryRecord) => {
-    setEditProductId(record.identificacao.produtoId)
-    setEditAddress(record.identificacao.endereco)
-    setEditQuantity(String(record.calculo.quantidadeFinal))
-    setEditError('')
-    setModal({ type: 'edit', record })
-  }
-
-  const saveEditedRecord = () => {
-    if (modal?.type !== 'edit') return
-    const productId = uppercase(editProductId.trim())
-    const address = uppercase(editAddress.trim())
-    const quantity = parseDecimal(editQuantity)
-    if (!productId) { setEditError('Informe o ID do produto.'); return }
-    if (!address) { setEditError('Informe o endereço.'); return }
-    if (quantity === null || !Number.isFinite(quantity) || quantity < 0) {
-      setEditError('Informe uma quantidade válida e não negativa.')
-      return
-    }
-    if (!Number.isInteger(quantity)) {
-      setEditError('A quantidade deve ser informada em unidades inteiras.')
-      return
-    }
-
-    const previous = {
-      produtoId: modal.record.identificacao.produtoId,
-      endereco: modal.record.identificacao.endereco,
-      quantidadeFinal: modal.record.calculo.quantidadeFinal,
-    }
-    const current = { produtoId: productId, endereco: address, quantidadeFinal: quantity }
-    if (
-      previous.produtoId === current.produtoId
-      && previous.endereco === current.endereco
-      && previous.quantidadeFinal === current.quantidadeFinal
-    ) {
-      setModal(null)
-      notify('Nenhuma alteração foi realizada.')
-      return
-    }
-
+  const runSurveyOperation = (operation: () => CalculatorSurveyState): CalculatorSurveyState | null => {
     try {
-      const moment = new Date().toISOString()
-      const result = replaceCalculatorHistoryRecord(modal.record.id, record => {
-        record.identificacao = { produtoId: productId, endereco: address }
-        record.calculo.quantidadeFinal = quantity
-        record.auditoria.atualizadoEm = moment
-        record.auditoria.revisao += 1
-        record.auditoria.alteracoes = [
-          ...record.auditoria.alteracoes,
-          { em: moment, anterior: previous, atual: current },
-        ].slice(-20)
-      })
-      if (!result.record) { setEditError('Este registro não foi encontrado.'); return }
-      setState(result.state)
-      setModal(null)
-      notify('Registro atualizado e revisão salva.')
+      const next = operation()
+      setSurveyState(next)
+      return next
     } catch (error) {
-      setEditError(error instanceof Error ? error.message : 'Não foi possível salvar a alteração.')
-    }
-  }
-
-  const deleteHistoryRecord = (record: CalculatorHistoryRecord) => {
-    try {
-      const result = removeCalculatorHistoryRecord(record.id)
-      if (!result.record) return
-      setState(result.state)
-      notify('Registro excluído.', {
-        actionLabel: 'Desfazer',
-        action: () => {
-          const restored = runStorageOperation(() => restoreCalculatorHistoryRecord(result.record!))
-          if (restored) notify('Registro restaurado.')
-        },
-      })
-    } catch (error) {
-      notify(error instanceof Error ? error.message : 'Não foi possível excluir o registro.')
+      notify(error instanceof CalculatorSurveyStorageError ? error.message : error instanceof Error ? error.message : 'Não foi possível atualizar o levantamento.')
+      return null
     }
   }
 
@@ -379,6 +251,128 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
     setGrossWeightText('')
     setGrammageText('')
     setProductLookup({ status: 'idle' })
+  }
+
+  const createSurvey = () => {
+    const name = uppercase(surveyNameDraft.trim())
+    if (!name) { notify('Informe o nome da rua ou do levantamento.'); return }
+    if (runSurveyOperation(() => createCalculatorSurvey(name))) {
+      setSurveyNameDraft('')
+      setSurveySearch('')
+      notify(`Levantamento ${name} criado.`)
+    }
+  }
+
+  const selectSurvey = (id: string) => {
+    if (runSurveyOperation(() => selectCalculatorSurvey(id))) setSurveySearch('')
+  }
+
+  const exportActiveSurvey = () => {
+    if (!activeSurvey) { notify('Selecione um levantamento para exportar.'); return }
+    try {
+      exportSurveyToXlsx(activeSurvey)
+      notify(`Excel de ${activeSurvey.nome} gerado.`)
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Não foi possível gerar o Excel.')
+    }
+  }
+
+  const openSaveModal = () => {
+    if (!calculation.sucesso || !selectedContainer) return
+    if (!activeSurvey) { notify('Crie ou selecione um levantamento antes de salvar.'); return }
+    const scannedCode = productLookup.status === 'found'
+      ? productLookup.product.codigo
+      : productLookup.status === 'not-found' || productLookup.status === 'error' ? productLookup.code : ''
+    setSaveCode(uppercase(scannedCode))
+    setSaveDescription(productLookup.status === 'found' ? uppercase(productLookup.product.descritivo?.trim() ?? '') : '')
+    setSaveError('')
+    setModal({ type: 'save' })
+  }
+
+  const saveCurrentCalculation = () => {
+    if (!calculation.sucesso || !selectedContainer || !activeSurvey) {
+      setSaveError('O cálculo ou o levantamento selecionado deixou de ser válido.')
+      return
+    }
+    const codigo = uppercase(saveCode.trim())
+    const descritivo = uppercase(saveDescription.trim())
+    if (!codigo) { setSaveError('Informe o código do produto.'); return }
+    if (!descritivo) { setSaveError('Informe o descritivo do produto.'); return }
+
+    const existing = activeSurvey.itens.some(item => item.codigo === codigo)
+    const now = new Date().toISOString()
+    const item: CalculatorSurveyItem = {
+      id: createCalculatorId('levantamento-item'),
+      codigo,
+      descritivo,
+      quantidade: calculation.resultado,
+      criadoEm: now,
+      atualizadoEm: now,
+      calculo: {
+        recipienteNome: selectedContainer.nome,
+        taraKg: selectedContainer.taraKg,
+        pesoBrutoKg: calculation.detalhes.pesoBrutoKg,
+        pesoLiquidoKg: calculation.detalhes.pesoLiquidoKg,
+        gramaturaG: calculation.detalhes.gramaturaG,
+        taxaRendimento: calculation.detalhes.taxaRendimento,
+        politicaArredondamento: calculation.detalhes.politicaArredondamento,
+      },
+    }
+
+    if (runSurveyOperation(() => upsertCalculatorSurveyItem(activeSurvey.id, item))) {
+      setModal(null)
+      clearFields()
+      notify(existing ? `${codigo} atualizado no levantamento.` : `${codigo} salvo no levantamento.`)
+    }
+  }
+
+  const openEditItem = (item: CalculatorSurveyItem) => {
+    setEditCode(item.codigo)
+    setEditDescription(item.descritivo)
+    setEditQuantity(String(item.quantidade))
+    setEditError('')
+    setModal({ type: 'edit-item', item })
+  }
+
+  const saveEditedItem = () => {
+    if (modal?.type !== 'edit-item' || !activeSurvey) return
+    const codigo = uppercase(editCode.trim())
+    const descritivo = uppercase(editDescription.trim())
+    const quantidade = parseDecimal(editQuantity)
+    if (!codigo) { setEditError('Informe o código do produto.'); return }
+    if (!descritivo) { setEditError('Informe o descritivo do produto.'); return }
+    if (quantidade === null || !Number.isFinite(quantidade) || quantidade < 0 || !Number.isInteger(quantidade)) {
+      setEditError('Informe uma quantidade inteira e não negativa.')
+      return
+    }
+    if (runSurveyOperation(() => updateCalculatorSurveyItem(activeSurvey.id, modal.item.id, { codigo, descritivo, quantidade }))) {
+      setModal(null)
+      notify('Item atualizado no levantamento.')
+    }
+  }
+
+  const deleteSurveyItem = (item: CalculatorSurveyItem) => {
+    if (!activeSurvey) return
+    if (runSurveyOperation(() => removeCalculatorSurveyItem(activeSurvey.id, item.id))) notify(`${item.codigo} removido do levantamento.`)
+  }
+
+  const confirmDeleteSurvey = () => {
+    if (!activeSurvey) return
+    const name = activeSurvey.nome
+    if (runSurveyOperation(() => removeCalculatorSurvey(activeSurvey.id))) {
+      setModal(null)
+      setSurveySearch('')
+      notify(`Levantamento ${name} excluído.`)
+    }
+  }
+
+  const confirmClearSurveys = () => {
+    if (!isAdmin) return
+    if (runSurveyOperation(clearCalculatorSurveys)) {
+      setModal(null)
+      setSurveySearch('')
+      notify('Todos os levantamentos locais foram apagados.')
+    }
   }
 
   const readProductCode = async (rawValue: string) => {
@@ -439,10 +433,7 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
     let id = baseId
     let suffix = 2
     while (adminContainers.some(container => container.id === id)) id = `${baseId}-${suffix++}`
-    setAdminContainers(current => [
-      ...current,
-      { id, nome: 'Novo recipiente', taraKg: 0, cor: '#526873', ativo: true },
-    ])
+    setAdminContainers(current => [...current, { id, nome: 'Novo recipiente', taraKg: 0, cor: '#526873', ativo: true }])
   }
 
   const updateAdminContainer = (id: string, patch: Partial<CalculatorContainer>) => {
@@ -466,9 +457,7 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
     if (!next) return
     setAdminError('')
     const nextActive = next.recipientes.filter(container => container.ativo)
-    if (!nextActive.some(container => container.id === selectedContainerId)) {
-      setSelectedContainerId(nextActive[0]?.id ?? '')
-    }
+    if (!nextActive.some(container => container.id === selectedContainerId)) setSelectedContainerId(nextActive[0]?.id ?? '')
     notify('Configurações administrativas salvas.')
   }
 
@@ -488,12 +477,43 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
     if (next) notify('Recipiente inicial atualizado.')
   }
 
-  const confirmClearHistory = () => {
-    if (!ensureAdminSession()) return
-    const next = runStorageOperation(clearCalculatorHistory)
-    if (!next) return
-    setModal(null)
-    notify('Histórico apagado.')
+  function renderModal() {
+    if (!modal) return null
+    const close = () => setModal(null)
+
+    if (modal.type === 'save') return <CalculatorModal title="Salvar no levantamento" eyebrow={activeSurvey?.nome ?? 'Levantamento'} onClose={close}>
+      <p>O código, o descritivo e a nova quantidade serão registrados no levantamento selecionado.</p>
+      <div className="calculator-survey-save-summary">
+        <div><span>Levantamento</span><strong>{activeSurvey?.nome ?? '—'}</strong></div>
+        <div><span>Nova quantidade</span><strong>{formatQuantity(calculation.resultado)}</strong></div>
+      </div>
+      <div className="calculator-modal-fields">
+        <label><span>Código do produto</span><input autoFocus value={saveCode} maxLength={80} placeholder="EX.: ITPFPHM408PAAI4" onChange={event => setSaveCode(uppercase(event.target.value))}/></label>
+        <label><span>Descritivo</span><textarea value={saveDescription} maxLength={500} placeholder="DESCRITIVO DO MATERIAL" onChange={event => setSaveDescription(uppercase(event.target.value))}/></label>
+      </div>
+      {saveError && <div className="calculator-form-error">{saveError}</div>}
+      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="primary-button" type="button" onClick={saveCurrentCalculation}><Save size={16}/>Salvar produto</button></div>
+    </CalculatorModal>
+
+    if (modal.type === 'edit-item') return <CalculatorModal title="Editar item" eyebrow={activeSurvey?.nome ?? 'Levantamento'} onClose={close}>
+      <div className="calculator-modal-fields">
+        <label><span>Código do produto</span><input autoFocus value={editCode} maxLength={80} onChange={event => setEditCode(uppercase(event.target.value))}/></label>
+        <label><span>Descritivo</span><textarea value={editDescription} maxLength={500} onChange={event => setEditDescription(uppercase(event.target.value))}/></label>
+        <label><span>Nova quantidade</span><input inputMode="numeric" value={editQuantity} onChange={event => setEditQuantity(sanitizeDecimalInput(event.target.value))}/></label>
+      </div>
+      {editError && <div className="calculator-form-error">{editError}</div>}
+      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="primary-button" type="button" onClick={saveEditedItem}><Save size={16}/>Salvar alterações</button></div>
+    </CalculatorModal>
+
+    if (modal.type === 'delete-survey') return <CalculatorModal title="Excluir levantamento" onClose={close}>
+      <p>O levantamento <strong>{activeSurvey?.nome}</strong> e todos os itens registrados nele serão excluídos deste dispositivo.</p>
+      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="calculator-danger-button" type="button" onClick={confirmDeleteSurvey}><Trash2 size={16}/>Excluir levantamento</button></div>
+    </CalculatorModal>
+
+    return <CalculatorModal title="Apagar todos os levantamentos" onClose={close}>
+      <p>Todos os levantamentos e respectivas quantidades salvas neste dispositivo serão apagados. Esta ação não pode ser desfeita.</p>
+      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="calculator-danger-button" type="button" onClick={confirmClearSurveys}><Trash2 size={16}/>Apagar tudo</button></div>
+    </CalculatorModal>
   }
 
   if (settingsOpen) {
@@ -502,7 +522,7 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
         <div className="calculator-heading-copy">
           <button className="calculator-back-link" type="button" onClick={() => setSettingsOpen(false)}><ArrowLeft size={17}/>Voltar à calculadora</button>
           <h2>Configurações da calculadora</h2>
-          <p>Preferências e parâmetros salvos somente neste dispositivo.</p>
+          <p>Preferências, taras e armazenamento local dos levantamentos.</p>
         </div>
         <button className="secondary-button" type="button" onClick={onBackHome}>Voltar ao início</button>
       </div>
@@ -518,11 +538,8 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
           </label>
         </section>
 
-        {isAdmin&&<section className="calculator-card">
-          <div className="calculator-section-title">
-            <div><h3>Administração</h3><p>Taras, fórmula e histórico disponíveis nesta área autenticada.</p></div>
-            <span className="calculator-admin-status unlocked">Liberado</span>
-          </div>
+        {isAdmin && <section className="calculator-card">
+          <div className="calculator-section-title"><div><h3>Administração</h3><p>Taras e parâmetros da fórmula.</p></div><span className="calculator-admin-status unlocked">Liberado</span></div>
           <div className="calculator-admin-content">
             <div className="calculator-admin-subhead"><div><h4>Recipientes</h4><p>Ao menos um recipiente deve permanecer ativo.</p></div><button className="secondary-button" type="button" onClick={addAdminContainer}><Plus size={16}/>Adicionar</button></div>
             <div className="calculator-container-editor">
@@ -539,56 +556,24 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
               <label><span>Quantidade final</span><select value={adminRounding} onChange={event => setAdminRounding(event.target.value as RoundingPolicy)}><option value="truncar">Somente unidades completas</option><option value="arredondar">Arredondamento convencional</option></select></label>
             </div>
             {adminError && <div className="calculator-form-error">{adminError}</div>}
-            <div className="calculator-admin-actions">
-              <button className="primary-button" type="button" onClick={saveAdministration}><Save size={16}/>Salvar alterações</button>
-              <button className="secondary-button" type="button" onClick={restoreDefaults}><RotateCcw size={16}/>Restaurar padrões</button>
-            </div>
-            <div className="calculator-danger-zone"><div><strong>Histórico local</strong><p>Apaga todos os registros salvos neste dispositivo.</p></div><button type="button" onClick={() => { if (ensureAdminSession()) setModal({ type: 'clear-history' }) }}><Trash2 size={16}/>Apagar histórico</button></div>
+            <div className="calculator-admin-actions"><button className="primary-button" type="button" onClick={saveAdministration}><Save size={16}/>Salvar alterações</button><button className="secondary-button" type="button" onClick={restoreDefaults}><RotateCcw size={16}/>Restaurar padrões</button></div>
+            <div className="calculator-danger-zone"><div><strong>Levantamentos locais</strong><p>Apaga todos os levantamentos e quantidades salvos neste dispositivo.</p></div><button type="button" onClick={() => setModal({ type: 'clear-surveys' })}><Trash2 size={16}/>Apagar levantamentos</button></div>
           </div>
         </section>}
 
         <section className="calculator-card calculator-system-info">
           <div className="calculator-section-title"><div><h3>Sistema</h3></div></div>
-          <dl><div><dt>Calculadora</dt><dd>{CALCULATOR_APP_VERSION}</dd></div><div><dt>Fórmula</dt><dd>v{CALCULATOR_FORMULA_VERSION}</dd></div><div><dt>Armazenamento</dt><dd>Local</dd></div><div><dt>Funcionamento</dt><dd>Offline</dd></div></dl>
+          <dl><div><dt>Calculadora</dt><dd>{CALCULATOR_APP_VERSION}</dd></div><div><dt>Levantamentos</dt><dd>Local / offline</dd></div><div><dt>Exportação</dt><dd>Excel .xlsx</dd></div><div><dt>Levantamentos criados</dt><dd>{surveyState.levantamentos.length}</dd></div></dl>
         </section>
       </div>
       {modal && renderModal()}
-      {notification && <CalculatorNotification notification={notification} onClose={() => setNotification(null)}/>} 
+      {notification && <CalculatorNotification message={notification.message} onClose={() => setNotification(null)}/>} 
     </section>
-  }
-
-  function renderModal() {
-    if (!modal) return null
-    const close = () => setModal(null)
-
-    if (modal.type === 'save') return <CalculatorModal title="Identificar cálculo" eyebrow="Novo registro" onClose={close}>
-      <p>Informe o produto e o endereço antes de salvar no histórico.</p>
-      <div className="calculator-modal-summary"><div><span>Recipiente</span><strong>{selectedContainer?.nome ?? '—'}</strong></div><div><span>Quantidade</span><strong>{formatQuantity(calculation.resultado)}</strong></div></div>
-      <div className="calculator-modal-fields"><label><span>ID do produto</span><input autoFocus value={saveProductId} maxLength={80} placeholder="Ex.: PROD-001" onChange={event => setSaveProductId(uppercase(event.target.value))}/></label><label><span>Endereço</span><input value={saveAddress} maxLength={120} placeholder="Ex.: Rua A / Posição 12" onChange={event => setSaveAddress(uppercase(event.target.value))}/></label></div>
-      {saveError && <div className="calculator-form-error">{saveError}</div>}
-      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="primary-button" type="button" onClick={saveCurrentCalculation}>Confirmar salvamento</button></div>
-    </CalculatorModal>
-
-    if (modal.type === 'edit') return <CalculatorModal title="Editar cálculo salvo" eyebrow="Revisão de registro" onClose={close}>
-      <p>As alterações ficam registradas no histórico de auditoria do cálculo.</p>
-      <div className="calculator-modal-fields"><label><span>ID do produto</span><input autoFocus value={editProductId} maxLength={80} onChange={event => setEditProductId(uppercase(event.target.value))}/></label><label><span>Endereço</span><input value={editAddress} maxLength={120} onChange={event => setEditAddress(uppercase(event.target.value))}/></label><label><span>Quantidade</span><input inputMode="numeric" value={editQuantity} onChange={event => setEditQuantity(sanitizeDecimalInput(event.target.value))}/><small>O valor calculado original será preservado para auditoria.</small></label></div>
-      {editError && <div className="calculator-form-error">{editError}</div>}
-      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="primary-button" type="button" onClick={saveEditedRecord}>Salvar alterações</button></div>
-    </CalculatorModal>
-
-    if (modal.type === 'details') return <CalculatorModal title="Detalhes do cálculo" wide onClose={close}>
-      <CalculatorRecordDetails record={modal.record}/>
-    </CalculatorModal>
-
-    return <CalculatorModal title="Apagar histórico" onClose={close}>
-      <p>Todos os cálculos salvos neste dispositivo serão apagados. Esta ação não pode ser desfeita.</p>
-      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="calculator-danger-button" type="button" onClick={confirmClearHistory}>Apagar tudo</button></div>
-    </CalculatorModal>
   }
 
   return <section className="calculator-page">
     <div className="calculator-page-heading">
-      <div className="calculator-brand"><img src={logoSrc} alt="Símbolo do BombonaCalc"/><div><span>FERRAMENTA INDUSTRIAL</span><h2>Calculadora</h2><p>Cálculo de produção por peso, tara e gramatura.</p></div></div>
+      <div className="calculator-brand"><img src={logoSrc} alt="Símbolo do BombonaCalc"/><div><span>FERRAMENTA INDUSTRIAL</span><h2>Calculadora</h2><p>Cálculo e levantamento de materiais por rua.</p></div></div>
       <div className="calculator-heading-actions"><button className="secondary-button" type="button" onClick={onBackHome}><ArrowLeft size={16}/>Início</button><button className="secondary-button" type="button" onClick={openSettings}><Settings size={17}/>Configurações</button></div>
     </div>
 
@@ -597,7 +582,7 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
         <section className={`calculator-result ${calculation.sucesso || calculation.codigoErro === 'DADOS_INCOMPLETOS' ? '' : 'error'}`} aria-live="polite">
           <div><span>Quantidade produzida</span><span className="calculator-container-badge">{selectedContainer?.nome ?? 'Sem recipiente'}</span></div>
           <strong>{calculation.sucesso ? formatQuantity(calculation.resultado) : '0'}</strong>
-          <p>{calculation.sucesso ? 'Cálculo concluído. Identifique o produto para salvar.' : calculation.mensagem}</p>
+          <p>{calculation.sucesso ? `Cálculo concluído${activeSurvey ? ` · levantamento ${activeSurvey.nome}` : ' · crie um levantamento para salvar'}.` : calculation.mensagem}</p>
         </section>
 
         <section className="calculator-card">
@@ -608,17 +593,19 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
         </section>
 
         <section className="calculator-card">
-          <div className="calculator-section-title calculator-values-title"><div><h3>Valores do cálculo</h3><p>Use vírgula ou ponto como separador decimal.</p></div><button className="calculator-scan-button" type="button" onClick={() => setScannerOpen(true)}><ScanLine size={18}/>Ler Data Matrix</button></div>
+          <div className="calculator-section-title calculator-values-title">
+            <div><h3>Valores do cálculo</h3><p>Leia o Data Matrix para preencher código, descritivo e gramatura.</p></div>
+            <button className="calculator-scan-button survey-scan-button" type="button" onClick={() => setScannerOpen(true)}>
+              <span className="calculator-camera-3d" aria-hidden="true"><Camera size={21}/><i/></span>
+              <span><b>Ler Data Matrix</b><small>Câmera rápida</small></span>
+            </button>
+          </div>
           {productLookup.status !== 'idle' && <div className={`calculator-product-lookup ${productLookup.status}`} aria-live="polite">
             {productLookup.status === 'searching' && <div className="calculator-product-searching"><LoaderCircle size={19}/><span><b>Buscando produto…</b><small>{productLookup.code}</small></span></div>}
             {productLookup.status === 'not-found' && <div><b>Produto não encontrado no banco de dados.</b><small>Código lido: {productLookup.code}</small></div>}
             {productLookup.status === 'error' && <div><b>{productLookup.message}</b>{productLookup.code && <small>Código lido: {productLookup.code}</small>}</div>}
             {productLookup.status === 'found' && <>
-              <dl>
-                <div><dt>Código</dt><dd>{productLookup.product.codigo}</dd></div>
-                <div><dt>Descritivo</dt><dd>{productLookup.product.descritivo?.trim() || 'Não informado no banco.'}</dd></div>
-                <div><dt>Gramatura</dt><dd>{productLookup.weight.valid ? formatGrams(productLookup.weight.grams) : 'Não identificada'}</dd></div>
-              </dl>
+              <dl><div><dt>Código</dt><dd>{productLookup.product.codigo}</dd></div><div><dt>Descritivo</dt><dd>{productLookup.product.descritivo?.trim() || 'Não informado no banco.'}</dd></div><div><dt>Gramatura</dt><dd>{productLookup.weight.valid ? formatGrams(productLookup.weight.grams) : 'Não identificada'}</dd></div></dl>
               {!productLookup.weight.valid && <p>{productLookup.weight.reason === 'ambiguous' ? 'Mais de uma gramatura possível foi encontrada. Informe manualmente.' : 'Gramatura não encontrada no descritivo. Informe manualmente.'}</p>}
             </>}
           </div>}
@@ -630,65 +617,36 @@ export function CalculatorPage({ onBackHome, isAdmin=false }: CalculatorPageProp
 
         {calculation.sucesso && <section className="calculator-card calculator-summary"><div className="calculator-section-title compact"><div><h3>Resumo</h3></div><span>{formatPercentage(calculation.detalhes.taxaRendimento)} · {calculation.detalhes.politicaArredondamento === 'truncar' ? 'unidades completas' : 'arredondamento convencional'}</span></div><dl><div><dt>Peso bruto</dt><dd>{formatWeight(calculation.detalhes.pesoBrutoKg)} kg</dd></div><div><dt>Tara utilizada</dt><dd>{formatWeight(calculation.detalhes.taraKg)} kg</dd></div><div><dt>Peso líquido</dt><dd>{formatWeight(calculation.detalhes.pesoLiquidoKg)} kg</dd></div><div><dt>Gramatura</dt><dd>{formatWeight(calculation.detalhes.gramaturaG)} g</dd></div></dl></section>}
 
-        <div className="calculator-actions"><button className="primary-button" type="button" disabled={!calculation.sucesso} onClick={openSaveModal}><Save size={17}/>Salvar no histórico</button><button className="secondary-button" type="button" disabled={!calculation.sucesso} onClick={async () => { if (!calculation.sucesso) return; try { await copyToClipboard(String(calculation.resultado)); notify('Resultado copiado.') } catch { notify('Não foi possível copiar o resultado.') } }}><Clipboard size={17}/>Copiar resultado</button><button className="calculator-text-button" type="button" onClick={clearFields}><RotateCcw size={16}/>Limpar campos</button></div>
+        <div className="calculator-actions"><button className="primary-button" type="button" disabled={!calculation.sucesso} onClick={openSaveModal}><Save size={17}/>Salvar no levantamento</button><button className="secondary-button" type="button" disabled={!calculation.sucesso} onClick={async () => { if (!calculation.sucesso) return; try { await copyToClipboard(String(calculation.resultado)); notify('Resultado copiado.') } catch { notify('Não foi possível copiar o resultado.') } }}><Clipboard size={17}/>Copiar resultado</button><button className="calculator-text-button" type="button" onClick={clearFields}><RotateCcw size={16}/>Limpar campos</button></div>
       </div>
 
       <aside className="calculator-history-column">
-        <section className="calculator-card calculator-history-card">
-          <div className="calculator-section-title"><div><h3>Histórico</h3><p>Somente cálculos salvos manualmente.</p></div><span className="calculator-history-count">{filteredHistory.length}</span></div>
-          <label className="calculator-history-search"><span>Buscar pelo ID do produto</span><div><Search size={17}/><input value={historySearch} type="search" maxLength={80} placeholder="EX.: PROD-001" onChange={event => setHistorySearch(uppercase(event.target.value))}/>{historySearch && <button type="button" aria-label="Limpar busca" onClick={() => setHistorySearch('')}><X size={15}/></button>}</div><small>{normalizedHistorySearch ? `${filteredHistory.length} registro(s) encontrado(s).` : ''}</small></label>
-          <div className="calculator-history-list">
-            {!filteredHistory.length ? <div className="calculator-history-empty">{normalizedHistorySearch ? 'Nenhum registro corresponde à busca.' : 'Nenhum cálculo salvo.'}</div> : filteredHistory.map(record => <article key={record.id} className="calculator-history-item"><button className="calculator-history-main" type="button" onClick={() => setModal({ type: 'details', record })}><span><strong>{record.identificacao.produtoId || 'Produto não informado'}</strong><em>{record.identificacao.endereco || 'Endereço não informado'}</em></span><small>{record.recipiente.nome} · {formatDateTime(record.criadoEm)}</small><small>PB {formatWeight(record.entrada.pesoBrutoKg)} kg · {formatWeight(record.entrada.gramaturaG)} g</small><b>{formatQuantity(record.calculo.quantidadeFinal)}{record.auditoria.revisao > 0 && <i>Editado · rev. {record.auditoria.revisao}</i>}</b></button><div className="calculator-history-actions"><button type="button" onClick={() => useHistoryRecord(record)}><Play size={14}/>Usar</button><button type="button" onClick={() => openEditModal(record)}><Pencil size={14}/>Editar</button><button type="button" onClick={() => setModal({ type: 'details', record })}><Eye size={14}/>Detalhes</button><button className="delete" type="button" onClick={() => deleteHistoryRecord(record)}><Trash2 size={14}/>Excluir</button></div></article>)}
-          </div>
+        <section className="calculator-card calculator-survey-card">
+          <div className="calculator-survey-head"><div><h3>Levantamentos</h3><p>Crie uma rua e registre as novas quantidades.</p></div><span className="calculator-survey-count">{activeSurvey?.itens.length ?? 0}</span></div>
+          <div className="calculator-survey-create"><input value={surveyNameDraft} maxLength={80} placeholder="NOME DA RUA / LEVANTAMENTO" onKeyDown={event => { if (event.key === 'Enter') createSurvey() }} onChange={event => setSurveyNameDraft(uppercase(event.target.value))}/><button type="button" onClick={createSurvey}><Plus size={15}/>Criar</button></div>
+          {surveyState.levantamentos.length > 0 ? <>
+            <label className="calculator-survey-select"><span>Levantamento ativo</span><select value={activeSurvey?.id ?? ''} onChange={event => selectSurvey(event.target.value)}>{surveyState.levantamentos.map(survey => <option key={survey.id} value={survey.id}>{survey.nome} · {survey.itens.length} item(ns)</option>)}</select></label>
+            <div className="calculator-survey-toolbar"><button className="calculator-survey-export" type="button" disabled={!activeSurvey?.itens.length} onClick={exportActiveSurvey}><FileSpreadsheet size={16}/>Exportar Excel</button><button className="calculator-survey-delete" type="button" aria-label="Excluir levantamento" onClick={() => setModal({ type: 'delete-survey' })}><Trash2 size={16}/></button></div>
+            {activeSurvey && <div className="calculator-survey-meta"><span><strong>{activeSurvey.nome}</strong></span><span>Atualizado {formatDateTime(activeSurvey.atualizadoEm)}</span></div>}
+            <label className="calculator-survey-search"><span>Buscar no levantamento</span><div><Search size={16}/><input value={surveySearch} type="search" maxLength={100} placeholder="CÓDIGO OU DESCRITIVO" onChange={event => setSurveySearch(uppercase(event.target.value))}/>{surveySearch && <button type="button" aria-label="Limpar busca" onClick={() => setSurveySearch('')}><X size={14}/></button>}</div></label>
+            <div className="calculator-survey-list">
+              {!filteredSurveyItems.length ? <div className="calculator-survey-empty">{normalizedSurveySearch ? 'Nenhum item corresponde à busca.' : 'Nenhum produto registrado neste levantamento.'}</div> : filteredSurveyItems.map(item => <article className="calculator-survey-item" key={item.id}><div className="calculator-survey-item-copy"><strong>{item.codigo}</strong><span>{item.descritivo || 'Sem descritivo'}</span><small>Registrado {formatDateTime(item.atualizadoEm)}</small><b>{formatQuantity(item.quantidade)}</b></div><div className="calculator-survey-item-actions"><button type="button" onClick={() => openEditItem(item)}><Pencil size={13}/>Editar</button><button className="delete" type="button" onClick={() => deleteSurveyItem(item)}><Trash2 size={13}/>Excluir</button></div></article>)}
+            </div>
+          </> : <div className="calculator-survey-empty">Crie o primeiro levantamento informando o nome da rua. Depois, cada cálculo salvo será registrado dentro dele.</div>}
         </section>
       </aside>
     </div>
+
     {scannerOpen && <Suspense fallback={<div className="calculator-modal-backdrop"><div className="calculator-scanner-loading" role="status"><LoaderCircle size={24}/>Carregando leitor…</div></div>}><ScannerModal title="Ler Data Matrix do produto" subtitle="Aponte a câmera para o código do material" onDetected={readProductCode} onClose={() => setScannerOpen(false)}/></Suspense>}
     {modal && renderModal()}
-    {notification && <CalculatorNotification notification={notification} onClose={() => setNotification(null)}/>} 
+    {notification && <CalculatorNotification message={notification.message} onClose={() => setNotification(null)}/>} 
   </section>
 }
 
-function CalculatorModal({
-  title,
-  eyebrow,
-  wide = false,
-  onClose,
-  children,
-}: {
-  title: string
-  eyebrow?: string
-  wide?: boolean
-  onClose: () => void
-  children: React.ReactNode
-}) {
-  return <div className="calculator-modal-backdrop" role="presentation" onMouseDown={event => { if (event.currentTarget === event.target) onClose() }}><section className={`calculator-modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}><div className="calculator-modal-head"><div>{eyebrow && <span>{eyebrow}</span>}<h3>{title}</h3></div><button type="button" aria-label="Fechar" onClick={onClose}><X size={20}/></button></div>{children}</section></div>
+function CalculatorModal({ title, eyebrow, onClose, children }: { title: string; eyebrow?: string; onClose: () => void; children: React.ReactNode }) {
+  return <div className="calculator-modal-backdrop" role="presentation" onMouseDown={event => { if (event.currentTarget === event.target) onClose() }}><section className="calculator-modal" role="dialog" aria-modal="true" aria-label={title}><div className="calculator-modal-head"><div>{eyebrow && <span>{eyebrow}</span>}<h3>{title}</h3></div><button type="button" aria-label="Fechar" onClick={onClose}><X size={20}/></button></div>{children}</section></div>
 }
 
-function CalculatorNotification({ notification, onClose }: { notification: NotificationState; onClose: () => void }) {
-  return <div className="calculator-notification" role="status"><span>{notification.message}</span>{notification.action && <button type="button" onClick={() => { onClose(); notification.action?.() }}><Undo2 size={15}/>{notification.actionLabel}</button>}</div>
-}
-
-function CalculatorRecordDetails({ record }: { record: CalculatorHistoryRecord }) {
-  const details: Array<[string, string]> = [
-    ['ID do produto', record.identificacao.produtoId || 'Não informado'],
-    ['Endereço', record.identificacao.endereco || 'Não informado'],
-    ['Salvo em', formatDateTime(record.criadoEm)],
-    ['Recipiente', record.recipiente.nome],
-    ['Peso bruto', `${formatWeight(record.entrada.pesoBrutoKg)} kg`],
-    ['Tara usada', `${formatWeight(record.recipiente.taraKg)} kg`],
-    ['Peso líquido', `${formatWeight(record.calculo.pesoLiquidoKg)} kg`],
-    ['Gramatura', `${formatWeight(record.entrada.gramaturaG)} g`],
-    ['Rendimento', formatPercentage(record.calculo.taxaRendimento)],
-    ['Arredondamento', record.calculo.politicaArredondamento === 'truncar' ? 'Unidades completas' : 'Convencional'],
-    ['Quantidade atual', formatQuantity(record.calculo.quantidadeFinal)],
-    ['Quantidade calculada', formatQuantity(record.calculo.quantidadeCalculadaOriginal)],
-    ['Fórmula', `v${record.calculo.versaoFormula}`],
-    ['Aplicativo', record.versaoAplicativo],
-  ]
-  if (record.auditoria.atualizadoEm) {
-    details.push(['Última edição', formatDateTime(record.auditoria.atualizadoEm)])
-    details.push(['Revisão', String(record.auditoria.revisao)])
-  }
-  return <><dl className="calculator-details-grid">{details.map(([title, value]) => <div key={title}><dt>{title}</dt><dd>{value}</dd></div>)}</dl>{record.auditoria.alteracoes.length > 0 && <section className="calculator-revisions"><h4>Histórico de alterações</h4><ol>{[...record.auditoria.alteracoes].reverse().map(change => <li key={`${change.em}-${change.atual.quantidadeFinal}`}><strong>{formatDateTime(change.em)}</strong><span>ID {change.anterior.produtoId || 'não informado'} → {change.atual.produtoId || 'não informado'} · Endereço {change.anterior.endereco || 'não informado'} → {change.atual.endereco || 'não informado'} · Quantidade {formatQuantity(change.anterior.quantidadeFinal)} → {formatQuantity(change.atual.quantidadeFinal)}</span></li>)}</ol></section>}</>
+function CalculatorNotification({ message, onClose }: { message: string; onClose: () => void }) {
+  return <div className="calculator-notification" role="status"><span>{message}</span><button type="button" aria-label="Fechar aviso" onClick={onClose}><X size={14}/></button></div>
 }
