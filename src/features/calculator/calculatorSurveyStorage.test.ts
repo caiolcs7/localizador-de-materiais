@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CALCULATOR_SURVEYS_STORAGE_KEY,
   createCalculatorSurvey,
   loadCalculatorSurveyState,
   removeCalculatorSurveyItem,
@@ -18,12 +19,13 @@ function createStorage(): Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> {
   }
 }
 
-function createItem(code: string, quantity: number): CalculatorSurveyItem {
+function createItem(code: string, quantity: number, address = 'R14A2C05'): CalculatorSurveyItem {
   const now = '2026-09-16T12:00:00.000Z'
   return {
     id: `item-${code}-${quantity}`,
     codigo: code,
     descritivo: `Descrição ${code}`,
+    endereco: address,
     quantidade: quantity,
     criadoEm: now,
     atualizadoEm: now,
@@ -55,21 +57,22 @@ describe('calculatorSurveyStorage', () => {
     expect(loadCalculatorSurveyState([], storage).levantamentoAtivoId).toBe(r01.id)
   })
 
-  it('atualiza a nova quantidade quando o mesmo código é salvo novamente', () => {
+  it('atualiza a nova quantidade e o endereço quando o mesmo código é salvo novamente', () => {
     const storage = createStorage()
     const created = createCalculatorSurvey('R14A1', storage)
     const surveyId = created.levantamentoAtivoId!
 
-    upsertCalculatorSurveyItem(surveyId, createItem('itpfphm408paai4', 100), storage)
-    const updated = upsertCalculatorSurveyItem(surveyId, createItem('ITPFPHM408PAAI4', 250), storage)
+    upsertCalculatorSurveyItem(surveyId, createItem('itpfphm408paai4', 100, 'R14A1C01'), storage)
+    const updated = upsertCalculatorSurveyItem(surveyId, createItem('ITPFPHM408PAAI4', 250, 'R14A1C09'), storage)
     const items = updated.levantamentos.find(survey => survey.id === surveyId)!.itens
 
     expect(items).toHaveLength(1)
     expect(items[0].codigo).toBe('ITPFPHM408PAAI4')
     expect(items[0].quantidade).toBe(250)
+    expect(items[0].endereco).toBe('R14A1C09')
   })
 
-  it('permite editar e remover um item sem afetar os demais', () => {
+  it('permite editar endereço e remover um item sem afetar os demais', () => {
     const storage = createStorage()
     const created = createCalculatorSurvey('R03', storage)
     const surveyId = created.levantamentoAtivoId!
@@ -80,11 +83,42 @@ describe('calculatorSurveyStorage', () => {
     state = updateCalculatorSurveyItem(surveyId, firstItem.id, {
       codigo: 'COD001',
       descritivo: 'Descrição revisada',
+      endereco: 'R03A1C22',
       quantidade: 33,
     }, storage)
-    expect(state.levantamentos[0].itens.find(item => item.codigo === 'COD001')?.quantidade).toBe(33)
+    const edited = state.levantamentos[0].itens.find(item => item.codigo === 'COD001')
+    expect(edited?.quantidade).toBe(33)
+    expect(edited?.endereco).toBe('R03A1C22')
 
     state = removeCalculatorSurveyItem(surveyId, firstItem.id, storage)
     expect(state.levantamentos[0].itens.map(item => item.codigo)).toEqual(['COD002'])
+  })
+
+  it('migra levantamentos antigos sem endereço sem perder os itens', () => {
+    const storage = createStorage()
+    storage.setItem(CALCULATOR_SURVEYS_STORAGE_KEY, JSON.stringify({
+      schema: 1,
+      levantamentoAtivoId: 'legacy',
+      levantamentos: [{
+        id: 'legacy',
+        nome: 'R07',
+        criadoEm: '2026-09-15T12:00:00.000Z',
+        atualizadoEm: '2026-09-15T12:00:00.000Z',
+        itens: [{
+          id: 'legacy-item',
+          codigo: 'codlegacy',
+          descritivo: 'Item antigo',
+          quantidade: 12,
+          criadoEm: '2026-09-15T12:00:00.000Z',
+          atualizadoEm: '2026-09-15T12:00:00.000Z',
+          calculo: {},
+        }],
+      }],
+    }))
+
+    const state = loadCalculatorSurveyState([], storage)
+    expect(state.schema).toBe(2)
+    expect(state.levantamentos[0].itens[0].codigo).toBe('CODLEGACY')
+    expect(state.levantamentos[0].itens[0].endereco).toBe('')
   })
 })
