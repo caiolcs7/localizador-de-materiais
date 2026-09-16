@@ -36,25 +36,27 @@ function buildSheetXml(survey: CalculatorSurvey): string {
   rows.push(`<row r="2" ht="22" customHeight="1">${cellInline('A2', `Rua / levantamento: ${survey.nome}`, 2)}</row>`)
   rows.push(`<row r="3" ht="20" customHeight="1">${cellInline('A3', `Gerado em: ${generatedAt}  •  Itens: ${survey.itens.length}`, 3)}</row>`)
   rows.push('<row r="4" ht="8" customHeight="1"></row>')
-  rows.push(`<row r="5" ht="24" customHeight="1">${cellInline('A5', 'CÓDIGO', 4)}${cellInline('B5', 'DESCRITIVO', 4)}${cellInline('C5', 'NOVA QUANTIDADE', 4)}</row>`)
+  rows.push(`<row r="5" ht="24" customHeight="1">${cellInline('A5', 'CÓDIGO', 4)}${cellInline('B5', 'DESCRITIVO', 4)}${cellInline('C5', 'ENDEREÇO', 4)}${cellInline('D5', 'NOVA QUANTIDADE', 4)}</row>`)
 
   survey.itens.forEach((item, index) => {
     const row = index + 6
     const odd = index % 2 === 1
-    rows.push(`<row r="${row}" ht="21" customHeight="1">${cellInline(`A${row}`, item.codigo, odd ? 6 : 5)}${cellInline(`B${row}`, item.descritivo || '—', odd ? 6 : 5)}${cellNumber(`C${row}`, item.quantidade, odd ? 8 : 7)}</row>`)
+    const textStyle = odd ? 6 : 5
+    const numberStyle = odd ? 8 : 7
+    rows.push(`<row r="${row}" ht="22" customHeight="1">${cellInline(`A${row}`, item.codigo, textStyle)}${cellInline(`B${row}`, item.descritivo || '—', textStyle)}${cellInline(`C${row}`, item.endereco || 'SEM ENDEREÇO', textStyle)}${cellNumber(`D${row}`, item.quantidade, numberStyle)}</row>`)
   })
 
   const lastRow = Math.max(5, survey.itens.length + 5)
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>
-  <dimension ref="A1:C${lastRow}"/>
+  <dimension ref="A1:D${lastRow}"/>
   <sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="5" topLeftCell="A6" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A6" sqref="A6"/></sheetView></sheetViews>
   <sheetFormatPr defaultRowHeight="18"/>
-  <cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="2" width="72" customWidth="1"/><col min="3" max="3" width="19" customWidth="1"/></cols>
+  <cols><col min="1" max="1" width="28" customWidth="1"/><col min="2" max="2" width="58" customWidth="1"/><col min="3" max="3" width="28" customWidth="1"/><col min="4" max="4" width="19" customWidth="1"/></cols>
   <sheetData>${rows.join('')}</sheetData>
-  <autoFilter ref="A5:C${lastRow}"/>
-  <mergeCells count="3"><mergeCell ref="A1:C1"/><mergeCell ref="A2:C2"/><mergeCell ref="A3:C3"/></mergeCells>
+  <autoFilter ref="A5:D${lastRow}"/>
+  <mergeCells count="3"><mergeCell ref="A1:D1"/><mergeCell ref="A2:D2"/><mergeCell ref="A3:D3"/></mergeCells>
   <pageMargins left="0.35" right="0.35" top="0.55" bottom="0.55" header="0.2" footer="0.2"/>
   <pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0" paperSize="9"/>
 </worksheet>`
