@@ -3,8 +3,9 @@ import {
   ArrowLeft,
   Camera,
   Clipboard,
-  FileSpreadsheet,
   LoaderCircle,
+  MapPin,
+  PackagePlus,
   Pencil,
   Plus,
   RotateCcw,
@@ -60,6 +61,7 @@ const ScannerModal = lazy(() => import('../scanner/ScannerModal').then(module =>
 
 type ModalState =
   | { type: 'save' }
+  | { type: 'add-manual' }
   | { type: 'edit-item'; item: CalculatorSurveyItem }
   | { type: 'delete-survey' }
   | { type: 'clear-surveys' }
@@ -101,7 +103,7 @@ function loadInitialSurveys(history: CalculatorState['historico']): { state: Cal
     return { state: loadCalculatorSurveyState(history), error: '' }
   } catch (error) {
     return {
-      state: { schema: 1, levantamentoAtivoId: null, levantamentos: [] },
+      state: { schema: 2, levantamentoAtivoId: null, levantamentos: [] },
       error: error instanceof Error ? error.message : 'Os levantamentos locais não puderam ser carregados.',
     }
   }
@@ -164,9 +166,16 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
   })
   const [saveCode, setSaveCode] = useState('')
   const [saveDescription, setSaveDescription] = useState('')
+  const [saveAddress, setSaveAddress] = useState('')
   const [saveError, setSaveError] = useState('')
+  const [manualCode, setManualCode] = useState('')
+  const [manualDescription, setManualDescription] = useState('')
+  const [manualAddress, setManualAddress] = useState('')
+  const [manualQuantity, setManualQuantity] = useState('')
+  const [manualError, setManualError] = useState('')
   const [editCode, setEditCode] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editAddress, setEditAddress] = useState('')
   const [editQuantity, setEditQuantity] = useState('')
   const [editError, setEditError] = useState('')
   const [adminContainers, setAdminContainers] = useState<CalculatorContainer[]>(state.recipientes)
@@ -195,11 +204,15 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
     () => surveyState.levantamentos.find(survey => survey.id === surveyState.levantamentoAtivoId) ?? null,
     [surveyState],
   )
+  const activeSurveyAddressCount = useMemo(
+    () => activeSurvey?.itens.filter(item => item.endereco.trim()).length ?? 0,
+    [activeSurvey],
+  )
   const normalizedSurveySearch = uppercase(surveySearch.trim())
   const filteredSurveyItems = useMemo(() => {
     const items = activeSurvey?.itens ?? []
     if (!normalizedSurveySearch) return items
-    return items.filter(item => uppercase(`${item.codigo} ${item.descritivo}`).includes(normalizedSurveySearch))
+    return items.filter(item => uppercase(`${item.codigo} ${item.descritivo} ${item.endereco}`).includes(normalizedSurveySearch))
   }, [activeSurvey, normalizedSurveySearch])
 
   useEffect(() => {
@@ -285,6 +298,7 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
       : productLookup.status === 'not-found' || productLookup.status === 'error' ? productLookup.code : ''
     setSaveCode(uppercase(scannedCode))
     setSaveDescription(productLookup.status === 'found' ? uppercase(productLookup.product.descritivo?.trim() ?? '') : '')
+    setSaveAddress(productLookup.status === 'found' ? uppercase(productLookup.product.endereco?.trim() ?? '') : '')
     setSaveError('')
     setModal({ type: 'save' })
   }
@@ -296,6 +310,7 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
     }
     const codigo = uppercase(saveCode.trim())
     const descritivo = uppercase(saveDescription.trim())
+    const endereco = uppercase(saveAddress.trim())
     if (!codigo) { setSaveError('Informe o código do produto.'); return }
     if (!descritivo) { setSaveError('Informe o descritivo do produto.'); return }
 
@@ -305,6 +320,7 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
       id: createCalculatorId('levantamento-item'),
       codigo,
       descritivo,
+      endereco,
       quantidade: calculation.resultado,
       criadoEm: now,
       atualizadoEm: now,
@@ -326,9 +342,60 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
     }
   }
 
+  const openManualModal = () => {
+    if (!activeSurvey) { notify('Crie ou selecione um levantamento antes de adicionar itens.'); return }
+    setManualCode('')
+    setManualDescription('')
+    setManualAddress('')
+    setManualQuantity('')
+    setManualError('')
+    setModal({ type: 'add-manual' })
+  }
+
+  const saveManualItem = () => {
+    if (!activeSurvey) { setManualError('O levantamento selecionado não existe mais.'); return }
+    const codigo = uppercase(manualCode.trim())
+    const descritivo = uppercase(manualDescription.trim())
+    const endereco = uppercase(manualAddress.trim())
+    const quantidade = parseDecimal(manualQuantity)
+    if (!codigo) { setManualError('Informe o código do produto.'); return }
+    if (quantidade === null || !Number.isFinite(quantidade) || quantidade < 0 || !Number.isInteger(quantidade)) {
+      setManualError('Informe uma quantidade inteira e não negativa.')
+      return
+    }
+    if (activeSurvey.itens.some(item => item.codigo === codigo)) {
+      setManualError('Esse código já existe neste levantamento. Use Editar para alterar o registro.')
+      return
+    }
+    const now = new Date().toISOString()
+    const item: CalculatorSurveyItem = {
+      id: createCalculatorId('levantamento-item'),
+      codigo,
+      descritivo,
+      endereco,
+      quantidade,
+      criadoEm: now,
+      atualizadoEm: now,
+      calculo: {
+        recipienteNome: 'Cadastro manual',
+        taraKg: 0,
+        pesoBrutoKg: 0,
+        pesoLiquidoKg: 0,
+        gramaturaG: 0,
+        taxaRendimento: state.configuracoes.taxaRendimento,
+        politicaArredondamento: state.configuracoes.politicaArredondamento,
+      },
+    }
+    if (runSurveyOperation(() => upsertCalculatorSurveyItem(activeSurvey.id, item))) {
+      setModal(null)
+      notify(`${codigo} adicionado ao levantamento.`)
+    }
+  }
+
   const openEditItem = (item: CalculatorSurveyItem) => {
     setEditCode(item.codigo)
     setEditDescription(item.descritivo)
+    setEditAddress(item.endereco)
     setEditQuantity(String(item.quantidade))
     setEditError('')
     setModal({ type: 'edit-item', item })
@@ -338,14 +405,14 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
     if (modal?.type !== 'edit-item' || !activeSurvey) return
     const codigo = uppercase(editCode.trim())
     const descritivo = uppercase(editDescription.trim())
+    const endereco = uppercase(editAddress.trim())
     const quantidade = parseDecimal(editQuantity)
     if (!codigo) { setEditError('Informe o código do produto.'); return }
-    if (!descritivo) { setEditError('Informe o descritivo do produto.'); return }
     if (quantidade === null || !Number.isFinite(quantidade) || quantidade < 0 || !Number.isInteger(quantidade)) {
       setEditError('Informe uma quantidade inteira e não negativa.')
       return
     }
-    if (runSurveyOperation(() => updateCalculatorSurveyItem(activeSurvey.id, modal.item.id, { codigo, descritivo, quantidade }))) {
+    if (runSurveyOperation(() => updateCalculatorSurveyItem(activeSurvey.id, modal.item.id, { codigo, descritivo, endereco, quantidade }))) {
       setModal(null)
       notify('Item atualizado no levantamento.')
     }
@@ -482,7 +549,7 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
     const close = () => setModal(null)
 
     if (modal.type === 'save') return <CalculatorModal title="Salvar no levantamento" eyebrow={activeSurvey?.nome ?? 'Levantamento'} onClose={close}>
-      <p>O código, o descritivo e a nova quantidade serão registrados no levantamento selecionado.</p>
+      <p>Confirme os dados do produto. O endereço pode ser preenchido agora ou editado depois.</p>
       <div className="calculator-survey-save-summary">
         <div><span>Levantamento</span><strong>{activeSurvey?.nome ?? '—'}</strong></div>
         <div><span>Nova quantidade</span><strong>{formatQuantity(calculation.resultado)}</strong></div>
@@ -490,16 +557,30 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
       <div className="calculator-modal-fields">
         <label><span>Código do produto</span><input autoFocus value={saveCode} maxLength={80} placeholder="EX.: ITPFPHM408PAAI4" onChange={event => setSaveCode(uppercase(event.target.value))}/></label>
         <label><span>Descritivo</span><textarea value={saveDescription} maxLength={500} placeholder="DESCRITIVO DO MATERIAL" onChange={event => setSaveDescription(uppercase(event.target.value))}/></label>
+        <label><span>Endereço</span><input value={saveAddress} maxLength={120} placeholder="EX.: R14A2C05" onChange={event => setSaveAddress(uppercase(event.target.value))}/></label>
       </div>
       {saveError && <div className="calculator-form-error">{saveError}</div>}
       <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="primary-button" type="button" onClick={saveCurrentCalculation}><Save size={16}/>Salvar produto</button></div>
+    </CalculatorModal>
+
+    if (modal.type === 'add-manual') return <CalculatorModal title="Adicionar item manualmente" eyebrow={activeSurvey?.nome ?? 'Levantamento'} onClose={close}>
+      <p>Cadastre um material sem usar a câmera. Código e quantidade são obrigatórios; descritivo e endereço podem ser preenchidos ou editados depois.</p>
+      <div className="calculator-modal-fields">
+        <label><span>Código do produto</span><input autoFocus value={manualCode} maxLength={80} placeholder="EX.: ITPFPHM408PAAI4" onChange={event => setManualCode(uppercase(event.target.value))}/></label>
+        <label><span>Descritivo</span><textarea value={manualDescription} maxLength={500} placeholder="DESCRITIVO DO MATERIAL (OPCIONAL)" onChange={event => setManualDescription(uppercase(event.target.value))}/></label>
+        <label><span>Quantidade</span><input inputMode="numeric" value={manualQuantity} placeholder="0" onChange={event => setManualQuantity(sanitizeDecimalInput(event.target.value))}/></label>
+        <label><span>Endereço</span><input value={manualAddress} maxLength={120} placeholder="EX.: R14A2C05" onChange={event => setManualAddress(uppercase(event.target.value))}/></label>
+      </div>
+      {manualError && <div className="calculator-form-error">{manualError}</div>}
+      <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="primary-button" type="button" onClick={saveManualItem}><PackagePlus size={16}/>Adicionar ao levantamento</button></div>
     </CalculatorModal>
 
     if (modal.type === 'edit-item') return <CalculatorModal title="Editar item" eyebrow={activeSurvey?.nome ?? 'Levantamento'} onClose={close}>
       <div className="calculator-modal-fields">
         <label><span>Código do produto</span><input autoFocus value={editCode} maxLength={80} onChange={event => setEditCode(uppercase(event.target.value))}/></label>
         <label><span>Descritivo</span><textarea value={editDescription} maxLength={500} onChange={event => setEditDescription(uppercase(event.target.value))}/></label>
-        <label><span>Nova quantidade</span><input inputMode="numeric" value={editQuantity} onChange={event => setEditQuantity(sanitizeDecimalInput(event.target.value))}/></label>
+        <label><span>Quantidade</span><input inputMode="numeric" value={editQuantity} onChange={event => setEditQuantity(sanitizeDecimalInput(event.target.value))}/></label>
+        <label><span>Endereço</span><input value={editAddress} maxLength={120} placeholder="EX.: R14A2C05" onChange={event => setEditAddress(uppercase(event.target.value))}/></label>
       </div>
       {editError && <div className="calculator-form-error">{editError}</div>}
       <div className="calculator-modal-actions"><button className="secondary-button" type="button" onClick={close}>Cancelar</button><button className="primary-button" type="button" onClick={saveEditedItem}><Save size={16}/>Salvar alterações</button></div>
@@ -595,9 +676,13 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
         <section className="calculator-card">
           <div className="calculator-section-title calculator-values-title">
             <div><h3>Valores do cálculo</h3><p>Leia o Data Matrix para preencher código, descritivo e gramatura.</p></div>
-            <button className="calculator-scan-button survey-scan-button" type="button" onClick={() => setScannerOpen(true)}>
-              <span className="calculator-camera-3d" aria-hidden="true"><Camera size={21}/><i/></span>
-              <span><b>Ler Data Matrix</b><small>Câmera rápida</small></span>
+            <button className="calculator-datamatrix-button" type="button" onClick={() => setScannerOpen(true)}>
+              <span className="calculator-datamatrix-top">
+                <span className="calculator-camera-3d" aria-hidden="true"><Camera size={22}/><i/><em/></span>
+                <span className="calculator-datamatrix-copy"><b>Ler Data Matrix</b><small>Abrir câmera</small></span>
+              </span>
+              <span className="calculator-datamatrix-bottom" aria-hidden="true"/>
+              <span className="calculator-datamatrix-base" aria-hidden="true"/>
             </button>
           </div>
           {productLookup.status !== 'idle' && <div className={`calculator-product-lookup ${productLookup.status}`} aria-live="polite">
@@ -622,17 +707,33 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
 
       <aside className="calculator-history-column">
         <section className="calculator-card calculator-survey-card">
-          <div className="calculator-survey-head"><div><h3>Levantamentos</h3><p>Crie uma rua e registre as novas quantidades.</p></div><span className="calculator-survey-count">{activeSurvey?.itens.length ?? 0}</span></div>
-          <div className="calculator-survey-create"><input value={surveyNameDraft} maxLength={80} placeholder="NOME DA RUA / LEVANTAMENTO" onKeyDown={event => { if (event.key === 'Enter') createSurvey() }} onChange={event => setSurveyNameDraft(uppercase(event.target.value))}/><button type="button" onClick={createSurvey}><Plus size={15}/>Criar</button></div>
+          <div className="calculator-survey-head">
+            <div><span className="calculator-survey-eyebrow">CONTROLE DE LEVANTAMENTO</span><h3>Levantamentos</h3><p>Organize a contagem por rua e mantenha cada item rastreável.</p></div>
+            <span className="calculator-survey-count"><b>{activeSurvey?.itens.length ?? 0}</b><small>itens</small></span>
+          </div>
+          <div className="calculator-survey-create"><input value={surveyNameDraft} maxLength={80} placeholder="NOME DA RUA OU LEVANTAMENTO" onKeyDown={event => { if (event.key === 'Enter') createSurvey() }} onChange={event => setSurveyNameDraft(uppercase(event.target.value))}/><button type="button" onClick={createSurvey}><Plus size={16}/>Criar</button></div>
           {surveyState.levantamentos.length > 0 ? <>
-            <label className="calculator-survey-select"><span>Levantamento ativo</span><select value={activeSurvey?.id ?? ''} onChange={event => selectSurvey(event.target.value)}>{surveyState.levantamentos.map(survey => <option key={survey.id} value={survey.id}>{survey.nome} · {survey.itens.length} item(ns)</option>)}</select></label>
-            <div className="calculator-survey-toolbar"><button className="calculator-survey-export" type="button" disabled={!activeSurvey?.itens.length} onClick={exportActiveSurvey}><FileSpreadsheet size={16}/>Exportar Excel</button><button className="calculator-survey-delete" type="button" aria-label="Excluir levantamento" onClick={() => setModal({ type: 'delete-survey' })}><Trash2 size={16}/></button></div>
-            {activeSurvey && <div className="calculator-survey-meta"><span><strong>{activeSurvey.nome}</strong></span><span>Atualizado {formatDateTime(activeSurvey.atualizadoEm)}</span></div>}
-            <label className="calculator-survey-search"><span>Buscar no levantamento</span><div><Search size={16}/><input value={surveySearch} type="search" maxLength={100} placeholder="CÓDIGO OU DESCRITIVO" onChange={event => setSurveySearch(uppercase(event.target.value))}/>{surveySearch && <button type="button" aria-label="Limpar busca" onClick={() => setSurveySearch('')}><X size={14}/></button>}</div></label>
-            <div className="calculator-survey-list">
-              {!filteredSurveyItems.length ? <div className="calculator-survey-empty">{normalizedSurveySearch ? 'Nenhum item corresponde à busca.' : 'Nenhum produto registrado neste levantamento.'}</div> : filteredSurveyItems.map(item => <article className="calculator-survey-item" key={item.id}><div className="calculator-survey-item-copy"><strong>{item.codigo}</strong><span>{item.descritivo || 'Sem descritivo'}</span><small>Registrado {formatDateTime(item.atualizadoEm)}</small><b>{formatQuantity(item.quantidade)}</b></div><div className="calculator-survey-item-actions"><button type="button" onClick={() => openEditItem(item)}><Pencil size={13}/>Editar</button><button className="delete" type="button" onClick={() => deleteSurveyItem(item)}><Trash2 size={13}/>Excluir</button></div></article>)}
+            <div className="calculator-survey-active-row">
+              <label className="calculator-survey-select"><span>Levantamento ativo</span><select value={activeSurvey?.id ?? ''} onChange={event => selectSurvey(event.target.value)}>{surveyState.levantamentos.map(survey => <option key={survey.id} value={survey.id}>{survey.nome} · {survey.itens.length} item(ns)</option>)}</select></label>
+              <button className="calculator-survey-delete" type="button" title="Excluir levantamento" aria-label="Excluir levantamento" onClick={() => setModal({ type: 'delete-survey' })}><Trash2 size={17}/></button>
             </div>
-          </> : <div className="calculator-survey-empty">Crie o primeiro levantamento informando o nome da rua. Depois, cada cálculo salvo será registrado dentro dele.</div>}
+            {activeSurvey && <div className="calculator-survey-overview">
+              <div><span>Itens registrados</span><strong>{activeSurvey.itens.length}</strong></div>
+              <div><span>Com endereço</span><strong>{activeSurveyAddressCount}</strong></div>
+              <div className="calculator-survey-overview-date"><span>Última atualização</span><strong>{formatDateTime(activeSurvey.atualizadoEm)}</strong></div>
+            </div>}
+            <button className="calculator-survey-manual" type="button" onClick={openManualModal}><PackagePlus size={17}/><span><b>Adicionar item manualmente</b><small>Código, quantidade, endereço e descritivo</small></span></button>
+            <button className="calculator-excel-button" type="button" disabled={!activeSurvey?.itens.length} onClick={exportActiveSurvey}><ExcelIcon/><span>Exportar para Excel</span></button>
+            <label className="calculator-survey-search"><span>Buscar no levantamento</span><div><Search size={16}/><input value={surveySearch} type="search" maxLength={100} placeholder="CÓDIGO, DESCRITIVO OU ENDEREÇO" onChange={event => setSurveySearch(uppercase(event.target.value))}/>{surveySearch && <button type="button" aria-label="Limpar busca" onClick={() => setSurveySearch('')}><X size={14}/></button>}</div></label>
+            <div className="calculator-survey-list">
+              {!filteredSurveyItems.length ? <div className="calculator-survey-empty"><PackagePlus size={22}/><strong>{normalizedSurveySearch ? 'Nenhum item encontrado' : 'Levantamento vazio'}</strong><span>{normalizedSurveySearch ? 'Revise o código, descritivo ou endereço pesquisado.' : 'Use a calculadora ou adicione um item manualmente para começar.'}</span></div> : filteredSurveyItems.map(item => <article className="calculator-survey-item" key={item.id}>
+                <div className="calculator-survey-item-head"><strong>{item.codigo}</strong><b>{formatQuantity(item.quantidade)}</b></div>
+                <p>{item.descritivo || 'Sem descritivo informado'}</p>
+                <div className={`calculator-survey-item-address ${item.endereco ? '' : 'empty'}`}><MapPin size={13}/><span>{item.endereco || 'SEM ENDEREÇO'}</span></div>
+                <div className="calculator-survey-item-footer"><small>Atualizado {formatDateTime(item.atualizadoEm)}</small><div><button type="button" onClick={() => openEditItem(item)}><Pencil size={13}/>Editar</button><button className="delete" type="button" onClick={() => deleteSurveyItem(item)}><Trash2 size={13}/>Excluir</button></div></div>
+              </article>)}
+            </div>
+          </> : <div className="calculator-survey-empty"><PackagePlus size={22}/><strong>Crie o primeiro levantamento</strong><span>Informe o nome da rua para começar a registrar materiais.</span></div>}
         </section>
       </aside>
     </div>
@@ -641,6 +742,10 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
     {modal && renderModal()}
     {notification && <CalculatorNotification message={notification.message} onClose={() => setNotification(null)}/>} 
   </section>
+}
+
+function ExcelIcon() {
+  return <svg className="calculator-excel-icon" fill="currentColor" width="20" height="20" viewBox="0 0 50 50" aria-hidden="true"><path d="M28.8125.03125.8125 5.34375C.339844 5.433594 0 5.863281 0 6.34375v37.3125c0 .480469.339844.910156.8125 1l28 5.3125c.0625.011719.125.03125.1875.03125.230469 0 .445313-.070312.625-.21875.230469-.191406.375-.484375.375-.78125V1c0-.296875-.144531-.589844-.375-.78125-.230469-.191406-.519531-.242188-.8125-.1875ZM32 6v7h2v2h-2v5h2v2h-2v5h2v2h-2v6h2v2h-2v7h15c1.101563 0 2-.898437 2-2V8c0-1.101562-.898437-2-2-2Zm4 7h8v2h-8ZM6.6875 15.6875h5.125l2.6875 5.59375c.210938.441406.398438.984375.5625 1.59375h.03125c.105469-.363281.308594-.933594.59375-1.65625l2.96875-5.53125h4.6875l-5.59375 9.25 5.75 9.4375h-4.96875l-3.25-6.09375c-.121094-.226562-.246094-.644531-.375-1.25h-.03125c-.0625.285156-.210937.730469-.4375 1.3125l-3.25 6.03125h-5l5.96875-9.34375ZM36 20h8v2h-8Zm0 7h8v2h-8Zm0 8h8v2h-8Z"/></svg>
 }
 
 function CalculatorModal({ title, eyebrow, onClose, children }: { title: string; eyebrow?: string; onClose: () => void; children: React.ReactNode }) {
