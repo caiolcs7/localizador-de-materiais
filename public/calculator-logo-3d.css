@@ -1,0 +1,182 @@
+/* 3D motion treatment for the calculator brand mark.
+   Kept isolated from the calculator feature styles so the effect can evolve
+   without coupling it to the functional calculator UI. */
+.calculator-brand {
+  --calculator-logo-size: 58px;
+  position: relative;
+  isolation: isolate;
+  perspective: 760px;
+  perspective-origin: calc(var(--calculator-logo-size) / 2) 50%;
+}
+
+.calculator-brand > div {
+  position: relative;
+  z-index: 3;
+}
+
+.calculator-brand::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  z-index: 0;
+  width: calc(var(--calculator-logo-size) + 16px);
+  height: calc(var(--calculator-logo-size) + 16px);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 34% 28%, rgb(255 255 255 / .92) 0 7%, transparent 27%),
+    radial-gradient(circle at 50% 50%, rgb(42 92 216 / .20) 0 28%, rgb(244 119 37 / .12) 45%, transparent 72%);
+  filter: blur(1.2px);
+  opacity: .82;
+  pointer-events: none;
+  transform: translateY(-50%);
+  scale: 1;
+  transition: opacity .22s ease, scale .28s cubic-bezier(.2,.85,.2,1);
+  animation: calculator-logo-aura 4.8s ease-in-out infinite;
+}
+
+/* Back face: keeps the company mark readable throughout the 360° rotation
+   instead of showing a mirrored logo on the second half of the spin. */
+.calculator-brand::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  z-index: 2;
+  width: var(--calculator-logo-size);
+  height: var(--calculator-logo-size);
+  background: url("/calculator-logo.png") center / contain no-repeat;
+  filter:
+    drop-shadow(0 10px 10px rgb(14 30 64 / .18))
+    drop-shadow(0 2px 3px rgb(255 255 255 / .45))
+    saturate(1.12)
+    contrast(1.04);
+  pointer-events: none;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, filter, scale;
+  scale: 1;
+  transition: scale .24s cubic-bezier(.2,.85,.2,1), filter .22s ease;
+  animation: calculator-logo-back-spin 6.8s linear infinite;
+}
+
+.calculator-brand img {
+  position: relative;
+  z-index: 2;
+  transform-origin: 50% 52%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, filter, scale;
+  filter:
+    drop-shadow(0 10px 10px rgb(14 30 64 / .18))
+    drop-shadow(0 2px 3px rgb(255 255 255 / .45))
+    saturate(1.12)
+    contrast(1.04);
+  scale: 1;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: scale .24s cubic-bezier(.2,.85,.2,1), filter .22s ease;
+  animation: calculator-logo-front-spin 6.8s linear infinite;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .calculator-brand:hover img,
+  .calculator-brand:hover::after {
+    scale: 1.065;
+    filter:
+      drop-shadow(0 14px 16px rgb(14 30 64 / .24))
+      drop-shadow(0 2px 4px rgb(255 255 255 / .5))
+      saturate(1.18)
+      contrast(1.06);
+  }
+
+  .calculator-brand:hover::before {
+    opacity: 1;
+    scale: 1.08;
+  }
+}
+
+.calculator-brand.is-logo-pressed img,
+.calculator-brand.is-logo-pressed::after {
+  scale: .86;
+  filter:
+    drop-shadow(0 5px 7px rgb(14 30 64 / .22))
+    saturate(1.24)
+    brightness(1.06)
+    contrast(1.06);
+  transition-duration: .11s;
+}
+
+.calculator-brand.is-logo-pressed::before {
+  opacity: 1;
+  scale: .91;
+  transition-duration: .11s;
+}
+
+.calculator-brand.is-logo-rebound img,
+.calculator-brand.is-logo-rebound::after {
+  scale: 1.105;
+  transition-duration: .16s;
+  transition-timing-function: cubic-bezier(.16,1.35,.34,1);
+}
+
+.calculator-brand.is-logo-rebound::before {
+  opacity: 1;
+  scale: 1.16;
+  transition-duration: .16s;
+  transition-timing-function: cubic-bezier(.16,1.35,.34,1);
+}
+
+@keyframes calculator-logo-front-spin {
+  0%   { transform: translate3d(0, 0, 2px) rotateX(8deg) rotateY(0deg) rotateZ(-1deg); }
+  25%  { transform: translate3d(0, -2px, 5px) rotateX(4deg) rotateY(90deg) rotateZ(.8deg); }
+  50%  { transform: translate3d(0, 0, 2px) rotateX(8deg) rotateY(180deg) rotateZ(1deg); }
+  75%  { transform: translate3d(0, 2px, 5px) rotateX(5deg) rotateY(270deg) rotateZ(-.8deg); }
+  100% { transform: translate3d(0, 0, 2px) rotateX(8deg) rotateY(360deg) rotateZ(-1deg); }
+}
+
+@keyframes calculator-logo-back-spin {
+  0%   { transform: translateY(-50%) translate3d(0, 0, 1px) rotateX(8deg) rotateY(180deg) rotateZ(-1deg); }
+  25%  { transform: translateY(calc(-50% - 2px)) translate3d(0, 0, 4px) rotateX(4deg) rotateY(270deg) rotateZ(.8deg); }
+  50%  { transform: translateY(-50%) translate3d(0, 0, 1px) rotateX(8deg) rotateY(360deg) rotateZ(1deg); }
+  75%  { transform: translateY(calc(-50% + 2px)) translate3d(0, 0, 4px) rotateX(5deg) rotateY(450deg) rotateZ(-.8deg); }
+  100% { transform: translateY(-50%) translate3d(0, 0, 1px) rotateX(8deg) rotateY(540deg) rotateZ(-1deg); }
+}
+
+@keyframes calculator-logo-aura {
+  0%, 100% { opacity: .68; scale: .94; }
+  50% { opacity: .94; scale: 1.08; }
+}
+
+@media (max-width: 680px) {
+  .calculator-brand {
+    --calculator-logo-size: 48px;
+    perspective: 680px;
+  }
+
+  .calculator-brand::before {
+    left: -7px;
+    border-radius: 20px;
+  }
+}
+
+/* Accessibility: preserve the premium touch feedback while respecting the
+   operating-system request to suppress perpetual motion. */
+@media (prefers-reduced-motion: reduce) {
+  .calculator-brand img,
+  .calculator-brand::after,
+  .calculator-brand::before {
+    animation: none;
+  }
+
+  .calculator-brand img {
+    transform: rotateX(5deg) rotateY(-8deg) translateZ(2px);
+  }
+
+  .calculator-brand::after {
+    display: none;
+  }
+}
