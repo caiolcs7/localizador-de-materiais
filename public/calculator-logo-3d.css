@@ -1,182 +1,249 @@
-/* 3D motion treatment for the calculator brand mark.
-   Kept isolated from the calculator feature styles so the effect can evolve
-   without coupling it to the functional calculator UI. */
+/* Premium PBR logo treatment for the calculator header. The generated asset
+   owns the brand geometry; these layers add depth, motion and touch feedback. */
 .calculator-brand {
-  --calculator-logo-size: 58px;
+  --calculator-logo-size: 72px;
   position: relative;
   isolation: isolate;
-  perspective: 760px;
-  perspective-origin: calc(var(--calculator-logo-size) / 2) 50%;
 }
 
-.calculator-brand > div {
+.calculator-brand-copy {
   position: relative;
-  z-index: 3;
+  z-index: 4;
+  min-width: 0;
 }
 
-.calculator-brand::before {
-  content: "";
-  position: absolute;
-  left: -8px;
-  top: 50%;
-  z-index: 0;
-  width: calc(var(--calculator-logo-size) + 16px);
-  height: calc(var(--calculator-logo-size) + 16px);
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 34% 28%, rgb(255 255 255 / .92) 0 7%, transparent 27%),
-    radial-gradient(circle at 50% 50%, rgb(42 92 216 / .20) 0 28%, rgb(244 119 37 / .12) 45%, transparent 72%);
-  filter: blur(1.2px);
-  opacity: .82;
-  pointer-events: none;
-  transform: translateY(-50%);
-  scale: 1;
-  transition: opacity .22s ease, scale .28s cubic-bezier(.2,.85,.2,1);
-  animation: calculator-logo-aura 4.8s ease-in-out infinite;
-}
-
-/* Back face: keeps the company mark readable throughout the 360° rotation
-   instead of showing a mirrored logo on the second half of the spin. */
-.calculator-brand::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
+.calculator-logo-stage {
+  --logo-tilt-x: 0deg;
+  --logo-tilt-y: 0deg;
+  --logo-tilt-z: 0deg;
+  --logo-light-x: 32%;
+  --logo-light-y: 24%;
+  --logo-scale: 1;
+  position: relative;
   z-index: 2;
   width: var(--calculator-logo-size);
   height: var(--calculator-logo-size);
-  background: url("/calculator-logo.png") center / contain no-repeat;
-  filter:
-    drop-shadow(0 10px 10px rgb(14 30 64 / .18))
-    drop-shadow(0 2px 3px rgb(255 255 255 / .45))
-    saturate(1.12)
-    contrast(1.04);
-  pointer-events: none;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-  will-change: transform, filter, scale;
-  scale: 1;
-  transition: scale .24s cubic-bezier(.2,.85,.2,1), filter .22s ease;
-  animation: calculator-logo-back-spin 6.8s linear infinite;
+  flex: 0 0 var(--calculator-logo-size);
+  perspective: 880px;
+  perspective-origin: 50% 46%;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+  contain: layout style;
 }
 
-.calculator-brand img {
-  position: relative;
-  z-index: 2;
-  transform-origin: 50% 52%;
+.calculator-logo-stage:active { cursor: grabbing; }
+
+.calculator-logo-model,
+.calculator-logo-rotor,
+.calculator-logo-face,
+.calculator-logo-edge {
+  position: absolute;
+  inset: 0;
   transform-style: preserve-3d;
+}
+
+.calculator-logo-model {
+  z-index: 3;
+  transform:
+    rotateX(var(--logo-tilt-x))
+    rotateY(var(--logo-tilt-y))
+    rotateZ(var(--logo-tilt-z))
+    scale(var(--logo-scale));
+  transition: transform 420ms cubic-bezier(.18,.84,.25,1.18), filter 260ms ease;
+  will-change: transform;
+}
+
+.calculator-logo-rotor {
+  animation: calculator-logo-orbit 9.6s linear infinite;
+  will-change: transform;
+}
+
+.calculator-logo-face {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
   backface-visibility: hidden;
-  will-change: transform, filter, scale;
   filter:
-    drop-shadow(0 10px 10px rgb(14 30 64 / .18))
-    drop-shadow(0 2px 3px rgb(255 255 255 / .45))
-    saturate(1.12)
-    contrast(1.04);
-  scale: 1;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-drag: none;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition: scale .24s cubic-bezier(.2,.85,.2,1), filter .22s ease;
-  animation: calculator-logo-front-spin 6.8s linear infinite;
+    drop-shadow(0 10px 10px rgb(7 18 38 / .22))
+    drop-shadow(0 2px 2px rgb(255 255 255 / .28));
+}
+
+.calculator-logo-front { transform: translateZ(3.5px); }
+.calculator-logo-back { transform: rotateY(180deg) translateZ(3.5px) scaleX(-1); }
+
+.calculator-logo-edge {
+  inset: 9%;
+  border-radius: 23%;
+  background: linear-gradient(90deg, #17223a 0%, #aab4c5 28%, #f9fafb 48%, #27324b 72%, #101827 100%);
+  box-shadow: inset 0 0 5px rgb(255 255 255 / .55), 0 0 7px rgb(20 40 78 / .2);
+  transform: rotateY(90deg) scaleX(.12);
+  opacity: .9;
+}
+
+.calculator-logo-shadow {
+  position: absolute;
+  left: 10%;
+  bottom: 1%;
+  z-index: 0;
+  width: 82%;
+  height: 25%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgb(7 18 38 / .34) 0%, rgb(7 18 38 / .15) 45%, transparent 74%);
+  filter: blur(5px);
+  transform: translate3d(5px, 7px, -12px) scaleX(.96);
+  opacity: .78;
+  transition: transform 360ms cubic-bezier(.2,.8,.2,1), opacity 260ms ease, filter 260ms ease;
+  pointer-events: none;
+}
+
+.calculator-logo-aura {
+  position: absolute;
+  inset: -7%;
+  z-index: 1;
+  border-radius: 32%;
+  background:
+    radial-gradient(circle at var(--logo-light-x) var(--logo-light-y), rgb(255 255 255 / .58) 0 5%, transparent 25%),
+    radial-gradient(circle at 24% 64%, rgb(34 101 255 / .22), transparent 42%),
+    radial-gradient(circle at 77% 61%, rgb(255 115 30 / .18), transparent 40%);
+  filter: blur(4px);
+  opacity: .68;
+  transform: scale(.94);
+  animation: calculator-logo-breathe 4.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.calculator-logo-glint {
+  position: absolute;
+  inset: 6%;
+  z-index: 5;
+  border-radius: 30%;
+  background: linear-gradient(112deg, transparent 27%, rgb(255 255 255 / .62) 44%, rgb(255 255 255 / .1) 51%, transparent 66%);
+  mix-blend-mode: screen;
+  -webkit-mask-image: url('/calculator-logo-octane.webp');
+  -webkit-mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-image: url('/calculator-logo-octane.webp');
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  opacity: 0;
+  transform: translateX(-48%) rotate(-5deg);
+  pointer-events: none;
+}
+
+.calculator-logo-ripple {
+  position: absolute;
+  inset: 13%;
+  z-index: 1;
+  border: 1px solid rgb(70 122 255 / .55);
+  border-radius: 32%;
+  opacity: 0;
+  pointer-events: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .calculator-brand:hover img,
-  .calculator-brand:hover::after {
-    scale: 1.065;
-    filter:
-      drop-shadow(0 14px 16px rgb(14 30 64 / .24))
-      drop-shadow(0 2px 4px rgb(255 255 255 / .5))
-      saturate(1.18)
-      contrast(1.06);
+  .calculator-logo-stage:hover .calculator-logo-model {
+    filter: saturate(1.08) contrast(1.035);
   }
 
-  .calculator-brand:hover::before {
-    opacity: 1;
-    scale: 1.08;
+  .calculator-logo-stage:hover .calculator-logo-shadow {
+    opacity: .9;
+    filter: blur(6px);
+    transform: translate3d(7px, 9px, -12px) scaleX(1.08);
+  }
+
+  .calculator-logo-stage:hover .calculator-logo-rotor {
+    animation-duration: 6.8s;
   }
 }
 
-.calculator-brand.is-logo-pressed img,
-.calculator-brand.is-logo-pressed::after {
-  scale: .86;
-  filter:
-    drop-shadow(0 5px 7px rgb(14 30 64 / .22))
-    saturate(1.24)
-    brightness(1.06)
-    contrast(1.06);
-  transition-duration: .11s;
+.calculator-logo-stage.is-logo-pressed { --logo-scale: .88; }
+
+.calculator-logo-stage.is-logo-pressed .calculator-logo-model {
+  filter: saturate(1.17) brightness(1.04) contrast(1.04);
+  transition-duration: 110ms;
+  transition-timing-function: cubic-bezier(.3,0,.6,1);
 }
 
-.calculator-brand.is-logo-pressed::before {
-  opacity: 1;
-  scale: .91;
-  transition-duration: .11s;
+.calculator-logo-stage.is-logo-pressed .calculator-logo-rotor,
+.calculator-logo-stage.is-logo-boosted .calculator-logo-rotor {
+  animation-duration: 2.65s;
 }
 
-.calculator-brand.is-logo-rebound img,
-.calculator-brand.is-logo-rebound::after {
-  scale: 1.105;
-  transition-duration: .16s;
-  transition-timing-function: cubic-bezier(.16,1.35,.34,1);
+.calculator-logo-stage.is-logo-pressed .calculator-logo-shadow {
+  opacity: .56;
+  filter: blur(3px);
+  transform: translate3d(3px, 5px, -12px) scaleX(.72);
 }
 
-.calculator-brand.is-logo-rebound::before {
-  opacity: 1;
-  scale: 1.16;
-  transition-duration: .16s;
-  transition-timing-function: cubic-bezier(.16,1.35,.34,1);
+.calculator-logo-stage.is-logo-rebound { --logo-scale: 1.09; }
+
+.calculator-logo-stage.is-logo-rebound .calculator-logo-model {
+  transition-duration: 210ms;
+  transition-timing-function: cubic-bezier(.12,1.42,.31,1);
 }
 
-@keyframes calculator-logo-front-spin {
-  0%   { transform: translate3d(0, 0, 2px) rotateX(8deg) rotateY(0deg) rotateZ(-1deg); }
-  25%  { transform: translate3d(0, -2px, 5px) rotateX(4deg) rotateY(90deg) rotateZ(.8deg); }
-  50%  { transform: translate3d(0, 0, 2px) rotateX(8deg) rotateY(180deg) rotateZ(1deg); }
-  75%  { transform: translate3d(0, 2px, 5px) rotateX(5deg) rotateY(270deg) rotateZ(-.8deg); }
-  100% { transform: translate3d(0, 0, 2px) rotateX(8deg) rotateY(360deg) rotateZ(-1deg); }
+.calculator-logo-stage.is-logo-impact .calculator-logo-glint {
+  animation: calculator-logo-glint 720ms cubic-bezier(.2,.75,.2,1) both;
 }
 
-@keyframes calculator-logo-back-spin {
-  0%   { transform: translateY(-50%) translate3d(0, 0, 1px) rotateX(8deg) rotateY(180deg) rotateZ(-1deg); }
-  25%  { transform: translateY(calc(-50% - 2px)) translate3d(0, 0, 4px) rotateX(4deg) rotateY(270deg) rotateZ(.8deg); }
-  50%  { transform: translateY(-50%) translate3d(0, 0, 1px) rotateX(8deg) rotateY(360deg) rotateZ(1deg); }
-  75%  { transform: translateY(calc(-50% + 2px)) translate3d(0, 0, 4px) rotateX(5deg) rotateY(450deg) rotateZ(-.8deg); }
-  100% { transform: translateY(-50%) translate3d(0, 0, 1px) rotateX(8deg) rotateY(540deg) rotateZ(-1deg); }
+.calculator-logo-stage.is-logo-impact .calculator-logo-ripple {
+  animation: calculator-logo-ripple 620ms cubic-bezier(.18,.72,.23,1) both;
 }
 
-@keyframes calculator-logo-aura {
-  0%, 100% { opacity: .68; scale: .94; }
-  50% { opacity: .94; scale: 1.08; }
+@keyframes calculator-logo-orbit {
+  0% { transform: rotateX(4deg) rotateY(0deg) translateY(0); }
+  25% { transform: rotateX(1deg) rotateY(90deg) translateY(-1.5px); }
+  50% { transform: rotateX(-3deg) rotateY(180deg) translateY(0); }
+  75% { transform: rotateX(1deg) rotateY(270deg) translateY(1.5px); }
+  100% { transform: rotateX(4deg) rotateY(360deg) translateY(0); }
 }
+
+@keyframes calculator-logo-breathe {
+  0%, 100% { opacity: .52; transform: scale(.92); }
+  50% { opacity: .82; transform: scale(1.04); }
+}
+
+@keyframes calculator-logo-glint {
+  0% { opacity: 0; transform: translateX(-58%) rotate(-5deg); }
+  32% { opacity: .9; }
+  100% { opacity: 0; transform: translateX(58%) rotate(-5deg); }
+}
+
+@keyframes calculator-logo-ripple {
+  0% { opacity: .65; transform: scale(.72); }
+  100% { opacity: 0; transform: scale(1.48); }
+}
+
+html[data-theme='dark'] .calculator-logo-shadow {
+  opacity: .94;
+  background: radial-gradient(ellipse, rgb(0 0 0 / .62) 0%, rgb(0 0 0 / .24) 48%, transparent 75%);
+}
+
+html[data-theme='dark'] .calculator-logo-aura { opacity: .8; }
 
 @media (max-width: 680px) {
-  .calculator-brand {
-    --calculator-logo-size: 48px;
-    perspective: 680px;
-  }
-
-  .calculator-brand::before {
-    left: -7px;
-    border-radius: 20px;
-  }
+  .calculator-brand { --calculator-logo-size: 60px; }
+  .calculator-logo-stage { perspective: 760px; }
 }
 
-/* Accessibility: preserve the premium touch feedback while respecting the
-   operating-system request to suppress perpetual motion. */
+@media (max-width: 430px) {
+  .calculator-brand { --calculator-logo-size: 56px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .calculator-brand img,
-  .calculator-brand::after,
-  .calculator-brand::before {
-    animation: none;
+  .calculator-logo-rotor,
+  .calculator-logo-aura,
+  .calculator-logo-glint,
+  .calculator-logo-ripple {
+    animation: none !important;
   }
 
-  .calculator-brand img {
-    transform: rotateX(5deg) rotateY(-8deg) translateZ(2px);
-  }
-
-  .calculator-brand::after {
-    display: none;
-  }
+  .calculator-logo-rotor { transform: rotateX(4deg) rotateY(-8deg); }
+  .calculator-logo-model { transition-duration: 120ms; }
 }

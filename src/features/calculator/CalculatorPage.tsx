@@ -183,7 +183,7 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
   const [adminRounding, setAdminRounding] = useState<RoundingPolicy>(state.configuracoes.politicaArredondamento)
   const [adminError, setAdminError] = useState('')
   const lookupAbortRef = useRef<AbortController | null>(null)
-  const logoSrc = `${import.meta.env.BASE_URL}calculator-logo.png`
+  const logoSrc = `${import.meta.env.BASE_URL}calculator-logo-octane.webp`
 
   const activeContainers = useMemo(
     () => state.recipientes.filter(container => container.ativo),
@@ -654,7 +654,22 @@ export function CalculatorPage({ onBackHome, isAdmin = false }: CalculatorPagePr
 
   return <section className="calculator-page">
     <div className="calculator-page-heading">
-      <div className="calculator-brand"><img src={logoSrc} alt="Símbolo do BombonaCalc"/><div><span>FERRAMENTA INDUSTRIAL</span><h2>Calculadora</h2><p>Cálculo e levantamento de materiais por rua.</p></div></div>
+      <div className="calculator-brand">
+        <div className="calculator-logo-stage" data-calculator-logo aria-hidden="true">
+          <span className="calculator-logo-shadow"/>
+          <span className="calculator-logo-aura"/>
+          <span className="calculator-logo-model">
+            <span className="calculator-logo-rotor">
+              <img className="calculator-logo-face calculator-logo-front" src={logoSrc} alt="" draggable="false"/>
+              <img className="calculator-logo-face calculator-logo-back" src={logoSrc} alt="" draggable="false"/>
+              <span className="calculator-logo-edge"/>
+            </span>
+          </span>
+          <span className="calculator-logo-glint"/>
+          <span className="calculator-logo-ripple"/>
+        </div>
+        <div className="calculator-brand-copy"><span>FERRAMENTA INDUSTRIAL</span><h2>Calculadora</h2><p>Cálculo e levantamento de materiais por rua.</p></div>
+      </div>
       <div className="calculator-heading-actions"><button className="secondary-button" type="button" onClick={onBackHome}><ArrowLeft size={16}/>Início</button><button className="secondary-button" type="button" onClick={openSettings}><Settings size={17}/>Configurações</button></div>
     </div>
 
