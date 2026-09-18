@@ -1,4 +1,4 @@
-name: Verify Leitor DM preview
+name: Verify Leitor DM production
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Validate preview
         env:
-          PREVIEW_URL: https://localizador-de-materiais-hgvte4gm8-caiolucas100-9244.vercel.app/?_vercel_share=7s9HHiwYcnsD0Wkoj5AJAfZG3mumtK5S
+          PREVIEW_URL: https://localizador-de-materiais.vercel.app
         run: |
           node <<'NODE'
           const { chromium } = require('playwright');
