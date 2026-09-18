@@ -1,0 +1,44 @@
+name: Leitor DM integration gate
+
+on:
+  push:
+    branches: [feat/leitor-dm-integration]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: leitor-dm-gate
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feat/leitor-dm-integration
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Refresh lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Commit lockfile when changed
+        run: |
+          if ! git diff --quiet -- package-lock.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "build(leitor-dm): refresh package lock"
+            git push origin HEAD:feat/leitor-dm-integration
+          fi
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Vite build
+        run: GITHUB_ACTIONS=false npm run build
