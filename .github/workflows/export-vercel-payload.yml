@@ -30,8 +30,9 @@ jobs:
           const fs=require('fs'), path=require('path');
           const root='dist';
           const out='.deploy-manifest';
-          const target=400000;
-          const entries=[];
+          const target=480000;
+          const fragmentSize=150000;
+          const files=[];
           function walk(dir){
             for(const name of fs.readdirSync(dir)){
               const full=path.join(dir,name);
@@ -39,21 +40,33 @@ jobs:
               if(st.isDirectory()) walk(full);
               else {
                 const rel=full.split(path.sep).join('/');
-                entries.push({file:rel,data:fs.readFileSync(full).toString('base64'),encoding:'base64'});
+                files.push({file:rel,data:fs.readFileSync(full).toString('base64')});
               }
             }
           }
           walk(root);
-          entries.sort((a,b)=>a.file.localeCompare(b.file));
+          files.sort((a,b)=>a.file.localeCompare(b.file));
+          const fragments=[];
+          for(const item of files){
+            let seq=0;
+            for(let offset=0;offset<item.data.length;offset+=fragmentSize){
+              fragments.push({file:item.file,seq:seq++,data:item.data.slice(offset,offset+fragmentSize)});
+            }
+          }
           let parts=[], current=[], size=2;
-          for(const entry of entries){
+          for(const entry of fragments){
             const eSize=JSON.stringify(entry).length+1;
             if(current.length && size+eSize>target){parts.push(current);current=[];size=2;}
             current.push(entry); size+=eSize;
           }
           if(current.length) parts.push(current);
           parts.forEach((part,i)=>fs.writeFileSync(path.join(out,`part-${String(i).padStart(2,'0')}.json`),JSON.stringify(part)));
-          fs.writeFileSync(path.join(out,'meta.json'),JSON.stringify({files:entries.length,parts:parts.length,bytes:entries.reduce((n,e)=>n+e.data.length,0)}));
+          fs.writeFileSync(path.join(out,'meta.json'),JSON.stringify({
+            files:files.length,
+            fragments:fragments.length,
+            parts:parts.length,
+            bytes:files.reduce((n,e)=>n+e.data.length,0)
+          }));
           NODE
       - name: Commit deployment payload
         run: |
