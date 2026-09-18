@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: verify-leitor-dm-preview
+  cancel-in-progress: true
+
 jobs:
   browser:
     if: github.actor != 'github-actions[bot]'
@@ -34,7 +38,7 @@ jobs:
             const consoleErrors = [];
             page.on('pageerror', e => pageErrors.push(String(e)));
             page.on('console', msg => { if (msg.type()==='error') consoleErrors.push(msg.text()); });
-            await page.goto(process.env.PREVIEW_URL, {waitUntil:'networkidle', timeout:90000});
+            await page.goto(process.env.PREVIEW_URL, {waitUntil:'domcontentloaded', timeout:45000});
             await page.getByText('Localizador de Materiais', {exact:true}).waitFor({timeout:30000});
             const leitor = page.getByRole('button', {name:/Leitor DM/i});
             if (await leitor.count() !== 1) throw new Error('Leitor DM não está visível no menu principal.');
