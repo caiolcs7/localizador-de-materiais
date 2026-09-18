@@ -27,7 +27,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Validate preview
         env:
-          PREVIEW_URL: https://localizador-de-materiais-hgvte4gm8-caiolucas100-9244.vercel.app/?_vercel_share=ckafKlMdqFJ6TeLPVkm4UkDr9SvcmRmX
+          PREVIEW_URL: https://localizador-de-materiais-hgvte4gm8-caiolucas100-9244.vercel.app/?_vercel_share=7s9HHiwYcnsD0Wkoj5AJAfZG3mumtK5S
         run: |
           node <<'NODE'
           const { chromium } = require('playwright');
@@ -39,8 +39,11 @@ jobs:
             page.on('pageerror', e => pageErrors.push(String(e)));
             page.on('console', msg => { if (msg.type()==='error') consoleErrors.push(msg.text()); });
             await page.goto(process.env.PREVIEW_URL, {waitUntil:'domcontentloaded', timeout:45000});
-            await page.getByText('Localizador de Materiais', {exact:true}).waitFor({timeout:30000});
+            console.log('FINAL_URL:', page.url());
+            console.log('TITLE:', await page.title());
+            console.log('BODY_SAMPLE:', (await page.locator('body').innerText()).slice(0, 600));
             const leitor = page.getByRole('button', {name:/Leitor DM/i});
+            await leitor.waitFor({timeout:30000});
             if (await leitor.count() !== 1) throw new Error('Leitor DM não está visível no menu principal.');
             const scannerButtons = page.getByRole('button', {name:/^Scanner$/i});
             if (await scannerButtons.count() !== 0) throw new Error('Scanner antigo ainda está visível.');
