@@ -11,7 +11,6 @@ import {
 import {
   Archive,
   Calculator as CalculatorIcon,
-  Camera,
   Database,
   Download,
   FileDown,
@@ -20,6 +19,7 @@ import {
   Menu,
   PackagePlus,
   Search,
+  ScanLine,
   ShoppingCart,
   Star,
   Upload,
@@ -60,6 +60,7 @@ const favoriteKey = 'lm-favorites'
 const ScannerModal = lazy(() => import('./features/scanner/ScannerModal').then(module => ({ default: module.ScannerModal })))
 const CartsPage = lazy(() => import('./features/carts/CartsPage').then(module => ({ default: module.CartsPage })))
 const CalculatorPage = lazy(() => import('./features/calculator/CalculatorPage').then(module => ({ default: module.CalculatorPage })))
+const LeitorDmPage = lazy(() => import('./features/leitor-dm/LeitorDmPage').then(module => ({ default: module.default })))
 
 const loadList = (key: string) => {
   try {
@@ -113,6 +114,7 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
   const [showData, setShowData] = useState(false)
   const [showCarts, setShowCarts] = useState(false)
   const [showCalculator, setShowCalculator] = useState(false)
+  const [showLeitorDM, setShowLeitorDM] = useState(false)
   const [mobileMenu, setMobileMenu] = useState(false)
   const [itemsStatus, setItemsStatus] = useState<ItemsStatusFilter>('all')
   const [onlyAvailable, setOnlyAvailable] = useState(true)
@@ -229,7 +231,7 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
     })
   }, [ready])
 
-  const homeVisible = !showItems && !showData && !showCarts && !showCalculator
+  const homeVisible = !showItems && !showData && !showCarts && !showCalculator && !showLeitorDM
   useEffect(() => {
     if (!ready || !homeVisible) return
     if (!query.trim()) {
@@ -345,6 +347,7 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
     setShowItems(false)
     setShowData(false)
     setShowCalculator(false)
+    setShowLeitorDM(false)
     setMobileMenu(false)
   }
   const openItems = () => {
@@ -352,6 +355,7 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
     setShowData(false)
     setShowCarts(false)
     setShowCalculator(false)
+    setShowLeitorDM(false)
     setMobileMenu(false)
   }
   const openCarts = () => {
@@ -359,6 +363,7 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
     setShowItems(false)
     setShowData(false)
     setShowCalculator(false)
+    setShowLeitorDM(false)
     setMobileMenu(false)
   }
   const openCalculator = () => {
@@ -366,6 +371,15 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
     setShowItems(false)
     setShowData(false)
     setShowCarts(false)
+    setShowLeitorDM(false)
+    setMobileMenu(false)
+  }
+  const openLeitorDM = () => {
+    setShowLeitorDM(true)
+    setShowItems(false)
+    setShowData(false)
+    setShowCarts(false)
+    setShowCalculator(false)
     setMobileMenu(false)
   }
   const openData = () => {
@@ -373,6 +387,7 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
     setShowItems(false)
     setShowCarts(false)
     setShowCalculator(false)
+    setShowLeitorDM(false)
     setMobileMenu(false)
   }
   const detect = (value: string) => {
@@ -399,7 +414,7 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
       <button className="brand brand-button" onClick={openHome}><img className="brand-logo" src={logoSrc} alt="Maccomevap"/><div><b>Localizador de Materiais</b><span>Maccomevap · Almoxarifado</span></div></button>
       <nav className={`app-nav ${mobileMenu ? 'open' : ''}`} aria-label="Navegação principal">
         <button className={`nav-3d ${homeVisible ? 'active' : ''}`} onClick={openHome}><Home size={18}/>Início</button>
-        <button className="nav-3d" onClick={() => { setScanner(true); setMobileMenu(false) }}><Camera size={18}/>Scanner</button>
+        <button className={`nav-3d ${showLeitorDM ? 'active' : ''}`} onClick={openLeitorDM}><ScanLine size={18}/>Leitor DM</button>
         <button className="nav-3d" onClick={() => { setEditor({}); setMobileMenu(false) }}><PackagePlus size={18}/>Novo item</button>
         <button className={`nav-3d ${showItems ? 'active' : ''}`} onClick={openItems}><Archive size={18}/>Itens</button>
         <button className={`nav-3d ${showCarts ? 'active' : ''}`} onClick={openCarts}><ShoppingCart size={18}/>Carrinhos</button>
@@ -413,7 +428,7 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
 
     <main>
       {homeVisible && <>
-        <section className="hero"><div className="eyebrow">LOCALIZAÇÃO RÁPIDA</div><h1>Onde está o material?</h1><p>Pesquise por código, descritivo, bombona ou endereço físico.</p><div className="search-wrap"><Search size={21}/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar código, item, bombona ou endereço..."/><button className="scan-short" onClick={() => setScanner(true)}><Camera size={19}/><span>Escanear</span></button></div><StockFilter checked={onlyAvailable} onChange={setOnlyAvailable}/></section>
+        <section className="hero"><div className="eyebrow">LOCALIZAÇÃO RÁPIDA</div><h1>Onde está o material?</h1><p>Pesquise por código, descritivo, bombona ou endereço físico.</p><div className="search-wrap"><Search size={21}/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar código, item, bombona ou endereço..."/></div><StockFilter checked={onlyAvailable} onChange={setOnlyAvailable}/></section>
         {query.trim() && searching && <div className="search-progress" role="status">Buscando materiais…</div>}
         {query.trim() && !searching && filteredSearchItems.length > 0 && <ResultCards
           items={filteredSearchItems}
@@ -455,10 +470,11 @@ export default function App({ adminMode = false, adminEmail, onLogout }: AppProp
 
       {showCarts && <Suspense fallback={<div className="loading inline-loading">Carregando carrinhos…</div>}><CartsPage inventory={cartInventory} carts={carts} isAdmin={adminMode} onOpenInventoryCode={openHomeSearch} onBackHome={openHome} onRefreshInventory={refreshCartInventory} onRefreshCarts={refreshCarts}/></Suspense>}
       {showCalculator && <Suspense fallback={<div className="loading inline-loading">Carregando calculadora…</div>}><CalculatorPage onBackHome={openHome} isAdmin={adminMode}/></Suspense>}
+      {showLeitorDM && <Suspense fallback={<div className="loading inline-loading">Carregando Leitor DM…</div>}><LeitorDmPage dark={dark}/></Suspense>}
       {adminMode && showData && <section className="page"><div className="page-title"><div><h2>Dados e acessos</h2><p>Backup central do Supabase e contas administrativas.</p></div><button className="secondary-button" onClick={openHome}><Home size={16}/>Voltar ao início</button></div><div className="data-grid"><button onClick={() => void exportBackup()}><Download/><b>Exportar backup</b><span>Salva todos os materiais em JSON.</span></button><label><Upload/><b>Importar backup</b><span>Mescla materiais pelo ID, sem excluir os demais.</span><input type="file" accept="application/json" onChange={async event => { const file = event.target.files?.[0]; if (!file || !confirm('Mesclar os materiais deste backup com o banco atual? Nenhum registro será apagado.')) return; try { const count = await importBackup(file); if (allLoadedRef.current) await refreshAllInventory(); else await refreshInventoryTotal(); notify(`${count} registros importados`) } catch (error) { alert(error instanceof Error ? error.message : 'Backup inválido') } }}/></label><button onClick={() => void exportCSV()}><FileDown/><b>Exportar CSV</b><span>Arquivo compatível com Excel.</span></button></div><AdminUsersPanel/></section>}
     </main>
 
-    <footer><span>{showCalculator ? 'Calculadora industrial · histórico neste dispositivo' : `${online ? 'Supabase sincronizado' : 'Cópia local offline'} · ${inventoryTotal} registros`}</span>{!showCalculator && <button onClick={() => toggleFav(query.trim().toUpperCase())} disabled={!query.trim()}><Star size={14}/> {favorites.includes(query.trim().toUpperCase()) ? 'Remover favorito' : 'Favoritar pesquisa'}</button>}</footer>
+    <footer><span>{showLeitorDM ? 'Leitor DM · dados locais neste dispositivo' : showCalculator ? 'Calculadora industrial · histórico neste dispositivo' : `${online ? 'Supabase sincronizado' : 'Cópia local offline'} · ${inventoryTotal} registros`}</span>{!showCalculator && !showLeitorDM && <button onClick={() => toggleFav(query.trim().toUpperCase())} disabled={!query.trim()}><Star size={14}/> {favorites.includes(query.trim().toUpperCase()) ? 'Remover favorito' : 'Favoritar pesquisa'}</button>}</footer>
     {scanner && <Suspense fallback={<div className="modal-backdrop"><div className="scanner-modal">Carregando leitor…</div></div>}><ScannerModal onDetected={detect} onClose={() => setScanner(false)}/></Suspense>}
     {editor && <ItemModal initial={editor} allowDuplicateOverride={adminMode} onClose={() => setEditor(null)} onSaved={record => {
       if (allLoadedRef.current) setAll(records => applyInventoryChange(records, { eventType: editor.id ? 'UPDATE' : 'INSERT', record }))
