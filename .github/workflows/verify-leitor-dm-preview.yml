@@ -27,7 +27,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Validate preview
         env:
-          PREVIEW_URL: https://localizador-de-materiais-hgvte4gm8-caiolucas100-9244.vercel.app
+          PREVIEW_URL: https://localizador-de-materiais-hgvte4gm8-caiolucas100-9244.vercel.app/?_vercel_share=ckafKlMdqFJ6TeLPVkm4UkDr9SvcmRmX
         run: |
           node <<'NODE'
           const { chromium } = require('playwright');
