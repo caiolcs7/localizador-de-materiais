@@ -30,7 +30,7 @@ jobs:
           const fs=require('fs'), path=require('path');
           const root='dist';
           const out='.deploy-manifest';
-          const target=540000;
+          const target=400000;
           const entries=[];
           function walk(dir){
             for(const name of fs.readdirSync(dir)){
