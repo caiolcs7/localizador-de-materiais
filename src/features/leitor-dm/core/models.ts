@@ -47,7 +47,10 @@ export const defaultSettings: Settings = {
     // warehouse locations are classified first by the specific rules below.
     productPatterns: ['^[A-Z0-9._/-]{1,128}$'],
     addressPatterns: [
+      // Standard structured locations, e.g. R06A1C06DP01.
       '^R[0-9]{2,3}A[0-9]{1,3}C[0-9]{1,3}[A-Z]P[0-9]{1,3}$',
+      // Alternative A-route locations, e.g. R07A1GHBEG01 / R07A1AVFEG01.
+      '^R[0-9]{2,3}A[0-9]{1,3}[A-Z0-9]{1,20}$',
       '^R[0-9]{2,3}B[0-9]{1,3}$',
     ],
     padB: false,
