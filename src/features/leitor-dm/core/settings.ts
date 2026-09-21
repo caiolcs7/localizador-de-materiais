@@ -4,9 +4,15 @@ const publishedProductDefaults = [
   '^IT[A-Z0-9]{3,62}$',
   '^[A-QS-Z][A-Z0-9]{1,63}$',
 ];
-const publishedAddressDefaults = [
-  '^R[0-9]{2,3}A[0-9]{1,3}C[0-9]{1,3}DP[0-9]{1,3}$',
-  '^R[0-9]{2,3}B[0-9]{1,3}$',
+const publishedAddressDefaultVariants = [
+  [
+    '^R[0-9]{2,3}A[0-9]{1,3}C[0-9]{1,3}DP[0-9]{1,3}$',
+    '^R[0-9]{2,3}B[0-9]{1,3}$',
+  ],
+  [
+    '^R[0-9]{2,3}A[0-9]{1,3}C[0-9]{1,3}[A-Z]P[0-9]{1,3}$',
+    '^R[0-9]{2,3}B[0-9]{1,3}$',
+  ],
 ];
 
 /** Upgrade known published defaults without replacing customized rules. */
@@ -14,9 +20,10 @@ export function upgradeLegacySettings(settings: Settings): Settings {
   const productIsPublishedDefault =
     settings.rules.productPatterns.length === 1 &&
     publishedProductDefaults.includes(settings.rules.productPatterns[0]);
-  const addressIsPublishedDefault =
-    JSON.stringify(settings.rules.addressPatterns) ===
-    JSON.stringify(publishedAddressDefaults);
+  const addressRulesJson = JSON.stringify(settings.rules.addressPatterns);
+  const addressIsPublishedDefault = publishedAddressDefaultVariants.some(
+    (defaults) => JSON.stringify(defaults) === addressRulesJson,
+  );
   if (!productIsPublishedDefault && !addressIsPublishedDefault) return settings;
   return {
     ...settings,
